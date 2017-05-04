@@ -30,6 +30,7 @@
 #include "TopView.hpp"
 #include "DebugUtility.hpp"
 #include "LogUtility.hpp"
+#include "visionHelper.h"
 
 #include <vector>
 #include <string>
