@@ -451,7 +451,7 @@ class ControlUINode
 	private:
 
 		ros::Subscriber keypoint_coord_sub;
-		ros::Subscriber pose_sub;
+		// ros::Subscriber pose_sub;
 		ros::Time lastKeyStamp;
 		ros::Subscriber tum_ardrone_sub;
 		ros::Publisher tum_ardrone_pub;

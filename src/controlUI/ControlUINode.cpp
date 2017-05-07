@@ -71,7 +71,7 @@ ControlUINode::ControlUINode()
 	// Subscribing for key point channel
 	keypoint_coord_sub = nh_.subscribe(keypoint_channel, 10, &ControlUINode::keyPointDataCb, this);
 	// Subscribing for pose channel
-	pose_sub = nh_.subscribe(pose_channel, 10, &ControlUINode::poseCb, this);
+	// pose_sub = nh_.subscribe(pose_channel, 10, &ControlUINode::poseCb, this);
 
 	tum_ardrone_pub = nh_.advertise<std_msgs::String>(command_channel, 50);
 	tum_ardrone_sub = nh_.subscribe(command_channel, 50, &ControlUINode::comCb, this);
