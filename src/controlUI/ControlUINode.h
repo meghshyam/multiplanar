@@ -599,7 +599,7 @@ class ControlUINode
 	public:
 
 		ImageView *image_gui;
-		// CapturePlane *capture_plane;
+		CapturePlane *capture_plane;
 		AlignDrone *align_drone;
 
 		/* Plane parameters for all planes obtained from jlinkage */

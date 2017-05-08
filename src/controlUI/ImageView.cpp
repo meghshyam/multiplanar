@@ -689,11 +689,11 @@ ImageView::on_key_down(int key)
 			}
 			cout << "\n";
 			cout << "[ DEBUG] [on_key_down] Capturing the current plane\n";
-			node->captureTheCurrentPlane();
-			// node->capture_plane->startSystem();
+			// node->captureTheCurrentPlane();
+			node->capture_plane->startSystem();
 			// Clear all Vectors
-			clearInputVectors();
-			numPointsClicked = 0;
+			// clearInputVectors();
+			// numPointsClicked = 0;
 		}
 		else
 		{
