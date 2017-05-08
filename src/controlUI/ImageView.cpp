@@ -642,8 +642,8 @@ ImageView::on_key_down(int key)
 			node->setValues(number_of_planes, min_height_of_plane, min_distance, max_height_of_plane, max_distance);
 			node->setMainAngles(main_angles);
 			node->setMainDirections(main_directions);
-			node->alignQuadcopterToCurrentPlane();
-			
+			node->align_drone->startSystem();
+			// node->alignQuadcopterToCurrentPlane();
 		}
 	}
 	// Key 0-9 - For testing
@@ -690,6 +690,7 @@ ImageView::on_key_down(int key)
 			cout << "\n";
 			cout << "[ DEBUG] [on_key_down] Capturing the current plane\n";
 			node->captureTheCurrentPlane();
+			// node->capture_plane->startSystem();
 			// Clear all Vectors
 			clearInputVectors();
 			numPointsClicked = 0;

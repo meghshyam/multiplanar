@@ -31,7 +31,8 @@
 #include <vector>
 #include <opencv2/core/core.hpp>
 #include "helperFunctions.h"
-
+#include "CapturePlane.hpp"
+#include "AlignDrone.hpp"
 
 #include "Line2.hpp"
 #include "AllHeaders.hpp"
@@ -122,8 +123,6 @@ class ImageView : private CVD::Thread, private MouseKeyHandler
 		//ControlUINode
 		ControlUINode *node;
 		//
-		int numPointsClicked;
-		//
 		int numKeyPointsDetected;
 
 		// 2d image points clicked
@@ -162,6 +161,9 @@ class ImageView : private CVD::Thread, private MouseKeyHandler
 	public:
 
 		bool newImageAvailable; /*!< */
+
+		//
+		int numPointsClicked;
 
 		/**
 		 * @brief Constructor

@@ -31,6 +31,8 @@
 #include "DebugUtility.hpp"
 #include "LogUtility.hpp"
 #include "visionHelper.h"
+// #include "CapturePlane.hpp"
+#include "AlignDrone.hpp"
 
 #include <vector>
 #include <string>
@@ -40,7 +42,10 @@
 using namespace std;
 using namespace cv;
 
+
 class ImageView;
+// class CapturePlane;
+class AlignDrone;
 
 enum MOVE_DIRECTIONS {LEFT, RIGHT, FORWARD, BACKWARD, UP, DOWN, CLOCK, COUNTERCLOCK};
 
@@ -594,6 +599,8 @@ class ControlUINode
 	public:
 
 		ImageView *image_gui;
+		// CapturePlane *capture_plane;
+		AlignDrone *align_drone;
 
 		/* Plane parameters for all planes obtained from jlinkage */
 		vector< vector<float> > jlink_all_plane_parameters;
