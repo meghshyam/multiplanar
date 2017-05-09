@@ -79,7 +79,7 @@ ControlUINode::ControlUINode()
 	// For recording video
 	video = nh_.serviceClient<ardrone_autonomy::RecordEnable>("ardrone/setrecord");
 
-	capture_plane = new CapturePlane(this);
+	// capture_plane = new CapturePlane(this);
 	align_drone = new AlignDrone(this);
 	// Initiating image view class which displays the "drone_controlUI" window
 	image_gui = new ImageView(this);
