@@ -23,7 +23,7 @@
 
 #include "../Line/Line2.hpp"
 #include "../AllHeaders.hpp"
-#include "../DebugUtility/DebugUtility.hpp"
+#include "../../DebugUtility/DebugUtility.hpp"
 #include "cvd/thread.h"
 
 enum SHAPES {POLYLINE, POLYGON}; //< Shapes currently available for drawing

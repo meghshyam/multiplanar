@@ -23,7 +23,7 @@
 #define LINE2_HPP_
 
 #include "../AllHeaders.hpp"
-#include "../DebugUtility/DebugUtility.hpp"
+#include "../../DebugUtility/DebugUtility.hpp"
 
 enum LineDirection {HORIZONTAL, VERTICAL, ASCENDING, DESCENDING};
 enum RotateDirection {CLOCKWISE, COUNTERCLOCKWISE};
