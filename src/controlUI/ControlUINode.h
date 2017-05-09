@@ -766,7 +766,7 @@ class ControlUINode
          * @return
          */
         void
-        getPTargetPoints(const pGrid &g, const vector<float> & plane,
+        getPTargetPoints(const pGrid &g, const vector<float> & plane, int plane_no,
                                                     const vector<Point3f> &uvAxes, vector<vector<double> > &tPoints );
 
         //sort target points according to Z
@@ -865,7 +865,7 @@ class ControlUINode
          * @return
          */
         void
-        write3DPointsToCSV(std::vector<std::vector<float> > &_3d_points);
+        write3DPointsToCSV(std::vector<std::vector<double> > &_3d_points, string filename="points.txt");
 
         /**
          * @brief A helper function to get the number of key points in the current frame

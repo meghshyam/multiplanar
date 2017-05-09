@@ -309,13 +309,12 @@ ControlUINode::load2dPoints (vector<float> x_img, vector<float> y_img)
 }
 
 void
-ControlUINode::write3DPointsToCSV(vector<vector<float> > &_3d_points)
+ControlUINode::write3DPointsToCSV(vector<vector<double> > &_3d_points, string filename)
 {
 
     int i, j;
     int numberOfPoints = _3d_points.size();
 
-    string filename = "points_fckohli_test_08042016.csv";
     const char* outFilename = filename.c_str();
     ofstream outFile;
     // Open the object in writing mode
@@ -335,11 +334,11 @@ ControlUINode::write3DPointsToCSV(vector<vector<float> > &_3d_points)
         {
             if(j != dimensions-1)
             {
-                outFile << _3d_points[i][j] << ", ";
+                outFile << std::setprecision(6) << _3d_points[i][j] << ", ";
             }
             else
             {
-                outFile << _3d_points[i][j] << "\n";
+                outFile << std::setprecision(6) << _3d_points[i][j] << "\n";
             }
         }
     }
@@ -497,7 +496,8 @@ ControlUINode::moveQuadcopter(
         pGrid grid = buildPGrid(uvCoordinates);
         //printGrid(grid, uvAxes, planeParameters[i]);
         vector< vector<double> > pTargetPoints;
-        getPTargetPoints(grid, planeParameters[i], uvAxes, pTargetPoints);
+        int plane_no = i;
+        getPTargetPoints(grid, planeParameters[i], plane_no, uvAxes, pTargetPoints);
         double desiredYaw = 0;
         Point3f projectedNormal(planeParameters[i][0], planeParameters[i][1], 0);
         Point3f yAxis(0,1,0);
@@ -1483,6 +1483,7 @@ ControlUINode::checkPos(const ros::TimerEvent&)
 //
 void
 ControlUINode::getPTargetPoints(const pGrid &g, const vector<float> & plane,
+                                    int plane_no,
                                     const vector<Point3f> &uvAxes,
                                     vector< vector<double> > &sortedTPoints)
 {
@@ -1735,6 +1736,9 @@ ControlUINode::getPTargetPoints(const pGrid &g, const vector<float> & plane,
     sortTargetPoints(numRows, numColsPerRow, tPoints, sortedTPoints);
     printf("\ntarget points\n\n");
     print3dPoints(sortedTPoints);
+    string filename = "/home/sonapraneeth/plane_"+to_string(plane_no)+"_map";
+    cout << "Writing " << sortedTPoints.size() << " points to file: " << filename << "\n";
+    write3DPointsToCSV(sortedTPoints, filename);
     //printf("Points with X and Z just midpoints\n");
     //print3dPoints(tPoints_z);
 }
