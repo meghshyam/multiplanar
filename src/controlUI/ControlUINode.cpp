@@ -54,6 +54,7 @@ pthread_mutex_t ControlUINode::keyPoint_CS = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t ControlUINode::pose_CS = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t ControlUINode::tum_ardrone_CS = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t ControlUINode::command_CS = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t ControlUINode::navdata_CS = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t ControlUINode::changeyaw_CS = PTHREAD_MUTEX_INITIALIZER;
 
 
@@ -67,6 +68,9 @@ ControlUINode::ControlUINode()
 	pose_channel = nh_.resolveName("ardrone/predictedPose");
 	// Channel for landing the quadcopter
 	land_channel = nh_.resolveName("ardrone/land");
+	// Channel for ardrone navdata (to access battery information)
+	// Reference: http://ardrone-autonomy.readthedocs.io/en/latest/reading.html?highlight=battery
+	navdata_channel = nh_.resolveName("ardrone/navdata");
 
 	// Subscribing for key point channel
 	keypoint_coord_sub = nh_.subscribe(keypoint_channel, 10, &ControlUINode::keyPointDataCb, this);
@@ -104,6 +108,9 @@ ControlUINode::ControlUINode()
 	/* PRANEETH's CODE */
 	// Channel for controlling landing commands
 	land_pub		= nh_.advertise<std_msgs::Empty>(land_channel, 1);
+	// For battery
+	navdata_sub = nh_.subscribe(navdata_channel, 10, &ControlUINode::navDataCb, this);
+
 	// Whether it's seeing the plane for the first time
 	_stage_of_plane_observation = true;
 	// Is the plane big? requiring multiple attempts to cover ti
@@ -146,6 +153,24 @@ ControlUINode::ControlUINode()
 ControlUINode::~ControlUINode()
 {
 
+}
+
+/**
+ * @brief Ardrone Autonomy Navadata Callback
+ * @details Currently used for capturing battery information
+ * @param navPtr
+ */
+void
+ControlUINode::navDataCb(const ardrone_autonomy::Navdata navPtr)
+{
+    pthread_mutex_lock(&navdata_CS);
+    if (navPtr.batteryPercent < 15)
+    {
+        LOG_MSG << "Current battery percentage: " << navPtr.batteryPercent << "\n";
+        PRINT_LOG_MESSAGE(1);
+        sendLand();
+    }
+    pthread_mutex_unlock(&navdata_CS);
 }
 
 void

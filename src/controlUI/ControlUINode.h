@@ -33,6 +33,8 @@
 #include "visionHelper.h"
 // #include "CapturePlane.hpp"
 #include "AlignDrone.hpp"
+#include "ardrone_autonomy/Navdata.h"
+
 
 #include <vector>
 #include <string>
@@ -461,6 +463,7 @@ class ControlUINode
 		ros::Subscriber tum_ardrone_sub;
 		ros::Publisher tum_ardrone_pub;
 		ros::Publisher land_pub;
+		ros::Subscriber navdata_sub;
 		std::string land_channel;
 		ros::NodeHandle nh_;
 
@@ -502,6 +505,7 @@ class ControlUINode
 		std::string keypoint_channel; // channel on which keypoint info is received
 		std::string command_channel; // channel on which commands can be posted or received
 		std::string pose_channel; // channel on which pose info is received
+		std::string navdata_channel;    // channel on which ardrone navdata is received
 
 		bool ransacVerbose; // Whether we need the ransac verbose output or not
 		bool useScaleFactor; // Using scale factors. MUST BE SET TO TRUE
@@ -591,6 +595,7 @@ class ControlUINode
 		static pthread_mutex_t tum_ardrone_CS;
 		static pthread_mutex_t keyPoint_CS;
 		static pthread_mutex_t pose_CS;
+		static pthread_mutex_t navdata_CS;
 		static pthread_mutex_t command_CS;
 		static pthread_mutex_t changeyaw_CS;
 
@@ -655,6 +660,8 @@ class ControlUINode
 		void keyPointDataCb (const tum_ardrone::keypoint_coordConstPtr coordPtr);
 		void poseCb (const tum_ardrone::filter_stateConstPtr statePtr);
 		void comCb (const std_msgs::StringConstPtr str);
+		void
+		navDataCb(const ardrone_autonomy::Navdata navPtr);
 		inline bool
 		isCalibrated()
 		{
