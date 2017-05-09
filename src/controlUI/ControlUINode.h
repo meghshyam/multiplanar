@@ -26,7 +26,6 @@
 #include <opencv2/core/core.hpp>
 
 #include "Line2.hpp"
-#include "AllHeaders.hpp"
 #include "TopView.hpp"
 #include "DebugUtility.hpp"
 #include "LogUtility.hpp"
@@ -34,7 +33,7 @@
 // #include "CapturePlane.hpp"
 #include "AlignDrone.hpp"
 #include "ardrone_autonomy/Navdata.h"
-
+#include "Headers.h"
 
 #include <vector>
 #include <string>
@@ -766,7 +765,7 @@ class ControlUINode
 		 * @return
 		 */
 		void
-		getPTargetPoints(const pGrid &g, const vector<float> & plane,
+		getPTargetPoints(const pGrid &g, const vector<float> & plane, int plane_no,
 													const vector<Point3f> &uvAxes, vector<vector<double> > &tPoints );
 
 		//sort target points according to Z
@@ -865,7 +864,7 @@ class ControlUINode
 		 * @return
 		 */
 		void
-		write3DPointsToCSV(std::vector<std::vector<float> > &_3d_points);
+		write3DPointsToCSV(std::vector<std::vector<double> > &_3d_points, string filename="points.csv");
 
 		/**
 		 * @brief A helper function to get the number of key points in the current frame
