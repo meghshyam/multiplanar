@@ -658,7 +658,6 @@ class ControlUINode
 
         // ROS message callbacks
         void keyPointDataCb (const tum_ardrone::keypoint_coordConstPtr coordPtr);
-        void poseCb (const tum_ardrone::filter_stateConstPtr statePtr);
         void comCb (const std_msgs::StringConstPtr str);
         void
         navDataCb(const ardrone_autonomy::Navdata navPtr);
@@ -849,12 +848,6 @@ class ControlUINode
         bool
         get2DPointNearest(std::vector<float> pt, std::vector<int> &p, bool considerAllLevels);
 
-        /**
-         * @brief Equality function for 3d keypoints.
-         * @details Does it need to be exact equality? Or some heuristic based distance threshold
-         * @param
-         * @return
-         */
         bool
         equal(std::vector<float> p1, std::vector<float> p2);
 

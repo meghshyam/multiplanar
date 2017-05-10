@@ -182,123 +182,46 @@ ControlUINode::navDataCb(const ardrone_autonomy::Navdata navPtr)
 void
 ControlUINode::keyPointDataCb (const tum_ardrone::keypoint_coordConstPtr coordPtr)
 {
-    //ROS_INFO("Received keypoint data");
     pthread_mutex_lock(&keyPoint_CS);
     numPoints = coordPtr->num;
     load2dPoints(coordPtr->x_img, coordPtr->y_img);
     load3dPoints(coordPtr->x_w, coordPtr->y_w, coordPtr->z_w);
     loadLevels(coordPtr->levels);
-
     assert(_2d_points.size()==_3d_points.size() && _3d_points.size()==_levels.size());
     pthread_mutex_unlock(&keyPoint_CS);
-    //fitPlane3d();
 }
 
-void
-ControlUINode::poseCb (const tum_ardrone::filter_stateConstPtr statePtr)
+float
+ControlUINode::distance (vector<int> p1, vector<float> p2)
 {
-    pthread_mutex_lock(&pose_CS);
+    return sqrt((p2[0]-p1[0])*(p2[0]-p1[0]) + (p2[1]-p1[1])*(p2[1]-p1[1]));
+}
 
-    scale = statePtr->scale;
-    scale_z = statePtr->scale_z;
-    x_offset = statePtr->x_offset;
-    y_offset = statePtr->y_offset;
-    z_offset = statePtr->z_offset;
+float
+ControlUINode::distance3D (vector<float> p1, vector<float> p2)
+{
+    return sqrt((p2[0]-p1[0])*(p2[0]-p1[0]) +
+                (p2[1]-p1[1])*(p2[1]-p1[1]) +
+                (p2[2]-p1[2])*(p2[2]-p1[2]));
+}
 
-    x_drone = statePtr->x;
-    y_drone = statePtr->y;
-    z_drone = statePtr->z;
-    yaw = statePtr->yaw;
-    roll = statePtr->roll;
-    pitch = statePtr->pitch;
-
-    pthread_mutex_unlock(&pose_CS);
-
-    // Goto commands left to be executed
-
-    pthread_mutex_lock(&command_CS);
-    static int numCommands = 0;
-    if(commands.size() > 0 && !currentCommand)
+/**
+ * @brief Equality function for 3d keypoints.
+ * @details Does it need to be exact equality? Or some heuristic based distance threshold
+ * @param
+ * @return
+ */
+bool
+ControlUINode::equal(vector<float> p1, vector<float> p2)
+{
+    if(distance3D(p1, p2) < 0.001)
     {
-        currentCommand = true;
-        numCommands++;
-        pthread_mutex_lock(&tum_ardrone_CS);
-        tum_ardrone_pub.publish(commands.front());
-        pthread_mutex_unlock(&tum_ardrone_CS);
-        targetPoint = targetPoints.front();
-        printf(" Current target: %lf %lf %lf\n", targetPoint[0], targetPoint[1] , targetPoint[2] );
-    }
-    else if(currentCommand && !recordNow)
-    {
-        static int planeIndexCurrent = 0;
-        if(planeIndexCurrent< (numberOfPlanes-1) &&
-            numCommands > startTargetPtIndex[planeIndexCurrent+1])
-            planeIndexCurrent++;
-
-        if(numCommands < startTargetPtIndex[planeIndexCurrent]+8)
-        {
-            ros::Duration(1).sleep();
-            currentCommand = false;
-            commands.pop_front();
-            targetPoints.pop_front();
-            pthread_mutex_unlock(&command_CS);
-            return;
-        }
-        double x = targetPoint[0];
-        double y = targetPoint[1];
-        double z = targetPoint[2];
-
-        pthread_mutex_lock(&pose_CS);
-        double ea = sqrt(pow(x - x_drone, 2) + pow(y - y_drone, 2) + pow(z - z_drone, 2));
-        //printf("Error %lf\n", ea);
-        pthread_mutex_unlock(&pose_CS);
-        if(ea < error_threshold)
-        {
-            //printf("reached\n");
-            recordNow = true;
-            ros::Duration(3).sleep();
-            last= ros::Time::now();
-        }
-        else
-        {
-            recordNow = false;
-        }
-    }
-    else if(recordNow)
-    {
-        if(ros::Time::now() - last < ros::Duration(recordTime))
-        {
-            if(record && notRecording)
-            {
-                ardrone_autonomy::RecordEnable srv;
-                srv.request.enable = true;
-                video.call(srv);
-                notRecording = false;
-                popen("rosbag record /ardrone/image_raw /ardrone/predictedPose --duration=3", "r");
-            }
-            else if(!notRecording)
-            {
-
-            }
-        }
-        else
-        {
-            ardrone_autonomy::RecordEnable srv;
-            srv.request.enable = false;
-            video.call(srv);
-            currentCommand = false;
-            notRecording = true;
-            recordNow = false;
-            commands.pop_front();
-            targetPoints.pop_front();
-            ros::Duration(3).sleep();
-        }
+        return true;
     }
     else
     {
-        // do nothing
+        return false;
     }
-    pthread_mutex_unlock(&command_CS);
 }
 
 void
@@ -317,10 +240,7 @@ ControlUINode::load2dPoints (vector<float> x_img, vector<float> y_img)
 void
 ControlUINode::write3DPointsToCSV(vector<vector<double> > &_3d_points, string filename)
 {
-
-    int i, j;
     int numberOfPoints = _3d_points.size();
-
     const char* outFilename = filename.c_str();
     ofstream outFile;
     // Open the object in writing mode
@@ -332,11 +252,10 @@ ControlUINode::write3DPointsToCSV(vector<vector<double> > &_3d_points, string fi
         cerr << "Please check if the file is existing and has required permissions ";
         cerr << " for writing.\n";
     }
-
-    for (i = 0; i < numberOfPoints; ++i)
+    for (int i = 0; i < numberOfPoints; ++i)
     {
         int dimensions = _3d_points[i].size();
-        for (j = 0; j < dimensions; ++j)
+        for (int j = 0; j < dimensions; ++j)
         {
             if(j != dimensions-1)
             {
@@ -348,18 +267,15 @@ ControlUINode::write3DPointsToCSV(vector<vector<double> > &_3d_points, string fi
             }
         }
     }
-
     // Close the file
     outFile.close();
     return ;
-
 }
 
 void
 ControlUINode::load3dPoints (vector<float> x_w, vector<float> y_w, vector<float> z_w)
 {
     pthread_mutex_lock(&pose_CS);
-
     _3d_points.clear();
     for (int i = 0; i < numPoints; ++i)
     {
@@ -378,9 +294,7 @@ ControlUINode::load3dPoints (vector<float> x_w, vector<float> y_w, vector<float>
         }
         _3d_points.push_back(p);
     }
-
     pthread_mutex_unlock(&pose_CS);
-    //write3DPointsToCSV(_3d_points);
 }
 
 void
@@ -396,17 +310,13 @@ ControlUINode::loadLevels (vector<int> levels)
 vector<float>
 ControlUINode::fitPlane3d (vector<int> ccPoints, vector<vector<int> > pointsClicked)
 {
-
     vector<vector<float> > _in_points;
-
     vector<vector<int> > points;
     for(unsigned int i=0; i<ccPoints.size(); i++)
     {
         points.push_back(pointsClicked[ccPoints[i]]);
     }
-
     pthread_mutex_lock(&keyPoint_CS);
-
     for(unsigned int i=0; i<_2d_points.size(); i++)
     {
         if(liesInside(points, _2d_points[i]))
@@ -415,12 +325,10 @@ ControlUINode::fitPlane3d (vector<int> ccPoints, vector<vector<int> > pointsClic
             _in_points.push_back(_3d_points[i]);
         }
     }
-
     pthread_mutex_unlock(&keyPoint_CS);
     //ROS_INFO("Number of keypoints inside %d", _in_points.size());
     //ROS_INFO("Total number of keypoints %d", _3d_points.size());
     _3d_plane = ransacPlaneFit(_in_points, ransacVerbose);
-
     return _3d_plane;
 }
 
@@ -430,15 +338,12 @@ ControlUINode::fitMultiplePlanes3d (vector<int> &ccPoints, vector<vector<int> > 
                                     vector< vector<Point3f> > & continuousBoundingBoxPoints)
 {
     vector<Point3f> _in_points;
-
-    vector<vector<int> > points;
+    vector< vector<int> > points;
     for(unsigned int i = 0; i < ccPoints.size(); i++)
     {
         points.push_back(pointsClicked[ccPoints[i]]);
     }
-
     pthread_mutex_lock(&keyPoint_CS);
-
     for(unsigned int i = 0; i < _2d_points.size(); i++)
     {
         if(liesInside(points, _2d_points[i]))
@@ -451,137 +356,8 @@ ControlUINode::fitMultiplePlanes3d (vector<int> &ccPoints, vector<vector<int> > 
             _in_points.push_back(featurePt);
         }
     }
-
     pthread_mutex_unlock(&keyPoint_CS);
     findMultiplePlanes(_in_points, planeParameters, continuousBoundingBoxPoints);
-}
-
-void
-ControlUINode::moveQuadcopter(const vector< vector<float> > &planeParameters,
-                              const vector< vector<Point3f> > &continuousBoundingBoxPoints)
-{
-    LOG_PRINT(1, "[ moveQuadcopter] Started.\n");
-    double drone_length = 0.6;
-    // Get the number of planes
-    numberOfPlanes = planeParameters.size();
-    // UV co-ordinates of bounding box points of the planes
-    vector<Point2f> uvCoordinates;
-    // UV axes for transformation between XYZ and UV co-ordinates
-    vector<Point3f> uvAxes, xyzGridCoord;
-    vector<float> uCoord, vCoord, uVector, vVector;
-    // Vector containing the number of commands to traverse each plane starting from a 
-    // distant position
-    // start????
-    startTargetPtIndex.resize(numberOfPlanes, 0);
-    startTargetPtIndex[0] = 0;
-    // The position from where drone is hovering in order to move to plane numbered plane_index
-    vector<double> prevPosition(3);
-    double prevYaw = 0;
-    // Apply a lock on commands
-    pthread_mutex_lock(&command_CS);
-    for (int plane_index = 0; plane_index < numberOfPlanes; ++plane_index)
-    {
-        LOG_MSG << "[ moveQuadcopter] Drone ready to capture for plane: " << plane_index+1 << ".\n";
-        PRINT_LOG_MESSAGE(1);
-        // Make parameters for making the grid
-        // ax + by + cz + d = 0 Parameters for the plane numbered by plane_index
-        // float a = planeParameters[plane_index][0];
-        // float b = planeParameters[plane_index][1];
-        // float c = planeParameters[plane_index][2];
-        // float d = planeParameters[plane_index][3];
-        // Clear the uv co-ordinates and axis vectors
-        uvCoordinates.clear();
-        uvAxes.clear();
-        // Convert XYZ bounding points to UV coordinates
-        LOG_MSG << "[ moveQuadcopter] Generating the UV axes for the plane: " << plane_index+1 << ".\n";
-        PRINT_LOG_MESSAGE(1);
-        AllXYZToUVCoordinates(continuousBoundingBoxPoints[plane_index], planeParameters[plane_index],
-                              uvCoordinates, uvAxes);
-        // Push the generated UV axis to the required vectors
-        uVector.clear();
-        uVector.push_back(uvAxes[0].x);
-        uVector.push_back(uvAxes[0].y);
-        uVector.push_back(uvAxes[0].z);
-        vVector.clear();
-        vVector.push_back(uvAxes[1].x);
-        vVector.push_back(uvAxes[1].y);
-        vVector.push_back(uvAxes[1].z);
-        uCoord.clear();
-        // Build the Grid by dividing the plane into cells
-        LOG_MSG << "[ moveQuadcopter] Building the grid for the plane: " << plane_index+1 << ".\n";
-        PRINT_LOG_MESSAGE(1);
-        pGrid grid = buildPGrid(uvCoordinates);
-        int num_rows = grid.rowSquares.size(), num_cols = 0;
-        if(num_rows > 0)
-        {
-            num_cols = grid.rowSquares[0].size();
-        }
-        LOG_MSG << "[ moveQuadcopter] Number of rows in the grid: " << num_rows << ".\n";
-        LOG_MSG << "[ moveQuadcopter] Number of cols in the grid: " << num_cols << ".\n";
-        // Print the Grid co-ordinates
-        // printGrid(grid, uvAxes, planeParameters[i]);
-        // Vector containing target points from where the video recording is supposed to be done
-        vector< vector<double> > pTargetPoints;
-        // Call to function for generating the pTargetPoints
-        LOG_MSG << "[ moveQuadcopter] Generating target points for capturing videos of the plane: " << plane_index+1 << ".\n";
-        PRINT_LOG_MESSAGE(1);
-        getPTargetPoints(grid, planeParameters[plane_index], plane_index, uvAxes, pTargetPoints);
-        // Calculate the angle to rotate to align the drone'e yaw to the plane's normal
-        double desiredYaw = 0;
-        Point3f projectedNormal(planeParameters[plane_index][0], planeParameters[plane_index][1], 0);
-        Point3f yAxis(0, 1, 0);
-        desiredYaw = findAngle(projectedNormal, yAxis);
-        desiredYaw = desiredYaw*180/M_PI;
-        // For plane_index == 0, prevPosition is the current position of the drone
-        if(plane_index == 0)
-        {
-            prevPosition[0] = x_drone;
-            prevPosition[1] = y_drone;
-            prevPosition[2] = z_drone;
-            prevYaw = yaw;
-        }
-        // Having known the prevPosition and pTargetPoints
-        // move the drone from prevPosition to pTargetPoints[0]
-        // and completely navigate around the plane as specified by the pTargetPoints
-        LOG_MSG << "[ moveQuadcopter] Moving the drone for the plane: " << plane_index+1 << ".\n";
-        PRINT_LOG_MESSAGE(1);
-        moveDrone(prevPosition, pTargetPoints, prevYaw, desiredYaw);
-        int numTargetPoints = pTargetPoints.size();
-        // Now the previous position of plane numbered plane_index+1 is the last position where 
-        // the drone has captured video for plane numbered plane_index
-        prevPosition[0] = pTargetPoints[numTargetPoints-1][0];
-        prevPosition[1] = pTargetPoints[numTargetPoints-1][1] - drone_length;
-        prevPosition[2] = pTargetPoints[numTargetPoints-1][2];
-        prevYaw = desiredYaw;
-        // Update the plane index
-        planeIndex++;
-    }
-    // Once all the movement of drone is completed unlock the acquired lock
-    pthread_mutex_unlock(&command_CS);
-    LOG_PRINT(1, "[ moveQuadcopter] Completed.\n");
-    return ;
-}
-
-void
-ControlUINode::printGrid(const pGrid &g, const vector<Point3f> &uvAxes, const vector<float> &plane)
-{
-    vector<Point2f> uvCoordinates;
-    vector<Point3f> xyzCorners;
-    cout<<"[ Debug ] UV Grid \n";
-    for(unsigned int i = 0; i < g.rowSquares.size(); i++)
-    {
-        for(unsigned int j = 0; j < g.rowSquares[i].size(); j++)
-        {
-            float u = g.rowSquares[i][j].u;
-            float v = g.rowSquares[i][j].v;
-            Point2f uv(u, v);
-            uvCoordinates.push_back(uv);
-        }
-    }
-    // 
-    AllUVToXYZCoordinates(uvCoordinates, uvAxes, plane[3], xyzCorners);
-    cout << uvCoordinates <<"\n";
-    cout << xyzCorners <<"\n";
 }
 
 void
@@ -596,20 +372,6 @@ ControlUINode::Loop ()
 void
 ControlUINode::comCb (const std_msgs::StringConstPtr str)
 {
-}
-
-float
-ControlUINode::distance (vector<int> p1, vector<float> p2)
-{
-    return sqrt((p2[0]-p1[0])*(p2[0]-p1[0]) + (p2[1]-p1[1])*(p2[1]-p1[1]));
-}
-
-float
-ControlUINode::distance3D (vector<float> p1, vector<float> p2)
-{
-    return sqrt((p2[0]-p1[0])*(p2[0]-p1[0]) +
-                (p2[1]-p1[1])*(p2[1]-p1[1]) +
-                (p2[2]-p1[2])*(p2[2]-p1[2]));
 }
 
 vector<float>
@@ -675,16 +437,11 @@ bool
 ControlUINode::get2DPoint (vector<float> pt, vector<int> &p,
                             bool considerAllLevels)
 {
-
     pthread_mutex_lock(&keyPoint_CS);
-
     // ROS_INFO("Total num %d\n", numPoints);
-
     bool found = false;
-
     float minDist = 10000000.0;
     int min = -1;
-
     if(!considerAllLevels)
     {
         for (unsigned int i = 0; i < _3d_points.size(); ++i)
@@ -715,7 +472,6 @@ ControlUINode::get2DPoint (vector<float> pt, vector<int> &p,
             }
         }
     }
-
     if(min!=-1)
     {
         found = true;
@@ -723,9 +479,7 @@ ControlUINode::get2DPoint (vector<float> pt, vector<int> &p,
         p.push_back((int)_2d_points[min][1]);
         //ROS_INFO("The minimum distance is %f", minDist);
     }
-
     pthread_mutex_unlock(&keyPoint_CS);
-
     return found;
 }
 
@@ -734,14 +488,10 @@ ControlUINode::get2DPointNearest (vector<float> pt, vector<int> &p,
                                     bool considerAllLevels)
 {
     pthread_mutex_lock(&keyPoint_CS);
-
     // ROS_INFO("Total num %d\n", numPoints);
-
     bool found = false;
-
     float minDist = 10000000.0;
     int min = -1;
-
     if(!considerAllLevels)
     {
         for (unsigned int i = 0; i < _3d_points.size(); ++i)
@@ -771,7 +521,6 @@ ControlUINode::get2DPointNearest (vector<float> pt, vector<int> &p,
             //}
         }
     }
-
     if(min!=-1)
     {
         found = true;
@@ -779,23 +528,8 @@ ControlUINode::get2DPointNearest (vector<float> pt, vector<int> &p,
         p.push_back((int)_2d_points[min][1]);
         //ROS_INFO("The minimum distance is %f", minDist);
     }
-
     pthread_mutex_unlock(&keyPoint_CS);
-
     return found;
-}
-
-bool
-ControlUINode::equal(vector<float> p1, vector<float> p2)
-{
-    if(distance3D(p1, p2) < 0.001)
-    {
-        return true;
-    }
-    else
-    {
-        return false;
-    }
 }
 
 int
@@ -926,6 +660,137 @@ ControlUINode::projectPoints (vector<int> ccPoints, vector<vector<float> > keyPo
         pPoints.push_back(v);
     }
     return pPoints;
+}
+
+void
+ControlUINode::moveQuadcopter(const vector< vector<float> > &planeParameters,
+                              const vector< vector<Point3f> > &continuousBoundingBoxPoints)
+{
+    LOG_PRINT(1, "[ moveQuadcopter] Started.\n");
+    double drone_length = 0.6;
+    // Get the number of planes
+    numberOfPlanes = planeParameters.size();
+    // UV co-ordinates of bounding box points of the planes
+    vector<Point2f> uvCoordinates;
+    // UV axes for transformation between XYZ and UV co-ordinates
+    vector<Point3f> uvAxes, xyzGridCoord;
+    vector<float> uCoord, vCoord, uVector, vVector;
+    // Vector containing the number of commands to traverse each plane starting from a 
+    // distant position
+    // start????
+    startTargetPtIndex.resize(numberOfPlanes, 0);
+    startTargetPtIndex[0] = 0;
+    // The position from where drone is hovering in order to move to plane numbered plane_index
+    vector<double> prevPosition(3);
+    double prevYaw = 0;
+    // Apply a lock on commands
+    pthread_mutex_lock(&command_CS);
+    for (int plane_index = 0; plane_index < numberOfPlanes; ++plane_index)
+    {
+        LOG_MSG << "[ moveQuadcopter] Drone ready to capture for plane: " << plane_index+1 << ".\n";
+        PRINT_LOG_MESSAGE(1);
+        // Make parameters for making the grid
+        // ax + by + cz + d = 0 Parameters for the plane numbered by plane_index
+        // float a = planeParameters[plane_index][0];
+        // float b = planeParameters[plane_index][1];
+        // float c = planeParameters[plane_index][2];
+        // float d = planeParameters[plane_index][3];
+        // Clear the uv co-ordinates and axis vectors
+        uvCoordinates.clear();
+        uvAxes.clear();
+        // Convert XYZ bounding points to UV coordinates
+        LOG_MSG << "[ moveQuadcopter] Generating the UV axes for the plane: " << plane_index+1 << ".\n";
+        PRINT_LOG_MESSAGE(1);
+        AllXYZToUVCoordinates(continuousBoundingBoxPoints[plane_index], planeParameters[plane_index],
+                              uvCoordinates, uvAxes);
+        // Push the generated UV axis to the required vectors
+        uVector.clear();
+        uVector.push_back(uvAxes[0].x);
+        uVector.push_back(uvAxes[0].y);
+        uVector.push_back(uvAxes[0].z);
+        vVector.clear();
+        vVector.push_back(uvAxes[1].x);
+        vVector.push_back(uvAxes[1].y);
+        vVector.push_back(uvAxes[1].z);
+        uCoord.clear();
+        // Build the Grid by dividing the plane into cells
+        LOG_MSG << "[ moveQuadcopter] Building the grid for the plane: " << plane_index+1 << ".\n";
+        PRINT_LOG_MESSAGE(1);
+        pGrid grid = buildPGrid(uvCoordinates);
+        int num_rows = grid.rowSquares.size(), num_cols = 0;
+        if(num_rows > 0)
+        {
+            num_cols = grid.rowSquares[0].size();
+        }
+        LOG_MSG << "[ moveQuadcopter] Number of rows in the grid: " << num_rows << ".\n";
+        LOG_MSG << "[ moveQuadcopter] Number of cols in the grid: " << num_cols << ".\n";
+        // Print the Grid co-ordinates
+        // printGrid(grid, uvAxes, planeParameters[i]);
+        // Vector containing target points from where the video recording is supposed to be done
+        vector< vector<double> > pTargetPoints;
+        // Call to function for generating the pTargetPoints
+        LOG_MSG << "[ moveQuadcopter] Generating target points for capturing videos of the plane: " << plane_index+1 << ".\n";
+        PRINT_LOG_MESSAGE(1);
+        getPTargetPoints(grid, planeParameters[plane_index], plane_index, uvAxes, pTargetPoints);
+        // Calculate the angle to rotate to align the drone'e yaw to the plane's normal
+        double desiredYaw = 0;
+        Point3f projectedNormal(planeParameters[plane_index][0], planeParameters[plane_index][1], 0);
+        Point3f yAxis(0, 1, 0);
+        desiredYaw = findAngle(projectedNormal, yAxis);
+        desiredYaw = desiredYaw*180/M_PI;
+        // For plane_index == 0, prevPosition is the current position of the drone
+        if(plane_index == 0)
+        {
+            prevPosition[0] = x_drone;
+            prevPosition[1] = y_drone;
+            prevPosition[2] = z_drone;
+            prevYaw = yaw;
+        }
+        // Having known the prevPosition and pTargetPoints
+        // move the drone from prevPosition to pTargetPoints[0]
+        // and completely navigate around the plane as specified by the pTargetPoints
+        LOG_MSG << "[ moveQuadcopter] Moving the drone for the plane: " << plane_index+1 << ".\n";
+        PRINT_LOG_MESSAGE(1);
+        moveDrone(prevPosition, pTargetPoints, prevYaw, desiredYaw);
+        int numTargetPoints = pTargetPoints.size();
+        // Now the previous position of plane numbered plane_index+1 is the last position where 
+        // the drone has captured video for plane numbered plane_index
+        prevPosition[0] = pTargetPoints[numTargetPoints-1][0];
+        prevPosition[1] = pTargetPoints[numTargetPoints-1][1] - drone_length;
+        prevPosition[2] = pTargetPoints[numTargetPoints-1][2];
+        prevYaw = desiredYaw;
+        // Update the plane index
+        planeIndex++;
+    }
+    // Once all the movement of drone is completed unlock the acquired lock
+    pthread_mutex_unlock(&command_CS);
+    LOG_PRINT(1, "[ moveQuadcopter] Completed.\n");
+    return ;
+}
+
+void
+ControlUINode::printGrid(const pGrid &g, const vector<Point3f> &uvAxes, const vector<float> &plane)
+{
+    DEBUG_PRINT(5, "[ printGrid] Started.\n");
+    vector<Point2f> uvCoordinates;
+    vector<Point3f> xyzCorners;
+    cout<<"[ Debug ] UV Grid \n";
+    for(unsigned int i = 0; i < g.rowSquares.size(); i++)
+    {
+        for(unsigned int j = 0; j < g.rowSquares[i].size(); j++)
+        {
+            float u = g.rowSquares[i][j].u;
+            float v = g.rowSquares[i][j].v;
+            Point2f uv(u, v);
+            uvCoordinates.push_back(uv);
+        }
+    }
+    // 
+    AllUVToXYZCoordinates(uvCoordinates, uvAxes, plane[3], xyzCorners);
+    DEBUG_MSG << uvCoordinates << "\n";
+    DEBUG_MSG << xyzCorners << "\n";
+    PRINT_DEBUG_MESSAGE(5);
+    DEBUG_PRINT(5, "[ printGrid] Completed.\n");
 }
 
 grid
@@ -1070,98 +935,50 @@ ControlUINode::project3DPointsOnImage(const vector<Point3f> &worldPts, vector<Po
 
 void
 ControlUINode::moveDrone (const vector<double> &prevPosition,
-                            vector<vector<double> > tPoints,
-                            double prevYaw, double desiredYaw)
+                          vector<vector<double> > tPoints,
+                          double prevYaw, double desiredYaw)
 {
+    LOG_PRINT(1, "[ moveDrone] Started.\n");
     double drone_length = 0.6;
     for (unsigned int i = 0; i < tPoints.size(); ++i)
     {
         vector<double> p = tPoints[i];
         p[1] = p[1] - drone_length;
-
         char buf[100];
         if(i == 0)
         {
-            vector<vector <double > > xyz_yaw;
+            vector< vector <double> > xyz_yaw;
             getInitialPath(prevPosition, p, prevYaw, desiredYaw, xyz_yaw);
-            for(unsigned int j=0; j<xyz_yaw.size(); j++){
+            for(unsigned int j = 0; j < xyz_yaw.size(); j++)
+            {
                 vector<double> interm_point;
                 interm_point = xyz_yaw[j];
                 snprintf(buf, 100, "c goto %lf %lf %lf %lf",
                     interm_point[0], interm_point[1], interm_point[2], interm_point[3]);
                 std_msgs::String s;
                 s.data = buf;
-                ROS_INFO("Message: ");
-                ROS_INFO(buf);
+                // ROS_INFO("Message: ");
+                // ROS_INFO(buf);
                 commands.push_back(s);
                 targetPoints.push_back(interm_point);
             }
-            /*
-            pthread_mutex_lock(&pose_CS);
-            double half_y = (y_drone + p[1])/2;
-            vector<double> interm_point(3);
-            interm_point[0] = x_drone;
-            interm_point[1] = half_y;
-            interm_point[2] = z_drone;
-
-            snprintf(buf, 100, "c goto %lf %lf %lf %lf", x_drone, half_y, z_drone, yaw);
-            std_msgs::String s;
-            s.data = buf;
-            ROS_INFO("Message: ");
-            ROS_INFO(buf);
-            commands.push_back(s);
-            targetPoints.push_back(interm_point);
-
-            interm_point[1] = p[1];
-            snprintf(buf, 100, "c goto %lf %lf %lf %lf", x_drone, p[1], z_drone, yaw);
-            std_msgs::String s1;
-            s1.data = buf;
-            ROS_INFO("Message: ");
-            ROS_INFO(buf);
-            commands.push_back(s1);
-            targetPoints.push_back(interm_point);
-
-            interm_point[0] = p[0];
-            snprintf(buf, 100, "c goto %lf %lf %lf %lf", p[0], p[1], z_drone, yaw);
-            std_msgs::String s2;
-            s2.data = buf;
-            ROS_INFO("Message: ");
-            ROS_INFO(buf);
-            commands.push_back(s2);
-            targetPoints.push_back(interm_point);
-
-            interm_point[2] = p[2];
-            snprintf(buf, 100, "c goto %lf %lf %lf %lf", p[0], p[1], p[2], yaw);
-            std_msgs::String s3;
-            s3.data = buf;
-            ROS_INFO("Message: ");
-            ROS_INFO(buf);
-            commands.push_back(s3);
-            targetPoints.push_back(p);
-
-            snprintf(buf, 100, "c goto %lf %lf %lf %lf", p[0], p[1], p[2], desiredYaw);
-            std_msgs::String s4;
-            s4.data = buf;
-            ROS_INFO("Message: ");
-            ROS_INFO(buf);
-            commands.push_back(s4);
-            targetPoints.push_back(p);
-            pthread_mutex_unlock(&pose_CS);
-            */
         }
         else
         {
             snprintf(buf, 100, "c goto %lf %lf %lf %lf", p[0], p[1], p[2], desiredYaw);
             std_msgs::String s;
             s.data = buf;
-            ROS_INFO("Message: ");
-            ROS_INFO(buf);
+            // ROS_INFO("Message: ");
+            // ROS_INFO(buf);
             commands.push_back(s);
             targetPoints.push_back(p);
         }
     }
-        if(planeIndex < (numberOfPlanes - 1) )
-            startTargetPtIndex[planeIndex+1] = targetPoints.size();
+    if(planeIndex < (numberOfPlanes-1))
+    {
+        startTargetPtIndex[planeIndex+1] = targetPoints.size();
+    }
+    LOG_PRINT(1, "[ moveDrone] Completed.\n");
 }
 
 
@@ -1468,7 +1285,7 @@ ControlUINode::sortTargetPoints(int numRows, const vector<int> &numColsPerRow,
 
 void
 ControlUINode::getInitialPath(const vector<double> &prevPosition, const vector<double> &tPoint,
-                                double prevYaw, double desiredYaw, vector<vector<double> > &xyz_yaw)
+                              double prevYaw, double desiredYaw, vector<vector<double> > &xyz_yaw)
 {
     vector<double> interm_point(4);
     interm_point[0] = prevPosition[0];
@@ -1494,12 +1311,6 @@ ControlUINode::getInitialPath(const vector<double> &prevPosition, const vector<d
     interm_point[2] = tPoint[2];
     xyz_yaw.push_back(interm_point);
 }
-
-/* PRANEETH's CODE */
-
-/**************************************************************************************
-    New additions to the code
-***************************************************************************************/
 
 /**
  * @brief New pose callback for dealing with autonomous moving of quadcopter
