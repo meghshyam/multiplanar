@@ -232,10 +232,10 @@ ControlUINode::poseCb (const tum_ardrone::filter_stateConstPtr statePtr)
     {
         static int planeIndexCurrent = 0;
         if(planeIndexCurrent< (numberOfPlanes-1) &&
-            numCommands > startTargePtIndex[planeIndexCurrent+1])
+            numCommands > startTargetPtIndex[planeIndexCurrent+1])
             planeIndexCurrent++;
 
-        if(numCommands < startTargePtIndex[planeIndexCurrent]+8)
+        if(numCommands < startTargetPtIndex[planeIndexCurrent]+8)
         {
             ros::Duration(1).sleep();
             currentCommand = false;
@@ -457,38 +457,47 @@ ControlUINode::fitMultiplePlanes3d (vector<int> &ccPoints, vector<vector<int> > 
 }
 
 void
-ControlUINode::moveQuadcopter(
-                                    const vector< vector<float> > &planeParameters,
-                                    const vector< vector<Point3f> > &continuousBoundingBoxPoints)
+ControlUINode::moveQuadcopter(const vector< vector<float> > &planeParameters,
+                              const vector< vector<Point3f> > &continuousBoundingBoxPoints)
 {
-
+    LOG_PRINT(1, "[ moveQuadcopter] Started.\n");
+    double drone_length = 0.6;
+    // Get the number of planes
     numberOfPlanes = planeParameters.size();
-    int i, j;
-
+    // UV co-ordinates of bounding box points of the planes
     vector<Point2f> uvCoordinates;
+    // UV axes for transformation between XYZ and UV co-ordinates
     vector<Point3f> uvAxes, xyzGridCoord;
     vector<float> uCoord, vCoord, uVector, vVector;
-    startTargePtIndex.resize(numberOfPlanes, 0);
-    startTargePtIndex[0] = 0;
+    // Vector containing the number of commands to traverse each plane starting from a 
+    // distant position
+    // start
+    startTargetPtIndex.resize(numberOfPlanes, 0);
+    startTargetPtIndex[0] = 0;
+    // The position from where drone is hovering in order to move to plane numbered plane_index
     vector<double> prevPosition(3);
     double prevYaw = 0;
+    // Apply a lock on commands
     pthread_mutex_lock(&command_CS);
-    for (i = 0; i < numberOfPlanes; ++i)
+    for (int plane_index = 0; plane_index < numberOfPlanes; ++plane_index)
     {
-
-        // TODO: Move the quadcopter to face the plane i (i>0)
-
+        LOG_MSG << "[ moveQuadcopter] Drone ready to capture for plane: " << plane_index+1 << ".\n";
+        LOG_PRINT(1);
         // Make parameters for making the grid
+        // ax + by + cz + d = 0 Parameters for the plane numbered by plane_index
         float a = planeParameters[i][0];
         float b = planeParameters[i][1];
         float c = planeParameters[i][2];
         float d = planeParameters[i][3];
+        // Clear the uv co-ordinates and axis vectors
         uvCoordinates.clear();
         uvAxes.clear();
         // Convert XYZ bounding points to UV coordinates
-        AllXYZToUVCoordinates(
-            continuousBoundingBoxPoints[i], planeParameters[i],
-            uvCoordinates, uvAxes);
+        LOG_MSG << "[ moveQuadcopter] Generating the UV axes for the plane: " << plane_index+1 << ".\n";
+        LOG_PRINT(1);
+        AllXYZToUVCoordinates(continuousBoundingBoxPoints[i], planeParameters[i],
+                              uvCoordinates, uvAxes);
+        // Push the generated UV axis to the required vectors
         uVector.clear();
         uVector.push_back(uvAxes[0].x);
         uVector.push_back(uvAxes[0].y);
@@ -498,36 +507,52 @@ ControlUINode::moveQuadcopter(
         vVector.push_back(uvAxes[1].y);
         vVector.push_back(uvAxes[1].z);
         uCoord.clear();
-
+        // Build the Grid by dividing the plane into cells
+        LOG_MSG << "[ moveQuadcopter] Building the grid for the plane: " << plane_index+1 << ".\n";
+        LOG_PRINT(1);
         pGrid grid = buildPGrid(uvCoordinates);
-        //printGrid(grid, uvAxes, planeParameters[i]);
+        // Print the Grid co-ordinates
+        // printGrid(grid, uvAxes, planeParameters[i]);
+        // Vector containing target points from where the video recording is supposed to be done
         vector< vector<double> > pTargetPoints;
-        int plane_no = i;
-        getPTargetPoints(grid, planeParameters[i], plane_no, uvAxes, pTargetPoints);
+        // Call to function for generating the pTargetPoints
+        LOG_MSG << "[ moveQuadcopter] Generating target points for capturing videos of the plane: " << plane_index+1 << ".\n";
+        LOG_PRINT(1);
+        getPTargetPoints(grid, planeParameters[i], plane_index, uvAxes, pTargetPoints);
+        // Calculate the angle to rotate to align the drone'e yaw to the plane's normal
         double desiredYaw = 0;
-        Point3f projectedNormal(planeParameters[i][0], planeParameters[i][1], 0);
-        Point3f yAxis(0,1,0);
-        desiredYaw= findAngle(projectedNormal, yAxis);
-        desiredYaw= desiredYaw*180/M_PI;
-        if(i ==0)
+        Point3f projectedNormal(planeParameters[plane_index][0], planeParameters[plane_index][1], 0);
+        Point3f yAxis(0, 1, 0);
+        desiredYaw = findAngle(projectedNormal, yAxis);
+        desiredYaw = desiredYaw*180/M_PI;
+        // For plane_index == 0, prevPosition is the current position of the drone
+        if(plane_index == 0)
         {
             prevPosition[0] = x_drone;
             prevPosition[1] = y_drone;
             prevPosition[2] = z_drone;
             prevYaw = yaw;
         }
+        // Having known the prevPosition and pTargetPoints
+        // move the drone from prevPosition to pTargetPoints[0]
+        // and completely navigate around the plane as specified by the pTargetPoints
+        LOG_MSG << "[ moveQuadcopter] Moving the drone for the plane: " << plane_index+1 << ".\n";
+        LOG_PRINT(1);
         moveDrone(prevPosition, pTargetPoints, prevYaw, desiredYaw);
         int numTargetPoints = pTargetPoints.size();
+        // Now the previous position of plane numbered plane_index+1 is the last position where 
+        // the drone has captured video for plane numbered plane_index
         prevPosition[0] = pTargetPoints[numTargetPoints-1][0];
-        prevPosition[1] = pTargetPoints[numTargetPoints-1][1] - 0.6;
+        prevPosition[1] = pTargetPoints[numTargetPoints-1][1] - drone_length;
         prevPosition[2] = pTargetPoints[numTargetPoints-1][2];
         prevYaw = desiredYaw;
+        // Update the plane index
         planeIndex++;
     }
+    // Once all the movement of drone is completed unlock the acquired lock
     pthread_mutex_unlock(&command_CS);
-
+    LOG_PRINT(1, "[ moveQuadcopter] Completed.\n");
     return ;
-
 }
 
 void
@@ -925,15 +950,6 @@ ControlUINode::buildGrid (vector<vector<float> > pPoints)
 
     return g;
 }
-
-/*pGrid ControlUINode::buildPGrid (vector<vector<float> > pPoints) {
-    vector<float> lu, rd, dd;
-    float maxD, maxR;
-
-    float squareWidth = 0.4, squareHeight = 0.4, overlap = 0.5;
-
-    getPDimensions (pPoints, lu, rd, dd, maxD, maxR);
-}*/
 
 pGrid
 ControlUINode::buildPGrid(const vector<Point2f> &uvCoordinates)
@@ -1448,7 +1464,7 @@ ControlUINode::moveDrone (const vector<double> &prevPosition,
         }
     }
         if(planeIndex < (numberOfPlanes - 1) )
-            startTargePtIndex[planeIndex+1] = targetPoints.size();
+            startTargetPtIndex[planeIndex+1] = targetPoints.size();
 }
 
 
@@ -1953,10 +1969,10 @@ ControlUINode::newPoseCb (const tum_ardrone::filter_stateConstPtr statePtr)
     {
         static int planeIndexCurrent = 0;
         if(planeIndexCurrent< (numberOfPlanes-1) &&
-            numCommands > startTargePtIndex[planeIndexCurrent+1])
+            numCommands > startTargetPtIndex[planeIndexCurrent+1])
             planeIndexCurrent++;
 
-        if(numCommands < startTargePtIndex[planeIndexCurrent]+8)
+        if(numCommands < startTargetPtIndex[planeIndexCurrent]+8)
         {
             ros::Duration(1).sleep();
             currentCommand = false;
