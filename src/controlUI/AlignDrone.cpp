@@ -20,7 +20,6 @@
 #include "AlignDrone.hpp"
 #include <cvd/gl_helpers.h>
 #include <cv_bridge/cv_bridge.h>
-#include "ControlUINode.h"
 
 AlignDrone::AlignDrone(ControlUINode *cnode)
 {

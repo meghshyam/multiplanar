@@ -30,7 +30,7 @@
 #include <string>
 #include "std_msgs/String.h"
 #include "../HelperFunctions.h"
-#include "ControlUINode.h"
+#include "ControlUINodeNew.h"
 #include "helperFunctions.h"
 
 /*typedef CGAL::Exact_predicates_inexact_constructions_kernel K;

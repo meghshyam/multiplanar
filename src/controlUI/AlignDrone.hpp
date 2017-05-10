@@ -25,7 +25,7 @@
 
 #include "Headers.h"
 
-#include "ControlUINode.h"
+#include "ControlUINodeNew.h"
 
 class ControlUINode;
 /**
