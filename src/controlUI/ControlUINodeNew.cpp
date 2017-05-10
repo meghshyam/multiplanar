@@ -191,6 +191,30 @@ ControlUINode::keyPointDataCb (const tum_ardrone::keypoint_coordConstPtr coordPt
     pthread_mutex_unlock(&keyPoint_CS);
 }
 
+void
+ControlUINode::getCurrentPositionOfDrone()
+{
+    _node_current_pos_of_drone.clear();
+    //pthread_mutex_lock(&pose_CS);
+        _node_current_pos_of_drone.push_back((double)x_drone);
+        _node_current_pos_of_drone.push_back((double)y_drone);
+        _node_current_pos_of_drone.push_back((double)z_drone);
+        _node_current_pos_of_drone.push_back((double)yaw);
+    //pthread_mutex_unlock(&pose_CS);
+}
+
+void
+ControlUINode::getCurrentPositionOfDrone(vector<double> &current_drone_pos)
+{
+    current_drone_pos.clear();
+    //pthread_mutex_lock(&pose_CS);
+        current_drone_pos.push_back((double)x_drone);
+        current_drone_pos.push_back((double)y_drone);
+        current_drone_pos.push_back((double)z_drone);
+        current_drone_pos.push_back((double)yaw);
+    //pthread_mutex_unlock(&pose_CS);
+}
+
 float
 ControlUINode::distance (vector<int> p1, vector<float> p2)
 {
@@ -222,6 +246,45 @@ ControlUINode::equal(vector<float> p1, vector<float> p2)
     {
         return false;
     }
+}
+
+void
+ControlUINode::sendLand()
+{
+    land_pub.publish(std_msgs::Empty());
+}
+
+void
+ControlUINode::setMainAngles(const vector<double> &main_angles)
+{
+    _node_main_angles.clear();
+    for (unsigned int i = 0; i < main_angles.size(); ++i)
+    {
+        _node_main_angles.push_back(main_angles[i]);
+    }
+    return ;
+}
+
+void
+ControlUINode::setMainDirections(const vector<RotateDirection> &main_directions)
+{
+    _node_main_directions.clear();
+    for (unsigned int i = 0; i < main_directions.size(); ++i)
+    {
+        _node_main_directions.push_back(main_directions[i]);
+    }
+    return ;
+}
+
+void
+ControlUINode::setValues(int number_of_planes, float min_height_of_plane, 
+                         float min_distance, float max_height_of_plane, float max_distance)
+{
+    _node_min_distance = min_distance;
+    _node_max_distance = max_distance;
+    _node_min_height_of_plane = min_height_of_plane;
+    _node_max_height_of_plane = max_height_of_plane;
+    _node_number_of_planes = number_of_planes;
 }
 
 void
@@ -550,14 +613,11 @@ void
 ControlUINode::saveKeyPointInformation (int numFile)
 {
     pthread_mutex_lock(&keyPoint_CS);
-
     //char * name = itoa(numFile);
     stringstream ss;
     ss << numFile;
     string s = ss.str();
-
     ofstream fp(s.c_str());
-
     fp << numPoints << endl;
     fp << endl;
     for(unsigned int i=0; i<_3d_points.size(); i++)
@@ -566,88 +626,7 @@ ControlUINode::saveKeyPointInformation (int numFile)
                 << ", " << _3d_points[i][2] << ", " << _levels[i] << endl;
     }
     fp.close();
-
     pthread_mutex_unlock(&keyPoint_CS);
-}
-
-vector<float>
-ControlUINode::translatePlane (float translateDistance)
-{
-
-    vector<float> translatedPlane;
-
-    float a = _3d_plane[0];
-    float b = _3d_plane[1];
-    float c = _3d_plane[2];
-
-    float norm = sqrt(a*a + b*b + c*c);
-
-    vector<float> unitNorm;
-    unitNorm.push_back(a/norm);
-    unitNorm.push_back(b/norm);
-    unitNorm.push_back(c/norm);
-
-    vector<float> pointLyingOnPlane;
-    if(b != 0)
-    {
-        pointLyingOnPlane.push_back(0);
-        pointLyingOnPlane.push_back(-1/b);
-        pointLyingOnPlane.push_back(0);
-    }
-    else if(a != 0)
-    {
-        pointLyingOnPlane.push_back(-1/a);
-        pointLyingOnPlane.push_back(0);
-        pointLyingOnPlane.push_back(0);
-    }
-    else if(c != 0)
-    {
-        pointLyingOnPlane.push_back(0);
-        pointLyingOnPlane.push_back(0);
-        pointLyingOnPlane.push_back(-1/c);
-    }
-    else
-    {
-        ROS_INFO("Invalid Plane");
-    }
-
-    vector<float> vectorConnectingOriginToPoint;
-    vectorConnectingOriginToPoint.push_back(-pointLyingOnPlane[0]);
-    vectorConnectingOriginToPoint.push_back(-pointLyingOnPlane[1]);
-    vectorConnectingOriginToPoint.push_back(-pointLyingOnPlane[2]);
-
-    int dir = sign(innerProduct(vectorConnectingOriginToPoint, unitNorm));
-    if(dir == 1)
-    {
-        //correct side
-        translatedPlane.push_back(a);
-        translatedPlane.push_back(b);
-        translatedPlane.push_back(c);
-        translatedPlane.push_back(1 - translateDistance);
-    }
-    else if(dir == -1)
-    {
-        //opposite side
-        /*unitNorm[0] = -unitNorm[0];
-        unitNorm[1] = -unitNorm[1];
-        unitNorm[2] = -unitNorm[2];*/
-        translatedPlane.push_back(a);
-        translatedPlane.push_back(b);
-        translatedPlane.push_back(c);
-        translatedPlane.push_back(1 + translateDistance);
-    }
-    else
-    {
-        // origin lies on the plane
-        ROS_INFO("Origin lies on the plane");
-        translatedPlane.push_back(a);
-        translatedPlane.push_back(b);
-        translatedPlane.push_back(c);
-        translatedPlane.push_back(1);
-    }
-
-    return translatedPlane;
-
 }
 
 vector< vector<float> >
@@ -798,12 +777,9 @@ ControlUINode::buildGrid (vector<vector<float> > pPoints)
 {
     vector<float> lu;
     float width, height;
-
     float squareWidth = 0.8, squareHeight = 0.45, overlap = 0.334;
-
     // Assuming that the plane is always parallel to XZ plane - ? Gotta change this
     getDimensions(pPoints, lu, width, height);
-
     grid g(lu[0], lu[1]-height, lu[0]+width, lu[1], squareWidth, squareHeight, overlap);
     gridSquare gs(lu, squareWidth, squareHeight);
     g.add(gs);
@@ -813,10 +789,8 @@ ControlUINode::buildGrid (vector<vector<float> > pPoints)
         gs = g.getLatest();
         //gs.debugPrint();
     }
-
     //ROS_INFO("Number of rows in grid : %d", g.row+1);
     //g.print();
-
     return g;
 }
 
@@ -872,134 +846,6 @@ ControlUINode::buildPGrid(const vector<Point2f> &uvCoordinates)
     }
     LOG_PRINT(1, "[ buildPGrid] Completed.\n");
     return grid;
-}
-
-void
-ControlUINode::calibrate()
-{
-    LOG_PRINT(1, "[ calibrate] Started.\n");
-    cameraMatrix = Mat(3, 3, DataType<float>::type);
-    // Camera Matrix
-    cameraMatrix.at<float>(0, 0) = 565.710890694431;
-    cameraMatrix.at<float>(0, 1) = 0;
-    cameraMatrix.at<float>(0, 2) = 329.70046366652;
-    cameraMatrix.at<float>(1, 0) = 0;
-    cameraMatrix.at<float>(1, 1) = 565.110297594854;
-    cameraMatrix.at<float>(1, 2) = 169.873085097623;
-    cameraMatrix.at<float>(2, 0) = 0;
-    cameraMatrix.at<float>(2, 1) = 0;
-    cameraMatrix.at<float>(2, 2) = 1;
-    DEBUG_MSG << "Camera Matrix used for calibration.\n";
-    DEBUG_MSG << cameraMatrix;
-    DEBUG_MSG << "\n";
-    PRINT_DEBUG_MESSAGE(5);
-    // Distortion co-efficients
-    distCoeffs = Mat::zeros(5, 1, DataType<float>::type);
-    // Vectors for storing object and image points
-    vector<Vec3f> object_points;
-    vector<Vec2f> image_pts;
-    // Acquire lock on keypoints
-    pthread_mutex_lock(&keyPoint_CS);
-    assert(_3d_points.size() == _2d_points.size());
-    int numPts = _3d_points.size();
-    // Capturing points in world co-ordinates and points image co-ordinates
-    // for estimating the camera matrix
-    for(int i = 0; i < numPts; i++)
-    {
-        Vec3f obj_pt(_3d_points[i][0], _3d_points[i][1], _3d_points[i][2]);
-        Vec2f img_pt(_2d_points[i][0], _2d_points[i][1]);
-        object_points.push_back(obj_pt);
-        image_pts.push_back(img_pt);
-    }
-    vector< vector<Vec3f> > object;
-    vector< vector<Vec2f> > image;
-    object.push_back(object_points);
-    image.push_back(image_pts);
-    LOG_PRINT(1, "[ calibrate] Calibrating camera.\n");
-    calibrateCamera(object, image, Size(640, 360), cameraMatrix, distCoeffs, rvecs, tvecs, CV_CALIB_USE_INTRINSIC_GUESS);
-    pthread_mutex_unlock(&keyPoint_CS);
-    // Calibrated is set to true
-    calibrated = true;
-    LOG_PRINT(1, "[ calibrate] Completed.\n");
-}
-
-void
-ControlUINode::project3DPointsOnImage(const vector<Point3f> &worldPts, vector<Point2f> &imagePts)
-{
-    LOG_PRINT(1, "[ project3DPointsOnImage] Started.\n");
-    calibrate();
-    cv::projectPoints(worldPts, rvecs[0], tvecs[0], cameraMatrix, distCoeffs, imagePts);
-    int numPoints = imagePts.size();
-    LOG_PRINT(1, "[ project3DPointsOnImage] Completed.\n");
-}
-
-void
-ControlUINode::moveDrone (const vector<double> &prevPosition,
-                          vector<vector<double> > tPoints,
-                          double prevYaw, double desiredYaw)
-{
-    LOG_PRINT(1, "[ moveDrone] Started.\n");
-    double drone_length = 0.6;
-    for (unsigned int i = 0; i < tPoints.size(); ++i)
-    {
-        vector<double> p = tPoints[i];
-        p[1] = p[1] - drone_length;
-        char buf[100];
-        if(i == 0)
-        {
-            vector< vector <double> > xyz_yaw;
-            getInitialPath(prevPosition, p, prevYaw, desiredYaw, xyz_yaw);
-            for(unsigned int j = 0; j < xyz_yaw.size(); j++)
-            {
-                vector<double> interm_point;
-                interm_point = xyz_yaw[j];
-                snprintf(buf, 100, "c goto %lf %lf %lf %lf",
-                    interm_point[0], interm_point[1], interm_point[2], interm_point[3]);
-                std_msgs::String s;
-                s.data = buf;
-                // ROS_INFO("Message: ");
-                // ROS_INFO(buf);
-                commands.push_back(s);
-                targetPoints.push_back(interm_point);
-            }
-        }
-        else
-        {
-            snprintf(buf, 100, "c goto %lf %lf %lf %lf", p[0], p[1], p[2], desiredYaw);
-            std_msgs::String s;
-            s.data = buf;
-            // ROS_INFO("Message: ");
-            // ROS_INFO(buf);
-            commands.push_back(s);
-            targetPoints.push_back(p);
-        }
-    }
-    if(planeIndex < (numberOfPlanes-1))
-    {
-        startTargetPtIndex[planeIndex+1] = targetPoints.size();
-    }
-    LOG_PRINT(1, "[ moveDrone] Completed.\n");
-}
-
-
-void
-ControlUINode::checkPos(const ros::TimerEvent&)
-{
-    if(targetSet)
-    {
-        double x = targetPoint[0];
-        double y = targetPoint[1];
-        double z = targetPoint[2];
-
-        pthread_mutex_lock(&pose_CS);
-        double ea = sqrt(pow(x - x_drone, 2) + pow(y - y_drone, 2) + pow(z - z_drone, 2));
-        pthread_mutex_unlock(&pose_CS);
-
-        if(ea < error_threshold)
-            targetSet = false;
-        else
-            targetSet = true;
-    }
 }
 
 void
@@ -1229,6 +1075,131 @@ ControlUINode::getPTargetPoints(const pGrid &g, const vector<float> & plane,
 }
 
 void
+ControlUINode::moveDrone (const vector<double> &prevPosition,
+                          vector<vector<double> > tPoints,
+                          double prevYaw, double desiredYaw)
+{
+    LOG_PRINT(1, "[ moveDrone] Started.\n");
+    double drone_length = 0.6;
+    for (unsigned int i = 0; i < tPoints.size(); ++i)
+    {
+        vector<double> p = tPoints[i];
+        p[1] = p[1] - drone_length;
+        char buf[100];
+        if(i == 0)
+        {
+            vector< vector <double> > xyz_yaw;
+            getInitialPath(prevPosition, p, prevYaw, desiredYaw, xyz_yaw);
+            for(unsigned int j = 0; j < xyz_yaw.size(); j++)
+            {
+                vector<double> interm_point;
+                interm_point = xyz_yaw[j];
+                snprintf(buf, 100, "c goto %lf %lf %lf %lf",
+                    interm_point[0], interm_point[1], interm_point[2], interm_point[3]);
+                std_msgs::String s;
+                s.data = buf;
+                // ROS_INFO("Message: ");
+                // ROS_INFO(buf);
+                commands.push_back(s);
+                targetPoints.push_back(interm_point);
+            }
+        }
+        else
+        {
+            snprintf(buf, 100, "c goto %lf %lf %lf %lf", p[0], p[1], p[2], desiredYaw);
+            std_msgs::String s;
+            s.data = buf;
+            // ROS_INFO("Message: ");
+            // ROS_INFO(buf);
+            commands.push_back(s);
+            targetPoints.push_back(p);
+        }
+    }
+    if(planeIndex < (numberOfPlanes-1))
+    {
+        startTargetPtIndex[planeIndex+1] = targetPoints.size();
+    }
+    LOG_PRINT(1, "[ moveDrone] Completed.\n");
+}
+
+void
+ControlUINode::calibrate()
+{
+    LOG_PRINT(5, "[ calibrate] Started.\n");
+    cameraMatrix = Mat(3, 3, DataType<float>::type);
+    // Camera Matrix
+    cameraMatrix.at<float>(0, 0) = 565.710890694431;
+    cameraMatrix.at<float>(0, 1) = 0;
+    cameraMatrix.at<float>(0, 2) = 329.70046366652;
+    cameraMatrix.at<float>(1, 0) = 0;
+    cameraMatrix.at<float>(1, 1) = 565.110297594854;
+    cameraMatrix.at<float>(1, 2) = 169.873085097623;
+    cameraMatrix.at<float>(2, 0) = 0;
+    cameraMatrix.at<float>(2, 1) = 0;
+    cameraMatrix.at<float>(2, 2) = 1;
+    DEBUG_MSG << "Camera Matrix used for calibration.\n";
+    DEBUG_MSG << cameraMatrix;
+    DEBUG_MSG << "\n";
+    PRINT_DEBUG_MESSAGE(5);
+    // Distortion co-efficients
+    distCoeffs = Mat::zeros(5, 1, DataType<float>::type);
+    // Vectors for storing object and image points
+    vector<Vec3f> object_points;
+    vector<Vec2f> image_pts;
+    // Acquire lock on keypoints
+    pthread_mutex_lock(&keyPoint_CS);
+    assert(_3d_points.size() == _2d_points.size());
+    int numPts = _3d_points.size();
+    // Capturing points in world co-ordinates and points image co-ordinates
+    // for estimating the camera matrix
+    for(int i = 0; i < numPts; i++)
+    {
+        Vec3f obj_pt(_3d_points[i][0], _3d_points[i][1], _3d_points[i][2]);
+        Vec2f img_pt(_2d_points[i][0], _2d_points[i][1]);
+        object_points.push_back(obj_pt);
+        image_pts.push_back(img_pt);
+    }
+    vector< vector<Vec3f> > object;
+    vector< vector<Vec2f> > image;
+    object.push_back(object_points);
+    image.push_back(image_pts);
+    LOG_PRINT(5, "[ calibrate] Calibrating camera.\n");
+    calibrateCamera(object, image, Size(640, 360), cameraMatrix, distCoeffs, rvecs, tvecs, CV_CALIB_USE_INTRINSIC_GUESS);
+    pthread_mutex_unlock(&keyPoint_CS);
+    // Calibrated is set to true
+    calibrated = true;
+    LOG_PRINT(5, "[ calibrate] Completed.\n");
+}
+
+void
+ControlUINode::project3DPointsOnImage(const vector<Point3f> &worldPts, vector<Point2f> &imagePts)
+{
+    LOG_PRINT(5, "[ project3DPointsOnImage] Started.\n");
+    calibrate();
+    cv::projectPoints(worldPts, rvecs[0], tvecs[0], cameraMatrix, distCoeffs, imagePts);
+    int numPoints = imagePts.size();
+    LOG_PRINT(5, "[ project3DPointsOnImage] Completed.\n");
+}
+
+void
+ControlUINode::checkPos(const ros::TimerEvent&)
+{
+    if(targetSet)
+    {
+        double x = targetPoint[0];
+        double y = targetPoint[1];
+        double z = targetPoint[2];
+        pthread_mutex_lock(&pose_CS);
+        double ea = sqrt(pow(x - x_drone, 2) + pow(y - y_drone, 2) + pow(z - z_drone, 2));
+        pthread_mutex_unlock(&pose_CS);
+        if(ea < error_threshold)
+            targetSet = false;
+        else
+            targetSet = true;
+    }
+}
+
+void
 ControlUINode::getGridSquareUVCorners(const pGridSquare &gs, vector<Point2f> &uvCorners)
 {
     Point2f corner1 = Point2f(gs.u, gs.v);
@@ -1243,8 +1214,8 @@ ControlUINode::getGridSquareUVCorners(const pGridSquare &gs, vector<Point2f> &uv
 
 void
 ControlUINode::sortTargetPoints(int numRows, const vector<int> &numColsPerRow,
-                                    const vector< vector<double> > &tPoints,
-                                    vector< vector<double> > &sortedTPoints)
+                                const vector< vector<double> > &tPoints,
+                                vector< vector<double> > &sortedTPoints)
 {
     vector<float> z_coord(numRows);
     vector<float> sortedZcoord;
@@ -1312,32 +1283,23 @@ ControlUINode::getInitialPath(const vector<double> &prevPosition, const vector<d
     xyz_yaw.push_back(interm_point);
 }
 
-/**
- * @brief New pose callback for dealing with autonomous moving of quadcopter
- * @details
- */
 void
 ControlUINode::newPoseCb (const tum_ardrone::filter_stateConstPtr statePtr)
 {
     pthread_mutex_lock(&pose_CS);
-
     scale = statePtr->scale;
     scale_z = statePtr->scale_z;
     x_offset = statePtr->x_offset;
     y_offset = statePtr->y_offset;
     z_offset = statePtr->z_offset;
-
     x_drone = statePtr->x;
     y_drone = statePtr->y;
     z_drone = statePtr->z;
     yaw = statePtr->yaw;
     roll = statePtr->roll;
     pitch = statePtr->pitch;
-
     pthread_mutex_unlock(&pose_CS);
-
     // Goto commands left to be executed
-
     pthread_mutex_lock(&command_CS);
     // cout << "[ DEBUG] [poseCb] Acquired command_CS Lock\n";
     static int numCommands = 0;
@@ -1441,7 +1403,6 @@ ControlUINode::newPoseCb (const tum_ardrone::filter_stateConstPtr statePtr)
         double x = targetPoint[0];
         double y = targetPoint[1];
         double z = targetPoint[2];
-
         pthread_mutex_lock(&pose_CS);
         double ea = sqrt(pow(x - x_drone, 2) + pow(y - y_drone, 2) + pow(z - z_drone, 2));
         //printf("Error %lf\n", ea);
@@ -1494,56 +1455,6 @@ ControlUINode::newPoseCb (const tum_ardrone::filter_stateConstPtr statePtr)
     }
     pthread_mutex_unlock(&command_CS);
     // cout << "[ DEBUG] [poseCb] Released command_CS Lock\n";
-}
-
-/**
- * @brief Land the quadcopter on calling this function
- * @details
- */
-void
-ControlUINode::sendLand()
-{
-    land_pub.publish(std_msgs::Empty());
-}
-
-/**
- * @brief Sets the _node_main_angles vector from ImageView
- * @details
- */
-void
-ControlUINode::setMainAngles(const vector<double> &main_angles)
-{
-    _node_main_angles.clear();
-    for (unsigned int i = 0; i < main_angles.size(); ++i)
-    {
-        _node_main_angles.push_back(main_angles[i]);
-    }
-    return ;
-}
-
-/**
- * @brief Sets the _node_main_directions vector from ImageView
- * @details
- */
-void
-ControlUINode::setMainDirections(const vector<RotateDirection> &main_directions)
-{
-    _node_main_directions.clear();
-    for (unsigned int i = 0; i < main_directions.size(); ++i)
-    {
-        _node_main_directions.push_back(main_directions[i]);
-    }
-    return ;
-}
-
-void
-ControlUINode::setValues(int number_of_planes, float min_height_of_plane, float min_distance, float max_height_of_plane, float max_distance)
-{
-    _node_min_distance = min_distance;
-    _node_max_distance = max_distance;
-    _node_min_height_of_plane = min_height_of_plane;
-    _node_max_height_of_plane = max_height_of_plane;
-    _node_number_of_planes = number_of_planes;
 }
 
 void
@@ -1627,39 +1538,6 @@ ControlUINode::augmentInfo()
         print1dVector(aug_plane_bounding_box_points, "[ DEBUG] [augmentInfo] Aug. Plane BB");
     }
     return ;
-}
-
-/**
- * @brief Gets the current position of the drone in _node_current_pos_of_drone (See private variables)
- * @details Returns the position of the drone when the function is called
- */
-void
-ControlUINode::getCurrentPositionOfDrone()
-{
-    _node_current_pos_of_drone.clear();
-    //pthread_mutex_lock(&pose_CS);
-        _node_current_pos_of_drone.push_back((double)x_drone);
-        _node_current_pos_of_drone.push_back((double)y_drone);
-        _node_current_pos_of_drone.push_back((double)z_drone);
-        _node_current_pos_of_drone.push_back((double)yaw);
-    //pthread_mutex_unlock(&pose_CS);
-}
-
-/**
- * @brief Gets the current position of the drone in the varible pos
- * @details Returns the position of the drone when the function is called.
- *          To be used when calling from other classes
- */
-void
-ControlUINode::getCurrentPositionOfDrone(vector<double> &current_drone_pos)
-{
-    current_drone_pos.clear();
-    //pthread_mutex_lock(&pose_CS);
-        current_drone_pos.push_back((double)x_drone);
-        current_drone_pos.push_back((double)y_drone);
-        current_drone_pos.push_back((double)z_drone);
-        current_drone_pos.push_back((double)yaw);
-    //pthread_mutex_unlock(&pose_CS);
 }
 
 /**

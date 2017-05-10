@@ -879,15 +879,6 @@ class ControlUINode
         saveKeyPointInformation(int numFile);
 
         /**
-         * @brief Translates the fitted plane by the given distance along its normal toward origin
-         * @details Currently not using
-         * @param
-         * @return
-         */
-        std::vector<float>
-        translatePlane (float translateDistance);
-
-        /**
          * @brief Projects the 3d points onto the extracted plane
          * @details
          * @param
@@ -934,24 +925,49 @@ class ControlUINode
         void
         checkPos (const ros::TimerEvent&);
 
+        /**
+         * @brief New pose callback for dealing with autonomous moving of quadcopter
+         * @details
+         */
         void
         newPoseCb (const tum_ardrone::filter_stateConstPtr statePtr);
 
+        /**
+         * @brief Land the quadcopter on calling this function
+         * @details
+         */
         void
         sendLand();
 
+        /**
+         * @brief Sets the _node_main_angles vector from ImageView
+         * @details
+         */
         void
         setMainAngles(const vector<double> &main_angles);
 
+        /**
+         * @brief Sets the _node_main_directions vector from ImageView
+         * @details
+         */
         void
         setMainDirections(const vector<RotateDirection> &main_directions);
 
         void
         setValues(int number_of_planes, float min_height_of_plane, float min_distance, float max_height_of_plane, float max_distance);
 
+        /**
+         * @brief Gets the current position of the drone in _node_current_pos_of_drone (See private variables)
+         * @details Returns the position of the drone when the function is called
+         */
         void
         getCurrentPositionOfDrone();
 
+        /**
+         * @brief Gets the current position of the drone in the varible pos
+         * @details Returns the position of the drone when the function is called.
+         *          To be used when calling from other classes
+         */
         void
         getCurrentPositionOfDrone(vector<double> &current_drone_pos);
 
