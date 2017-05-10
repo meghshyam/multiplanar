@@ -280,7 +280,7 @@ set(TOPVIEW_HEADER_FILES
 
 set(CONTROLUI_SOURCE_FILES
     src/controlUI/main_controlUI.cpp
-    src/controlUI/ControlUINode.cpp
+    src/controlUI/ControlUINodeNew.cpp
     src/controlUI/ransacPlaneFit.cpp
     src/controlUI/GLWindow2.cc
     src/controlUI/GLWindowMenu.cc
@@ -291,7 +291,7 @@ set(CONTROLUI_SOURCE_FILES
     ${TOPVIEW_SOURCE_FILES})
 
 set(CONTROLUI_HEADER_FILES
-    src/controlUI/ControlUINode.h
+    src/controlUI/ControlUINodeNew.h
     src/controlUI/ransacPlaneFit.h
     src/controlUI/MouseKeyHandler.h
     src/controlUI/GLWindow2.h
