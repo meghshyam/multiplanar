@@ -60,6 +60,14 @@ pthread_mutex_t ControlUINode::changeyaw_CS = PTHREAD_MUTEX_INITIALIZER;
 
 ControlUINode::ControlUINode()
 {
+// Setting up the debug and log utilties
+    SET_DEBUG_LEVEL(3);
+    SET_LOG_LEVEL(3);
+
+    LOG_PRINT(1, "[ ControlUINode] Initiating ControlUINode ...\n");
+    LOG_PRINT(1, "[ ControlUINode] Initiating various publishers and ");
+    LOG_PRINT(1, "subscribers for channels using tum_ardrone and ardrone.\n");
+
     // Command channel for sending/receiving commands (goto)
     command_channel = nh_.resolveName("tum_ardrone/com");
     // Channel for receiving the keypoints at various levels (1 to 4)
@@ -71,23 +79,30 @@ ControlUINode::ControlUINode()
     // Channel for ardrone navdata (to access battery information)
     // Reference: http://ardrone-autonomy.readthedocs.io/en/latest/reading.html?highlight=battery
     navdata_channel = nh_.resolveName("ardrone/navdata");
-
     // Subscribing for key point channel
     keypoint_coord_sub = nh_.subscribe(keypoint_channel, 10, &ControlUINode::keyPointDataCb, this);
-    // Subscribing for pose channel
+    // Subscribing for pose channel. Currently using newPoseCb
     // pose_sub = nh_.subscribe(pose_channel, 10, &ControlUINode::poseCb, this);
-
+    // Subscribing for pose channel
+    new_pose_sub = nh_.subscribe(pose_channel, 10, &ControlUINode::newPoseCb, this);
     tum_ardrone_pub = nh_.advertise<std_msgs::String>(command_channel, 50);
     tum_ardrone_sub = nh_.subscribe(command_channel, 50, &ControlUINode::comCb, this);
-
     // For recording video
     video = nh_.serviceClient<ardrone_autonomy::RecordEnable>("ardrone/setrecord");
+    timer_checkPos = nh_.createTimer(ros::Duration(pollingTime), &ControlUINode::checkPos, this);
+    // timer_record = nh_.createTimer(ros::Duration(recordTime), &ControlUINode::recordVideo);
+    // Channel for controlling landing commands
+    land_pub = nh_.advertise<std_msgs::Empty>(land_channel, 1);
+    // For battery
+    navdata_sub = nh_.subscribe(navdata_channel, 10, &ControlUINode::navDataCb, this);
 
+    // New CVD thread for running captureTheCurrenntPlaneCode
     // capture_plane = new CapturePlane(this);
+    // New CVD thread for running alignQuadcopterToCurrentPlane code
     align_drone = new AlignDrone(this);
     // Initiating image view class which displays the "drone_controlUI" window
     image_gui = new ImageView(this);
-
+    // Some variables
     ransacVerbose = true;
     useScaleFactor = true;
     threshold = 0.1;
@@ -102,15 +117,7 @@ ControlUINode::ControlUINode()
     notRecording = true;
     planeIndex = 0;
 
-    timer_checkPos = nh_.createTimer(ros::Duration(pollingTime), &ControlUINode::checkPos, this);
-    // timer_record = nh_.createTimer(ros::Duration(recordTime), &ControlUINode::recordVideo);
-
-    /* PRANEETH's CODE */
-    // Channel for controlling landing commands
-    land_pub        = nh_.advertise<std_msgs::Empty>(land_channel, 1);
-    // For battery
-    navdata_sub = nh_.subscribe(navdata_channel, 10, &ControlUINode::navDataCb, this);
-
+    // More variables
     // Whether it's seeing the plane for the first time
     _stage_of_plane_observation = true;
     // Is the plane big? requiring multiple attempts to cover ti
@@ -145,9 +152,8 @@ ControlUINode::ControlUINode()
     _angle_heuristic = 4.0;
     _sig_plane_index = 0;
     _actual_plane_index = 0;
-    // Subscribing for pose channel
-    new_pose_sub = nh_.subscribe(pose_channel, 10, &ControlUINode::newPoseCb, this);
 
+    LOG_PRINT(1, "[ ControlUINode] Initiated ControlUINode.\n");
 }
 
 ControlUINode::~ControlUINode()
