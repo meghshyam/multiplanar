@@ -912,7 +912,6 @@ class ControlUINode
         grid
         buildGrid (std::vector<std::vector<float> > pPoints);
 
-        //pGrid buildPGrid (std::vector<std::vector<float> > pPoints);
         /**
          * @brief Builds the PGrid
          * @details
@@ -921,15 +920,6 @@ class ControlUINode
          */
         pGrid
         buildPGrid(const vector<Point2f> &uvCoordinates);
-
-        /**
-         * @brief Gets the target points given the grid and plane
-         * @details
-         * @param
-         * @return
-         */
-        std::vector< std::vector<double> >
-        getTargetPoints (grid g, std::vector<float> plane);
 
         /**
          * @brief Generate the appropriate goto commands according to the target points
@@ -951,16 +941,6 @@ class ControlUINode
         void
         checkPos (const ros::TimerEvent&);
 
-        // Records the video for a fixed amount of time
-        // bool recordVideo ();
-
-
-        /*** NEWER FUNCTIONS ***/
-        // Records the video for a fixed amount of time
-        // bool recordVideo ();
-
-
-        /*** PRANEETH's CODE ***/
         void
         newPoseCb (const tum_ardrone::filter_stateConstPtr statePtr);
 
