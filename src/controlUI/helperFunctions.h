@@ -29,6 +29,7 @@
 
 #include "Line2.hpp"
 #include "Multiple-Plane-JLinkage/utilities.hpp"
+#include "Headers.h"
 
 
 using namespace std;
@@ -1274,12 +1275,6 @@ projectPointsOnPlane (const vector<Point3f> &points, const vector<float> &planeP
 	return ;
 }
 
-inline static void
-genPointAlongNormalAtDistance()
-{
-	return ;
-}
-
 inline static double
 getHeightFromGround(const vector<float> &planeParameters, 
 						const vector<Point3f> &continuousBoundingBoxPoints,
@@ -1332,5 +1327,81 @@ copyVector(const vector<T> vec1, vector<T> &vec2)
 	return ;
 }
 
+/**
+ * @brief Translates the fitted plane by the given distance along its normal toward origin
+ * @details Currently not using
+ * @param
+ * @return
+ */
+// vector<float>
+// translatePlane (vector<float> _3d_plane, float translateDistance)
+// {
+//     vector<float> translatedPlane;
+//     float a = _3d_plane[0];
+//     float b = _3d_plane[1];
+//     float c = _3d_plane[2];
+//     float norm = sqrt(a*a + b*b + c*c);
+//     vector<float> unitNorm;
+//     unitNorm.push_back(a/norm);
+//     unitNorm.push_back(b/norm);
+//     unitNorm.push_back(c/norm);
+//     vector<float> pointLyingOnPlane;
+//     if(b != 0)
+//     {
+//         pointLyingOnPlane.push_back(0);
+//         pointLyingOnPlane.push_back(-1/b);
+//         pointLyingOnPlane.push_back(0);
+//     }
+//     else if(a != 0)
+//     {
+//         pointLyingOnPlane.push_back(-1/a);
+//         pointLyingOnPlane.push_back(0);
+//         pointLyingOnPlane.push_back(0);
+//     }
+//     else if(c != 0)
+//     {
+//         pointLyingOnPlane.push_back(0);
+//         pointLyingOnPlane.push_back(0);
+//         pointLyingOnPlane.push_back(-1/c);
+//     }
+//     else
+//     {
+//         ROS_INFO("Invalid Plane");
+//     }
+//     vector<float> vectorConnectingOriginToPoint;
+//     vectorConnectingOriginToPoint.push_back(-pointLyingOnPlane[0]);
+//     vectorConnectingOriginToPoint.push_back(-pointLyingOnPlane[1]);
+//     vectorConnectingOriginToPoint.push_back(-pointLyingOnPlane[2]);
+//     int dir = signD(innerProduct(vectorConnectingOriginToPoint, unitNorm));
+//     if(dir == 1)
+//     {
+//         //correct side
+//         translatedPlane.push_back(a);
+//         translatedPlane.push_back(b);
+//         translatedPlane.push_back(c);
+//         translatedPlane.push_back(1 - translateDistance);
+//     }
+//     else if(dir == -1)
+//     {
+//         //opposite side
+//         /*unitNorm[0] = -unitNorm[0];
+//         unitNorm[1] = -unitNorm[1];
+//         unitNorm[2] = -unitNorm[2];*/
+//         translatedPlane.push_back(a);
+//         translatedPlane.push_back(b);
+//         translatedPlane.push_back(c);
+//         translatedPlane.push_back(1 + translateDistance);
+//     }
+//     else
+//     {
+//         // origin lies on the plane
+//         ROS_INFO("Origin lies on the plane");
+//         translatedPlane.push_back(a);
+//         translatedPlane.push_back(b);
+//         translatedPlane.push_back(c);
+//         translatedPlane.push_back(1);
+//     }
+//     return translatedPlane;
+// }
 
 #endif
