@@ -482,20 +482,20 @@ ControlUINode::moveQuadcopter(const vector< vector<float> > &planeParameters,
     for (int plane_index = 0; plane_index < numberOfPlanes; ++plane_index)
     {
         LOG_MSG << "[ moveQuadcopter] Drone ready to capture for plane: " << plane_index+1 << ".\n";
-        LOG_PRINT(1);
+        PRINT_LOG_MESSAGE(1);
         // Make parameters for making the grid
         // ax + by + cz + d = 0 Parameters for the plane numbered by plane_index
-        float a = planeParameters[i][0];
-        float b = planeParameters[i][1];
-        float c = planeParameters[i][2];
-        float d = planeParameters[i][3];
+        // float a = planeParameters[plane_index][0];
+        // float b = planeParameters[plane_index][1];
+        // float c = planeParameters[plane_index][2];
+        // float d = planeParameters[plane_index][3];
         // Clear the uv co-ordinates and axis vectors
         uvCoordinates.clear();
         uvAxes.clear();
         // Convert XYZ bounding points to UV coordinates
         LOG_MSG << "[ moveQuadcopter] Generating the UV axes for the plane: " << plane_index+1 << ".\n";
-        LOG_PRINT(1);
-        AllXYZToUVCoordinates(continuousBoundingBoxPoints[i], planeParameters[i],
+        PRINT_LOG_MESSAGE(1);
+        AllXYZToUVCoordinates(continuousBoundingBoxPoints[plane_index], planeParameters[plane_index],
                               uvCoordinates, uvAxes);
         // Push the generated UV axis to the required vectors
         uVector.clear();
@@ -509,7 +509,7 @@ ControlUINode::moveQuadcopter(const vector< vector<float> > &planeParameters,
         uCoord.clear();
         // Build the Grid by dividing the plane into cells
         LOG_MSG << "[ moveQuadcopter] Building the grid for the plane: " << plane_index+1 << ".\n";
-        LOG_PRINT(1);
+        PRINT_LOG_MESSAGE(1);
         pGrid grid = buildPGrid(uvCoordinates);
         // Print the Grid co-ordinates
         // printGrid(grid, uvAxes, planeParameters[i]);
@@ -517,8 +517,8 @@ ControlUINode::moveQuadcopter(const vector< vector<float> > &planeParameters,
         vector< vector<double> > pTargetPoints;
         // Call to function for generating the pTargetPoints
         LOG_MSG << "[ moveQuadcopter] Generating target points for capturing videos of the plane: " << plane_index+1 << ".\n";
-        LOG_PRINT(1);
-        getPTargetPoints(grid, planeParameters[i], plane_index, uvAxes, pTargetPoints);
+        PRINT_LOG_MESSAGE(1);
+        getPTargetPoints(grid, planeParameters[plane_index], plane_index, uvAxes, pTargetPoints);
         // Calculate the angle to rotate to align the drone'e yaw to the plane's normal
         double desiredYaw = 0;
         Point3f projectedNormal(planeParameters[plane_index][0], planeParameters[plane_index][1], 0);
@@ -537,7 +537,7 @@ ControlUINode::moveQuadcopter(const vector< vector<float> > &planeParameters,
         // move the drone from prevPosition to pTargetPoints[0]
         // and completely navigate around the plane as specified by the pTargetPoints
         LOG_MSG << "[ moveQuadcopter] Moving the drone for the plane: " << plane_index+1 << ".\n";
-        LOG_PRINT(1);
+        PRINT_LOG_MESSAGE(1);
         moveDrone(prevPosition, pTargetPoints, prevYaw, desiredYaw);
         int numTargetPoints = pTargetPoints.size();
         // Now the previous position of plane numbered plane_index+1 is the last position where 

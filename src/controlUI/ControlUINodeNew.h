@@ -498,7 +498,7 @@ class ControlUINode
         std::vector<double> targetPoint;
         std::list<std_msgs::String> commands;
         std::list<std::vector<double> > targetPoints;
-        std::vector<int> startTargePtIndex;
+        std::vector<int> startTargetPtIndex;
         int numberOfPlanes;
         int planeIndex;
 
