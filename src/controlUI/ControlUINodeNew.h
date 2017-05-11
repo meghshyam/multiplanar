@@ -1021,7 +1021,7 @@ class ControlUINode
                            const vector< double > &end);
 
         void
-        designPathForDroneRelative(double dest, int direction);
+        moveDroneByMeasure(double dest, int direction);
 
         void
         alignQuadcopterToNextPlane();
