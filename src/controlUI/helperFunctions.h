@@ -347,22 +347,43 @@ print2dVector(const vector< vector<T> > &two_d_vector, string vec_name = "vector
  * @details
  */
 inline static void
-print1dVector(const vector<Point3f> &one_d_vector, string vec_name = "vector")
+print1dVector(const vector<Point3f> &one_d_vector, string vec_name = "vector",
+			  string style="matlab")
 {
-	//cout << "Printing the vector: " << vec_name << "\n";
 	cout << vec_name << "\n";
-	cout << "[...\n";
-	for (unsigned int i = 0; i < one_d_vector.size(); ++i)
+	if (style == "matlab")
 	{
-		cout << "\t[ ";
-		cout << one_d_vector[i].x << "; "
-				<< one_d_vector[i].y << "; ";
-		if(i!=one_d_vector.size()-1)
-			cout << one_d_vector[i].z << "], ...\n";
-		else
-			cout << one_d_vector[i].z << "] ...\n";
+		cout << "[...\n";
+		for (unsigned int i = 0; i < one_d_vector.size(); ++i)
+		{
+			cout << "\t[ ";
+			cout << one_d_vector[i].x << "; "
+					<< one_d_vector[i].y << "; ";
+			if(i!=one_d_vector.size()-1)
+				cout << one_d_vector[i].z << "], ...\n";
+			else
+				cout << one_d_vector[i].z << "] ...\n";
+		}
+		cout << "]\n";
 	}
-	cout << "]\n";
+	else if (style == "normal")
+	{
+		for (unsigned int i = 0; i < one_d_vector.size(); ++i)
+		{
+			cout << "(" << one_d_vector[i].x << ", " 
+				<< one_d_vector[i].y << ", " <<
+				one_d_vector[i].z << ")\n";
+		}
+	}
+	else
+	{
+		for (unsigned int i = 0; i < one_d_vector.size(); ++i)
+		{
+			cout << "(" << one_d_vector[i].x << ", " 
+				<< one_d_vector[i].y << ", " <<
+				one_d_vector[i].z << ")\n";
+		}
+	}
 	return ;
 }
 
@@ -372,19 +393,46 @@ print1dVector(const vector<Point3f> &one_d_vector, string vec_name = "vector")
  */
 template<typename T>
 inline static void
-print1dVector(const vector<T> &one_d_vector, string vec_name = "vector")
+print1dVector(const vector<T> &one_d_vector, string vec_name = "vector",
+			  string style="matlab")
 {
-	//cout << "Printing the vector: " << vec_name << "\n";
 	cout << vec_name << "\n";
-	cout << "[...\n\t[ ";
-	for (unsigned int i = 0; i < one_d_vector.size(); ++i)
+	if (style == "matlab")
 	{
-		if(i!=one_d_vector.size()-1)
-			cout << one_d_vector[i] << "; ";
-		else
-			cout << one_d_vector[i] << "";
+		cout << "[...\n\t[ ";
+		for (unsigned int i = 0; i < one_d_vector.size(); ++i)
+		{
+			if(i!=one_d_vector.size()-1)
+				cout << one_d_vector[i] << "; ";
+			else
+				cout << one_d_vector[i] << "";
+		}
+		cout << "]...\n]\n";
 	}
-	cout << "]...\n]\n";
+	else if (style == "normal")
+	{
+		cout << "(";
+		for (unsigned int i = 0; i < one_d_vector.size(); ++i)
+		{
+			if(i!=one_d_vector.size()-1)
+				cout << one_d_vector[i] << ", ";
+			else
+				cout << one_d_vector[i] << "";
+		}
+		cout << ")\n";
+	}
+	else
+	{
+		cout << "(";
+		for (unsigned int i = 0; i < one_d_vector.size(); ++i)
+		{
+			if(i!=one_d_vector.size()-1)
+				cout << one_d_vector[i] << ", ";
+			else
+				cout << one_d_vector[i] << "";
+		}
+		cout << ")\n";
+	}
 	return ;
 }
 
@@ -1212,11 +1260,11 @@ projectPointsOnPlane (const vector<Point3f> &points, const vector<float> &planeP
 	vector<float> v;
 	vector<double> point;
 	Point3f pp;
-	float distance, t;
+	float t; //, distance
 	float a = planeParameters[0];
 	float b = planeParameters[1];
 	float c = planeParameters[2];
-	float d = planeParameters[3];
+	// float d = planeParameters[3];
 	/*if( !(fabs(a-0.0) <= 0.001 ) )
 	{
 		p.x = -d/a;
@@ -1239,7 +1287,7 @@ projectPointsOnPlane (const vector<Point3f> &points, const vector<float> &planeP
 	{
 		 cout << "[ ERROR] [projectPointsOnPlane] None of a, b, c are non-zero\n";
 	}*/
-	int numberOfPointsInThisPlane = points.size();
+	unsigned int numberOfPointsInThisPlane = points.size();
 	// Create a matrix out of the vector of points: Dimension: numberOfPoints*3
 	Mat pointsMatrixTemp(numberOfPointsInThisPlane, 3, CV_32F);
 	for (unsigned int j = 0; j < numberOfPointsInThisPlane; ++j)

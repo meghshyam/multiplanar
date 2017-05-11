@@ -515,10 +515,10 @@ ImageView::on_key_down(int key)
 	// Key a - Just for testing
 	else if(key == 'a')
 	{
-		int min_height_of_plane = 2.0;
-		int max_height_of_plane = 5.0;
-		float min_distance = getDistanceToSeePlane(min_height_of_plane);
-		float max_distance = getDistanceToSeePlane(max_height_of_plane);
+		// int min_height_of_plane = 2.0;
+		// int max_height_of_plane = 5.0;
+		// float min_distance = getDistanceToSeePlane(min_height_of_plane);
+		// float max_distance = getDistanceToSeePlane(max_height_of_plane);
 		vector<double> curr_pos_of_drone;
 		curr_pos_of_drone.clear();
 		/* node->getCurrentPositionOfDrone(curr_pos_of_drone);

@@ -576,6 +576,9 @@ class ControlUINode
         unsigned int just_navigation_total_commands;
         std::list<std_msgs::String> just_navigation_commands;
 
+        int debug_level = 3;
+        int log_level = 3;
+
 
         // distance between two 2d points
         /**

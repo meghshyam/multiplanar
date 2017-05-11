@@ -61,8 +61,8 @@ pthread_mutex_t ControlUINode::changeyaw_CS = PTHREAD_MUTEX_INITIALIZER;
 ControlUINode::ControlUINode()
 {
 // Setting up the debug and log utilties
-    SET_DEBUG_LEVEL(3);
-    SET_LOG_LEVEL(3);
+    SET_DEBUG_LEVEL(debug_level);
+    SET_LOG_LEVEL(log_level);
 
     LOG_PRINT(1, "[ ControlUINode] Initiating ControlUINode ...\n");
     LOG_PRINT(1, "[ ControlUINode] Initiating various publishers and ");
@@ -195,24 +195,24 @@ void
 ControlUINode::getCurrentPositionOfDrone()
 {
     _node_current_pos_of_drone.clear();
-    //pthread_mutex_lock(&pose_CS);
+    pthread_mutex_lock(&pose_CS);
         _node_current_pos_of_drone.push_back((double)x_drone);
         _node_current_pos_of_drone.push_back((double)y_drone);
         _node_current_pos_of_drone.push_back((double)z_drone);
         _node_current_pos_of_drone.push_back((double)yaw);
-    //pthread_mutex_unlock(&pose_CS);
+    pthread_mutex_unlock(&pose_CS);
 }
 
 void
 ControlUINode::getCurrentPositionOfDrone(vector<double> &current_drone_pos)
 {
     current_drone_pos.clear();
-    //pthread_mutex_lock(&pose_CS);
+    pthread_mutex_lock(&pose_CS);
         current_drone_pos.push_back((double)x_drone);
         current_drone_pos.push_back((double)y_drone);
         current_drone_pos.push_back((double)z_drone);
         current_drone_pos.push_back((double)yaw);
-    //pthread_mutex_unlock(&pose_CS);
+    pthread_mutex_unlock(&pose_CS);
 }
 
 float
@@ -1177,7 +1177,7 @@ ControlUINode::project3DPointsOnImage(const vector<Point3f> &worldPts, vector<Po
     LOG_PRINT(5, "[ project3DPointsOnImage] Started.\n");
     calibrate();
     cv::projectPoints(worldPts, rvecs[0], tvecs[0], cameraMatrix, distCoeffs, imagePts);
-    int numPoints = imagePts.size();
+    // int numPoints = imagePts.size();
     LOG_PRINT(5, "[ project3DPointsOnImage] Completed.\n");
 }
 
@@ -1301,7 +1301,8 @@ ControlUINode::newPoseCb (const tum_ardrone::filter_stateConstPtr statePtr)
     pthread_mutex_unlock(&pose_CS);
     // Goto commands left to be executed
     pthread_mutex_lock(&command_CS);
-    // cout << "[ DEBUG] [poseCb] Acquired command_CS Lock\n";
+    DEBUG_MSG << "[newPoseCb] Acquired command_CS Lock\n";
+    PRINT_DEBUG_MESSAGE(5);
     static int numCommands = 0;
     /*cout << "[ DEBUG] [poseCb] Checking for just navigation commands\n";
     cout << "[ DEBUG] [poseCb] Number of commands left: " << just_navigation_commands.size() << "\n";
@@ -1311,7 +1312,8 @@ ControlUINode::newPoseCb (const tum_ardrone::filter_stateConstPtr statePtr)
     {
         pthread_mutex_unlock(&changeyaw_CS);
         changeyawLockReleased = 0;
-        cout << "[ DEBUG] [newPoseCb] Released first changeyaw_CS Lock\n";
+        DEBUG_MSG << "[newPoseCb] Released first changeyaw_CS Lock\n";
+        PRINT_DEBUG_MESSAGE(4);
     }
     else if(just_navigation_commands.size() > 0 && !justNavigation)
     {
@@ -1323,9 +1325,10 @@ ControlUINode::newPoseCb (const tum_ardrone::filter_stateConstPtr statePtr)
         pthread_mutex_unlock(&tum_ardrone_CS);
         targetPoint.clear();
         targetPoint = targetPoints.front();
-        printf("[ INFO] [newPoseCb] (%u) Just Navigation Current target %u: %lf %lf %lf %lf\n", 
-            just_navigation_total_commands, just_navigation_command_number, targetPoint[0], 
-            targetPoint[1] , targetPoint[2], targetPoint[3] );
+        DEBUG_MSG << "[newPoseCb] Just navigation current target " << just_navigation_command_number
+                <<" of " << just_navigation_total_commands << ": (" << targetPoint[0] << ", " 
+                << targetPoint[1] << "," << targetPoint[2] << ", " << targetPoint[3] << ")\n";
+        PRINT_DEBUG_MESSAGE(3);
     }
     else if(justNavigation && !traverseComplete)
     {
@@ -1333,7 +1336,6 @@ ControlUINode::newPoseCb (const tum_ardrone::filter_stateConstPtr statePtr)
         double y = targetPoint[1];
         double z = targetPoint[2];
         double ya = targetPoint[3];
-        pthread_mutex_lock(&pose_CS);
         //double ea = sqrt(pow(x - x_drone, 2) + pow(y - y_drone, 2) + pow(z - z_drone, 2) + pow(ya - yaw, 2));
         //double ea = fabs(fabs(x-x_drone)+fabs(y-y_drone)+fabs(z-z_drone)+fabs(ya-yaw));
         /*cout << "[ DEBUG] [poseCb] Current Pose: " << x_drone << ", " << y_drone << ", " << z_drone << ", " << yaw << "\n";
@@ -1341,18 +1343,24 @@ ControlUINode::newPoseCb (const tum_ardrone::filter_stateConstPtr statePtr)
                     << fabs(z-z_drone) << ", " << fabs(ya-yaw) << "\n";*/
         //printf("[ DEBUG] [poseCb] Error %lf\n", ea);
         getCurrentPositionOfDrone();
+        DEBUG_MSG << "[newPoseCb] Current position of drone: (" << x_drone << ", " << y_drone << ", "
+                << z_drone << ")\n";
+        PRINT_DEBUG_MESSAGE(5);
         /*print1dVector(_node_current_pos_of_drone, "[ DEBUG] [newPoseCb] Current position of drone");
         cout << " [DEBUG] [newPoseCb] x: " << x << ", y: " << y << ", z: " << z << "\n";
         cout << "[ DEBUG] [newPoseCb] Error: " << fabs(x-x_drone) << ", " << fabs(y-y_drone) << ", "
                     << fabs(z-z_drone) << ", " << fabs(ya-yaw) << "\n";*/
-        pthread_mutex_unlock(&pose_CS);
         bool var1 = (fabs(x-x_drone) < 0.08);
         bool var2 = (fabs(y-y_drone) < 0.08);
         bool var3 = (fabs(z-z_drone) < 0.08);
         bool var4 = (fabs(ya-yaw) < 0.3);
+        DEBUG_MSG << "[newPoseCb] x: " << var1 << ", y: " << var2 << ", z: " << var3 << ", yaw: " << var4 << "\n";
+        PRINT_DEBUG_MESSAGE(5);
         if( var1 & var2 & var3 & var4 )
         {
             // cout << "[ DEBUG] [poseCb] Destination reached for command no. " << just_navigation_number << "\n";
+            DEBUG_MSG << "[newPoseCb] Reached targetPoint: (" << x << ", " << y << ", " << z << ")\n";
+            PRINT_DEBUG_MESSAGE(3);
             if(just_navigation_command_number <= just_navigation_total_commands)
             {
                 ros::Duration(1).sleep();
@@ -1362,9 +1370,17 @@ ControlUINode::newPoseCb (const tum_ardrone::filter_stateConstPtr statePtr)
                 targetPoints.pop_front();
                 targetPoint.clear();
                 pthread_mutex_unlock(&command_CS);
-                cout << "[ DEBUG] [newPoseCb] Released elseif command_CS Lock\n";
+                int leftCommands = just_navigation_total_commands - just_navigation_command_number;
+                DEBUG_MSG << "[newPoseCb] Need to complete " << leftCommands << " of " 
+                            << just_navigation_total_commands << "\n";
+                DEBUG_MSG << "[newPoseCb] Released elseif command_CS Lock\n";
+                PRINT_DEBUG_MESSAGE(3);
                 getCurrentPositionOfDrone();
-                print1dVector(_node_current_pos_of_drone, "[ DEBUG] [newPoseCb] Current position of drone after command");
+                if (debug_level >= 3)
+                {
+                    print1dVector(_node_current_pos_of_drone, 
+                                  "[ DEBUG] [newPoseCb] Current position of drone after command", "");
+                }
                 if(just_navigation_commands.size() == 0) {changeyawLockReleased = -1;}
                 return;
             }
@@ -1376,21 +1392,33 @@ ControlUINode::newPoseCb (const tum_ardrone::filter_stateConstPtr statePtr)
     }
     else if(commands.size() > 0 && !currentCommand)
     {
+        // Looking for a new position to move.
+        // There are more commands to be executed and
+        // Currently drone has not been given any command to move
         currentCommand = true;
+        // Total number of commands given
         numCommands++;
         pthread_mutex_lock(&tum_ardrone_CS);
+        // Publish the command at the front of queue
         tum_ardrone_pub.publish(commands.front());
         pthread_mutex_unlock(&tum_ardrone_CS);
         targetPoint = targetPoints.front();
-        printf(" Current target: %lf %lf %lf\n", targetPoint[0], targetPoint[1] , targetPoint[2] );
+        DEBUG_MSG << "[ newPoseCb] Current target: (" << targetPoint[0] << ", " << targetPoint[1] << ", "
+                    << targetPoint[2] << ", " << targetPoint[3] << ")\n";
+        PRINT_DEBUG_MESSAGE(3);
     }
     else if(currentCommand && !recordNow)
     {
+        // Drone has been given a position to move to but not record a video
+        // Current index of plane which the drone has to move
         static int planeIndexCurrent = 0;
-        if(planeIndexCurrent< (numberOfPlanes-1) &&
+        // Change the plane number if total number of commands executed is greater than 
+        // ?
+        if( planeIndexCurrent < (numberOfPlanes-1) &&
             numCommands > startTargetPtIndex[planeIndexCurrent+1])
+        {
             planeIndexCurrent++;
-
+        }
         if(numCommands < startTargetPtIndex[planeIndexCurrent]+8)
         {
             ros::Duration(1).sleep();
@@ -1409,7 +1437,8 @@ ControlUINode::newPoseCb (const tum_ardrone::filter_stateConstPtr statePtr)
         pthread_mutex_unlock(&pose_CS);
         if(ea < error_threshold)
         {
-            //printf("reached\n");
+            DEBUG_MSG << "[newPoseCb] Reached targetPoint: (" << x << ", " << y << ", " << z << ")\n";
+            PRINT_DEBUG_MESSAGE(4);
             recordNow = true;
             ros::Duration(3).sleep();
             last= ros::Time::now();
@@ -1454,7 +1483,8 @@ ControlUINode::newPoseCb (const tum_ardrone::filter_stateConstPtr statePtr)
         // do nothing
     }
     pthread_mutex_unlock(&command_CS);
-    // cout << "[ DEBUG] [poseCb] Released command_CS Lock\n";
+    DEBUG_MSG << "[newPoseCb] Released command_CS Lock\n";
+    PRINT_DEBUG_MESSAGE(5);
 }
 
 void
