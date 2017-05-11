@@ -1009,9 +1009,16 @@ class ControlUINode
         void
         adjustForNextCapture();
 
+        /**
+         * @brief Generates the set of points (smoothly distributed) which drone has to follow to move from start to end
+         * @details The initial and end points are represented as (x, y, z, yaw)
+         * @param [in] [vector< double >] start - Starting position of quadcopter (With yaw)
+         * @param [in] [vector< double >] end - Ending position of quadcopter (With yaw)
+         * @return
+         */
         void
         designPathForDrone(const vector< double > &start,
-                                const vector< double > &end);
+                           const vector< double > &end);
 
         void
         designPathForDroneRelative(double dest, int direction);

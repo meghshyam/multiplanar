@@ -248,6 +248,25 @@ ControlUINode::equal(vector<float> p1, vector<float> p2)
     }
 }
 
+/**
+ * @brief Fits 3d points for a single plane
+ * @details Assumption: Only one plane is visible  at the current instant
+ */
+vector<float>
+ControlUINode::fitPlane3dForTheCurrentPlane ()
+{
+    vector<vector<float> > _in_points;
+    pthread_mutex_lock(&keyPoint_CS);
+    for(unsigned int i = 0; i < _3d_points.size(); i++)
+    {
+        _in_points.push_back(_3d_points[i]);
+    }
+    pthread_mutex_unlock(&keyPoint_CS);
+    _3d_plane = ransacPlaneFit(_in_points, ransacVerbose);
+    _in_points.clear();
+    return _3d_plane;
+}
+
 void
 ControlUINode::sendLand()
 {
@@ -1487,6 +1506,406 @@ ControlUINode::newPoseCb (const tum_ardrone::filter_stateConstPtr statePtr)
     PRINT_DEBUG_MESSAGE(5);
 }
 
+/**
+ *
+ */
+void
+ControlUINode::designPathForDroneRelative(double dest, int direction)
+{
+    // 1 - Left
+    // 2 - Right
+    // 3 - Front
+    // 4 - Back
+    // 5 - Top
+    // 6 - Back
+    cout << "[ DEBUG] [designPathForDroneRelative] Started\n";
+    cout << "[ DEBUG] [designPathForDroneRelative] Direction: " << direction << "\n";
+    if(direction == MOVE_DIRECTIONS::LEFT) // Left
+    {
+        moveLeft(dest);
+    }
+    else if(direction == MOVE_DIRECTIONS::RIGHT) // Right
+    {
+        moveRight(dest);
+    }
+    else if(direction == MOVE_DIRECTIONS::FORWARD) // Front
+    {
+        moveForward(dest);
+    }
+    else if(direction == MOVE_DIRECTIONS::BACKWARD) // Back
+    {
+        moveBackward(dest);
+    }
+    else if(direction == MOVE_DIRECTIONS::UP) // Up
+    {
+        moveUp(dest);
+    }
+    else if(direction == MOVE_DIRECTIONS::DOWN) // Down
+    {
+        moveDown(dest);
+    }
+    else if(direction == MOVE_DIRECTIONS::CLOCK) // Clockwise
+    {
+        rotateClockwise(dest);
+    }
+    else if(direction == MOVE_DIRECTIONS::COUNTERCLOCK) // CounterClockwise
+    {
+        rotateCounterClockwise(dest);
+    }
+    else
+    {
+        cout << "[ DEBUG] [designPathForDroneRelative] I don't understand this direction\n";
+    }
+    cout << "[ DEBUG] [designPathForDroneRelative] Completed\n";
+    return ;
+}
+
+void
+ControlUINode::move(double distance, int i)
+{
+    cout << "[ DEBUG] [move] Started\n";
+    clear2dVector(_interm_path);
+    getCurrentPositionOfDrone();
+    _node_dest_pos_of_drone.clear();
+    _node_dest_pos_of_drone.push_back(0.0);
+    _node_dest_pos_of_drone.push_back(0.0);
+    _node_dest_pos_of_drone.push_back(0.0);
+    _node_dest_pos_of_drone.push_back(0.0);
+    print1dVector(_node_current_pos_of_drone, "[ DEBUG] [move] Current position of drone");
+    cout << "[ DEBUG] [move] Requested movement: " << distance << ", Direction: " << i << "\n";
+    double start = 0.0;
+    double move;
+    if(signbit(distance))
+    {
+        move = -1.0;
+    }
+    else
+    {
+        move = 1.0;
+    }
+    cout << "[ DEBUG] [move] Move: " << move << "\n";
+    bool to_move = false;
+    if(fabs(start - distance) < _move_heuristic)
+    {
+        start = distance;
+        _node_dest_pos_of_drone[i] = start;
+        print1dVector(_node_dest_pos_of_drone, "[ DEBUG] [move] Dest position of drone (relative)");
+        convertWRTQuadcopterOrigin(_node_current_pos_of_drone, _node_dest_pos_of_drone, _node_ac_dest_pos_of_drone);
+        _interm_path.push_back(_node_ac_dest_pos_of_drone);
+    }
+    else
+    {
+        to_move = true;
+    }
+    while(to_move)
+    {
+        if(fabs(start - distance) < _move_heuristic)
+        {
+            start = distance;
+            to_move = false;
+        }
+        else
+        {
+            start += (move * _move_heuristic);
+            to_move = true;
+        }
+        _node_dest_pos_of_drone[i] = start;
+        print1dVector(_node_dest_pos_of_drone, "[ DEBUG] [move] Dest position of drone (relative)");
+        convertWRTQuadcopterOrigin(_node_current_pos_of_drone, _node_dest_pos_of_drone, _node_ac_dest_pos_of_drone);
+        _interm_path.push_back(_node_ac_dest_pos_of_drone);
+    }
+    if(fabs(start - distance) < _move_heuristic)
+    {
+        start = distance;
+        _node_dest_pos_of_drone[i] = start;
+        convertWRTQuadcopterOrigin(_node_current_pos_of_drone, _node_dest_pos_of_drone, _node_ac_dest_pos_of_drone);
+        _interm_path.push_back(_node_ac_dest_pos_of_drone);
+    }
+    moveDroneViaSetOfPoints(_interm_path);
+    cout << "[ DEBUG] [move] Completed\n";
+    return ;
+}
+
+void
+ControlUINode::moveUp(double up_distance)
+{
+    cout << "[ DEBUG] [moveUp] Started\n";
+    move(up_distance, 2);
+    cout << "[ DEBUG] [moveUp] Completed\n";
+    return ;
+}
+
+void
+ControlUINode::moveDown(double down_distance)
+{
+    cout << "[ DEBUG] [moveDown] Started\n";
+    move(-down_distance, 2);
+    cout << "[ DEBUG] [moveDown] Completed\n";
+    return ;
+}
+
+void
+ControlUINode::moveLeft(double left_distance)
+{
+    cout << "[ DEBUG] [moveLeft] Started\n";
+    move(-left_distance, 0);
+    cout << "[ DEBUG] [moveLeft] Completed\n";
+    return ;
+}
+
+void
+ControlUINode::moveRight(double right_distance)
+{
+    cout << "[ DEBUG] [moveRight] Started\n";
+    move(right_distance, 0);
+    cout << "[ DEBUG] [moveRight] Completed\n";
+    return ;
+}
+
+void
+ControlUINode::moveForward(double forward_distance)
+{
+    cout << "[ DEBUG] [moveForward] Started\n";
+    move(forward_distance, 1);
+    cout << "[ DEBUG] [moveForward] Completed\n";
+    return ;
+}
+
+void
+ControlUINode::moveBackward(double backward_distance)
+{
+    cout << "[ DEBUG] [moveBackward] Started\n";
+    move(-backward_distance, 1);
+    cout << "[ DEBUG] [moveBackward] Completed\n";
+    return ;
+}
+
+void
+ControlUINode::moveInDirection(const vector<float> &dir, 
+                                        const vector<double> &position,
+                                        const vector<Point3f> &points)
+{
+    cout << "[ DEBUG] [moveInDirection] Started\n";
+    float point_distance = getPointToPlaneDistance(dir, position);
+    int move = (_fixed_distance >= point_distance) ? -1: 1;
+    float step_distance = fabs(_fixed_distance - point_distance);
+    cout << "[ DEBUG] [moveInDirection] Drone Distance: " << point_distance
+                << ", Fixed Distance: " << _fixed_distance << "\n";
+    cout << "[ DEBUG] [moveInDirection] Move: " << move << ", Step Distance: " << step_distance << "\n";
+    if(move == -1)
+    {
+        cout << "[ DEBUG] [moveInDirection] Moving backwards\n";
+    }
+    else if(move == 1)
+    {
+        cout << "[ DEBUG] [moveInDirection] Moving forwards\n";
+    }
+    Point3f pp, pos((float)position[0], (float)position[1], (float)position[2]);
+    float t, avg_a = 0.0, avg_b = 0.0, avg_c = 0.0;
+    float a = dir[0];
+    float b = dir[1];
+    float c = dir[2];
+    print1dVector(dir, "[ DEBUG] [moveInDirection] Plane Parameters for distance adjustment");
+    print1dVector(position, "[ DEBUG] [moveInDirection] Current position of drone");
+    unsigned int numberOfPointsInThisPlane = points.size();
+    for (unsigned int j = 0; j < numberOfPointsInThisPlane; ++j)
+    {
+        avg_a += points[j].x;
+        avg_b += points[j].y;
+        avg_c += points[j].z;
+    }
+    avg_a /= (float)points.size();
+    avg_b /= (float)points.size();
+    avg_c /= (float)points.size();
+    Point3f p(avg_a, avg_b, avg_c), qp;
+    float mag = ((a*a)+(b*b)+(c*c));
+    qp = pos - p;
+    t = (qp.x * (a/mag)) + (qp.y * (b/mag)) + ((qp.z * (c/mag)));
+    Point3f proj(pos.x - a*t, pos.y - b*t, pos.z - c*t);
+    Point3f dest;
+    cout << "[ DEBUG] [moveInDirection] t: " << t << "\n";
+    if(signbit(t)) {t = -1.0;}
+    else {t = 1.0;}
+    dest.x = proj.x + a*t*(_fixed_distance);
+    dest.y = proj.y + b*t*(_fixed_distance);
+    dest.z = proj.z + c*t*(_fixed_distance);
+    cout << "[ DEBUG] [moveInDirection] t: " << t*(_fixed_distance) << "\n";
+    cout << "[ DEBUG] [moveInDirection] Point on plane: " << proj << ", Point to move: " << dest << "\n";
+    vector<double> init_pos, dest_pos;
+    init_pos.push_back(position[0]);
+    init_pos.push_back(position[1]);
+    init_pos.push_back(position[2]);
+    dest_pos.push_back((double)dest.x);
+    dest_pos.push_back((double)dest.y);
+    dest_pos.push_back((double)dest.z);
+    clear2dVector(_interm_path);
+    getInitialPath(init_pos, dest_pos, position[3], position[3], _interm_path);
+    moveDroneViaSetOfPoints(_interm_path);
+    cout << "[ DEBUG] [moveInDirection] Completed\n";
+    return ;
+}
+
+/**
+ * @brief Move the drone to the destination point via a set of points
+ * @details Each point is represented as (x, y, z, yaw)
+ * @param [vector< vector<double> >] dest_points - Points to where quadcopter has to travel
+ *                                  Includes yaw in the vector
+ * @return
+ */
+void
+ControlUINode::moveDroneViaSetOfPoints(const vector< vector<double> > &dest_points)
+{
+    pthread_mutex_lock(&changeyaw_CS);
+    changeyawLockReleased = 1;
+    cout << "[ DEBUG] [moveDroneViaSetOfPoints] Acquired first changeyaw_CS Lock\n";
+    cout << "[ DEBUG] [moveDroneViaSetOfPoints] Started\n";
+    char buf[100];
+    just_navigation_commands.clear();
+    targetPoints.clear();
+    just_navigation_total_commands = dest_points.size();
+    just_navigation_command_number = 0;
+    cout << "[ DEBUG] [moveDroneViaSetOfPoints] Total Commands: " << just_navigation_total_commands << "\n";
+    print2dVector(dest_points, "[ DEBUG] [moveDroneViaSetOfPoints] Moving points");
+    for (unsigned int i = 0; i < dest_points.size(); ++i)
+    {
+        snprintf(buf, 100, "c goto %lf %lf %lf %lf",
+            dest_points[i][0], dest_points[i][1], dest_points[i][2], dest_points[i][3]);
+        visited_motion_points.push_back(dest_points[i]);
+        std_msgs::String s;
+        s.data = buf;
+        just_navigation_commands.push_back(s);
+        targetPoints.push_back(dest_points[i]);
+    }
+    cout << "[ DEBUG] [moveDroneViaSetOfPoints] Commands Ready\n";
+    cout << "[ DEBUG] [moveDroneViaSetOfPoints] Commands to execute: " << just_navigation_commands.size() << "\n";
+    if(just_navigation_commands.size() == 0)
+    {
+        changeyawLockReleased = -1;
+    }
+    pthread_mutex_lock(&changeyaw_CS);
+    cout << "[ DEBUG] [moveDroneViaSetOfPoints] Acquired second changeyaw_CS Lock\n";
+    pthread_mutex_unlock(&changeyaw_CS);
+    getCurrentPositionOfDrone();
+    print1dVector(_node_current_pos_of_drone, "[ DEBUG] [moveDroneViaSetOfPoints] Current position of drone after movement");
+    cout << "[ DEBUG] [moveDroneViaSetOfPoints] Released second changeyaw_CS Lock\n";
+    just_navigation_total_commands = -1;
+    just_navigation_command_number = -1;
+}
+
+void
+ControlUINode::rotateClockwise(double step_angle)
+{
+    cout << "[ DEBUG] [rotateClockwise] Started\n";
+    getCurrentPositionOfDrone();
+    designPathToChangeYaw(_node_current_pos_of_drone, _node_current_pos_of_drone[3]+step_angle);
+    moveDroneViaSetOfPoints(_interm_path);
+    cout << "[ DEBUG] [rotateClockwise] Completed\n";
+    return ;
+}
+
+void
+ControlUINode::rotateCounterClockwise(double step_angle)
+{
+    cout << "[ DEBUG] [rotateCounterClockwise] Started\n";
+    clear2dVector(_interm_path);
+    getCurrentPositionOfDrone();
+    designPathToChangeYaw(_node_current_pos_of_drone, _node_current_pos_of_drone[3]-step_angle);
+    moveDroneViaSetOfPoints(_interm_path);
+    cout << "[ DEBUG] [rotateCounterClockwise] Completed\n";
+    return ;
+}
+
+/**
+ * @brief Generates the set of points (smoothly distributed) which drone has to follow to change its yaw by large angles
+ * @details The current point is represented as (x, y, z, yaw)
+ * @param [vector< vector<double> >] dest_points - Points to where quadcopter has to travel
+ *                                  Includes yaw in the vector
+ * @return
+ */
+void
+ControlUINode::designPathToChangeYaw(const vector<double> &curr_point,
+                double dest_yaw)
+{
+    clear2dVector(_interm_path);
+    vector<double> interm_point;
+    double currentYaw = curr_point[3], desiredYaw = dest_yaw;
+    cout << "[ DEBUG] [designPathToChangeYaw] Changing yaw by " << _angle_heuristic << " step\n";
+    cout << "[ DEBUG] [designPathToChangeYaw] Current Yaw: " << currentYaw << "\n";
+    cout << "[ DEBUG] [designPathToChangeYaw] Destination Yaw: " << desiredYaw << "\n";
+    double move; bool to_move = true;
+    if(currentYaw > desiredYaw) {move = -1.0;}
+    else {move = 1.0;}
+    cout << "[ DEBUG] [designPathToChangeYaw] Started\n";
+    double prog_yaw = currentYaw;
+    if(move == 1.0)
+    {
+        cout << "[ DEBUG] [designPathToChangeYaw] Move clockwise\n";
+    }
+    else
+    {
+        cout << "[ DEBUG] [designPathToChangeYaw] Move counter-clockwise\n";
+    }
+    while(to_move)
+    {
+        if(fabs(desiredYaw - prog_yaw) < _angle_heuristic)
+        {
+            //prog_yaw = desiredYaw;
+            if(move == -1.0)
+            {
+                if(desiredYaw < -180.0)
+                {
+                    desiredYaw = 360.0+desiredYaw;
+                    prog_yaw = desiredYaw;
+                }
+            }
+            else if(move == 1.0)
+            {
+                if(desiredYaw >= 180.0)
+                {
+                    desiredYaw = -360.0+desiredYaw;
+                    prog_yaw = desiredYaw;
+                }
+            }
+            else
+            {
+
+            }
+            to_move = false;
+        }
+        else
+        {
+            prog_yaw += (move * (double)_angle_heuristic);
+            if(move == -1.0)
+            {
+                if(prog_yaw < -180.0)
+                {
+                    prog_yaw = 360.0+prog_yaw;
+                    desiredYaw = 360.0+desiredYaw;
+                }
+            }
+            else if(move == 1.0)
+            {
+                if(prog_yaw >= 180.0)
+                {
+                    prog_yaw = -360.0+prog_yaw;
+                    desiredYaw = -360.0+desiredYaw;
+                }
+            }
+            else
+            {
+
+            }
+            to_move = true;
+        }
+        interm_point.clear();
+        interm_point.push_back(curr_point[0]); interm_point.push_back(curr_point[1]);
+        interm_point.push_back(curr_point[2]); interm_point.push_back(prog_yaw);
+        _interm_path.push_back(interm_point);
+    }
+    print2dVector(_interm_path, "[ DEBUG] [designPathToChangeYaw] Final Path");
+    cout << "[ DEBUG] [designPathToChangeYaw] Completed\n";
+}
+
 void
 ControlUINode::copyNecessaryInfo()
 {
@@ -1663,256 +2082,6 @@ ControlUINode::getMultiplePlanes3d (vector< vector<float> > &planeParameters,
     in_p.clear();
     cout << "[ DEBUG] [getMultiplePlanes3d] Completed\n";
     return ;
-}
-
-/**
- * @brief Fits 3d points for a single plane
- * @details Assumption: Only one plane is visible  at the current instant
- */
-vector<float>
-ControlUINode::fitPlane3dForTheCurrentPlane ()
-{
-    vector<vector<float> > _in_points;
-    pthread_mutex_lock(&keyPoint_CS);
-    for(unsigned int i = 0; i < _3d_points.size(); i++)
-    {
-        _in_points.push_back(_3d_points[i]);
-    }
-    pthread_mutex_unlock(&keyPoint_CS);
-    _3d_plane = ransacPlaneFit(_in_points, ransacVerbose);
-    _in_points.clear();
-    return _3d_plane;
-}
-
-/**
- * @brief Move the drone to the destination point via a set of points
- * @details Each point is represented as (x, y, z, yaw)
- * @param [vector< vector<double> >] dest_points - Points to where quadcopter has to travel
- *                                  Includes yaw in the vector
- * @return
- */
-void
-ControlUINode::moveDroneViaSetOfPoints(const vector< vector<double> > &dest_points)
-{
-    pthread_mutex_lock(&changeyaw_CS);
-    changeyawLockReleased = 1;
-    cout << "[ DEBUG] [moveDroneViaSetOfPoints] Acquired first changeyaw_CS Lock\n";
-    cout << "[ DEBUG] [moveDroneViaSetOfPoints] Started\n";
-    char buf[100];
-    just_navigation_commands.clear();
-    targetPoints.clear();
-    just_navigation_total_commands = dest_points.size();
-    just_navigation_command_number = 0;
-    cout << "[ DEBUG] [moveDroneViaSetOfPoints] Total Commands: " << just_navigation_total_commands << "\n";
-    print2dVector(dest_points, "[ DEBUG] [moveDroneViaSetOfPoints] Moving points");
-    for (unsigned int i = 0; i < dest_points.size(); ++i)
-    {
-        snprintf(buf, 100, "c goto %lf %lf %lf %lf",
-            dest_points[i][0], dest_points[i][1], dest_points[i][2], dest_points[i][3]);
-        visited_motion_points.push_back(dest_points[i]);
-        std_msgs::String s;
-        s.data = buf;
-        just_navigation_commands.push_back(s);
-        targetPoints.push_back(dest_points[i]);
-    }
-    cout << "[ DEBUG] [moveDroneViaSetOfPoints] Commands Ready\n";
-    cout << "[ DEBUG] [moveDroneViaSetOfPoints] Commands to execute: " << just_navigation_commands.size() << "\n";
-    if(just_navigation_commands.size() == 0)
-    {
-        changeyawLockReleased = -1;
-    }
-    pthread_mutex_lock(&changeyaw_CS);
-    cout << "[ DEBUG] [moveDroneViaSetOfPoints] Acquired second changeyaw_CS Lock\n";
-    pthread_mutex_unlock(&changeyaw_CS);
-    getCurrentPositionOfDrone();
-    print1dVector(_node_current_pos_of_drone, "[ DEBUG] [moveDroneViaSetOfPoints] Current position of drone after movement");
-    cout << "[ DEBUG] [moveDroneViaSetOfPoints] Released second changeyaw_CS Lock\n";
-    just_navigation_total_commands = -1;
-    just_navigation_command_number = -1;
-}
-
-void
-ControlUINode::rotateClockwise(double step_angle)
-{
-    cout << "[ DEBUG] [rotateClockwise] Started\n";
-    getCurrentPositionOfDrone();
-    designPathToChangeYaw(_node_current_pos_of_drone, _node_current_pos_of_drone[3]+step_angle);
-    /*double current_angle = _node_current_pos_of_drone[3];
-    double dest_angle = _node_current_pos_of_drone[3]+step_angle;
-    vector<double> interm_point;
-    bool to_rotate = true;
-    double move = 1.0;
-    while(to_rotate)
-    {
-        if(fabs(dest_angle - current_angle) < _angle_heuristic)
-        {
-            current_angle = dest_angle;
-            to_rotate = false;
-        }
-        else
-        {
-            current_angle += (move * (double)_angle_heuristic);
-            if(current_angle >= 180.0)
-            {
-                current_angle = -360.0+current_angle;
-                dest_angle = -360.0+dest_angle;
-            }
-            to_rotate = true;
-        }
-        interm_point.clear();
-        interm_point.push_back(_node_current_pos_of_drone[0]);
-        interm_point.push_back(_node_current_pos_of_drone[1]);
-        interm_point.push_back(_node_current_pos_of_drone[2]);
-        interm_point.push_back(current_angle);
-        _interm_path.push_back(interm_point);
-    }*/
-    moveDroneViaSetOfPoints(_interm_path);
-    cout << "[ DEBUG] [rotateClockwise] Completed\n";
-    return ;
-}
-
-void
-ControlUINode::rotateCounterClockwise(double step_angle)
-{
-    cout << "[ DEBUG] [rotateCounterClockwise] Started\n";
-    clear2dVector(_interm_path);
-    getCurrentPositionOfDrone();
-    designPathToChangeYaw(_node_current_pos_of_drone, _node_current_pos_of_drone[3]-step_angle);
-    /*double current_angle = _node_current_pos_of_drone[3];
-    double dest_angle = _node_current_pos_of_drone[3]-step_angle;
-    vector<double> interm_point;
-    bool to_rotate = true;
-    double move = -1.0;
-    while(to_rotate)
-    {
-        if(fabs(dest_angle - current_angle) < _angle_heuristic)
-        {
-            current_angle = dest_angle;
-            to_rotate = false;
-        }
-        else
-        {
-            current_angle += (move * (double)_angle_heuristic);
-            if(current_angle < -180.0)
-            {
-                current_angle = 360.0+current_angle;
-                dest_angle = 360.0+dest_angle;
-            }
-            to_rotate = true;
-        }
-        interm_point.clear();
-        interm_point.push_back(_node_current_pos_of_drone[0]);
-        interm_point.push_back(_node_current_pos_of_drone[1]);
-        interm_point.push_back(_node_current_pos_of_drone[2]);
-        interm_point.push_back(current_angle);
-        _interm_path.push_back(interm_point);
-    }*/
-    moveDroneViaSetOfPoints(_interm_path);
-    cout << "[ DEBUG] [rotateCounterClockwise] Completed\n";
-    return ;
-}
-
-/**
- * @brief Generates the set of points (smoothly distributed) which drone has to follow to change its yaw by large angles
- * @details The current point is represented as (x, y, z, yaw)
- * @param [vector< vector<double> >] dest_points - Points to where quadcopter has to travel
- *                                  Includes yaw in the vector
- * @return
- */
-void
-ControlUINode::designPathToChangeYaw(const vector<double> &curr_point,
-                double dest_yaw)
-{
-    clear2dVector(_interm_path);
-    vector<double> interm_point;
-    double currentYaw = curr_point[3], desiredYaw = dest_yaw;
-    cout << "[ DEBUG] [designPathToChangeYaw] Changing yaw by " << _angle_heuristic << " step\n";
-    cout << "[ DEBUG] [designPathToChangeYaw] Current Yaw: " << currentYaw << "\n";
-    cout << "[ DEBUG] [designPathToChangeYaw] Destination Yaw: " << desiredYaw << "\n";
-    double move; bool to_move = true;
-    if(currentYaw > desiredYaw) {move = -1.0;}
-    else {move = 1.0;}
-    cout << "[ DEBUG] [designPathToChangeYaw] Started\n";
-    double prog_yaw = currentYaw;
-    if(move == 1.0)
-    {
-        cout << "[ DEBUG] [designPathToChangeYaw] Move clockwise\n";
-    }
-    else
-    {
-        cout << "[ DEBUG] [designPathToChangeYaw] Move counter-clockwise\n";
-    }
-    /*if(fabs(desiredYaw - prog_yaw) < _angle_heuristic)
-    {
-        interm_point.clear();
-        interm_point.push_back(curr_point[0]); interm_point.push_back(curr_point[1]);
-        interm_point.push_back(curr_point[2]); interm_point.push_back(desiredYaw);
-        _interm_path.push_back(interm_point);
-        to_move = false;
-    }
-    else
-    {
-        to_move = true;
-    }*/
-    while(to_move)
-    {
-        if(fabs(desiredYaw - prog_yaw) < _angle_heuristic)
-        {
-            //prog_yaw = desiredYaw;
-            if(move == -1.0)
-            {
-                if(desiredYaw < -180.0)
-                {
-                    desiredYaw = 360.0+desiredYaw;
-                    prog_yaw = desiredYaw;
-                }
-            }
-            else if(move == 1.0)
-            {
-                if(desiredYaw >= 180.0)
-                {
-                    desiredYaw = -360.0+desiredYaw;
-                    prog_yaw = desiredYaw;
-                }
-            }
-            else
-            {
-
-            }
-            to_move = false;
-        }
-        else
-        {
-            prog_yaw += (move * (double)_angle_heuristic);
-            if(move == -1.0)
-            {
-                if(prog_yaw < -180.0)
-                {
-                    prog_yaw = 360.0+prog_yaw;
-                    desiredYaw = 360.0+desiredYaw;
-                }
-            }
-            else if(move == 1.0)
-            {
-                if(prog_yaw >= 180.0)
-                {
-                    prog_yaw = -360.0+prog_yaw;
-                    desiredYaw = -360.0+desiredYaw;
-                }
-            }
-            else
-            {
-
-            }
-            to_move = true;
-        }
-        interm_point.clear();
-        interm_point.push_back(curr_point[0]); interm_point.push_back(curr_point[1]);
-        interm_point.push_back(curr_point[2]); interm_point.push_back(prog_yaw);
-        _interm_path.push_back(interm_point);
-    }
-    print2dVector(_interm_path, "[ DEBUG] [designPathToChangeYaw] Final Path");
-    cout << "[ DEBUG] [designPathToChangeYaw] Completed\n";
 }
 
 /**
@@ -2291,279 +2460,6 @@ ControlUINode::checkPlaneParametersSign(const vector<double> &position,
 }
 
 /**
- * @brief Code for performing module tests on functions written
- * @details Called by pressing a numeric key from DRONE CAMERA FEED Window
- *  Key 0 - Get the current position of drone
- *  Key 1 - Changing the yaw of drone
- *  Key 2 - Translation and rotation of drone
- *  Key 3 - Aligning the quadcopter to see the left edge of the plane
- *  Key 4 - Aligning the quadcopter to see the top and bottom edge of the plane
- *  Key 5 - Capture next part of the same plane
- *  Key 6 - Move quadcopter to the next unvisited plane
- *  Key 7 - 
- *  Key 8 - 
- *  Key 9 - Align the quadcopter to the current plane
- */
-void
-ControlUINode::testUtility(int test_no)
-{
-    cout << "[ INFO] [testUtility] Running test no.: " << test_no << "\n";
-    if(test_no == 0)
-    {
-        getCurrentPositionOfDrone();
-        cout << "Current Position of drone: ";
-        cout << "(" << _node_current_pos_of_drone[0] << ", " << _node_current_pos_of_drone[1] 
-                << ", " << _node_current_pos_of_drone[2] << ", " << _node_current_pos_of_drone[3] << ")\n";
-    }
-    else if(test_no == 1)
-    {
-        cout << "[ INFO] Testing for changing yaw of drone\n";
-        _node_number_of_planes = 1;
-        _node_min_distance = 3.0;
-        _node_max_distance = 5.0;
-        getCurrentPositionOfDrone();
-        cout << "Current Position of drone: ";
-        cout << "(" << _node_current_pos_of_drone[0] << ", " << _node_current_pos_of_drone[1] 
-                << ", " << _node_current_pos_of_drone[2] << ", " << _node_current_pos_of_drone[3] << ")\n";
-        designPathToChangeYaw(_node_current_pos_of_drone, 30.0);
-        cout << "[ DEBUG] [testUtility] Acquired changeyaw_CS Lock\n";
-        linearTraversal = false;
-        moveDroneViaSetOfPoints(_interm_path);
-        cout << "[ DEBUG] [testUtility] Moved drone changing yaw\n";
-    }
-    else if(test_no == 2)
-    {
-        cout << "[ INFO] [testUtility] Testing for linear translation and rotation of drone\n";
-        _node_number_of_planes = 1;
-        _node_min_distance = 3.0;
-        _node_max_distance = 5.0;
-        getCurrentPositionOfDrone();
-        cout << "[ INFO] [testUtility] Current Position of drone: ";
-        cout << "(" << _node_current_pos_of_drone[0] << ", " << _node_current_pos_of_drone[1] 
-                << ", " << _node_current_pos_of_drone[2] << ", " << _node_current_pos_of_drone[3] << ")\n";
-        _node_dest_pos_of_drone.clear();
-        _node_dest_pos_of_drone.push_back(-2.0);
-        _node_dest_pos_of_drone.push_back(-2.5);
-        _node_dest_pos_of_drone.push_back(2.0);
-        _node_dest_pos_of_drone.push_back(0.0);
-        convertWRTQuadcopterOrigin(_node_current_pos_of_drone, _node_dest_pos_of_drone, _node_ac_dest_pos_of_drone);
-        cout << "[ INFO] [testUtility] Final Expected Position of drone: ";
-        cout << "(" << _node_ac_dest_pos_of_drone[0] << ", " << _node_ac_dest_pos_of_drone[1] 
-                << ", " << _node_ac_dest_pos_of_drone[2] << ", " << _node_ac_dest_pos_of_drone[3] << ")\n";
-        designPathForDrone(_node_current_pos_of_drone, _node_ac_dest_pos_of_drone);
-        linearTraversal = true;
-        moveDroneViaSetOfPoints(_interm_path);
-        cout << "[ DEBUG] [testUtility] Moved drone linearly\n";
-    }
-    else if(test_no == 3)
-    {
-        cout << "[ INFO] [testUtility] Testing for linear translation to the left edge of the plane\n";
-        _node_number_of_planes = 1;
-        _node_min_distance = 3.0;
-        _node_max_distance = 5.0;
-        getCurrentPositionOfDrone();
-        cout << "[ INFO] [testUtility] Current Position of drone: ";
-        cout << "(" << _node_current_pos_of_drone[0] << ", " << _node_current_pos_of_drone[1] 
-                << ", " << _node_current_pos_of_drone[2] << ", " << _node_current_pos_of_drone[3] << ")\n";
-        doJLinkage();
-        // Render significant plane
-        //image_gui->setRender(false, true, true, false);
-        //cout << "[ INFO] [testUtility] Rendering the frames in the DRONE CAMERA FEED GUI\n";
-        //image_gui->setSigPlaneBoundingBoxPoints(jlink_all_continuous_bounding_box_points[_sig_plane_index]);
-        //image_gui->renderFrame();
-        adjustLeftEdge();
-        cout << "[ INFO] [testUtility] Adjusting to left edge completed\n";
-    }
-    else if(test_no == 4)
-    {
-        cout << "[ INFO] [testUtility] Testing for linear translation to top and bottom edge of the plane\n";
-        _node_number_of_planes = 1;
-        _node_min_distance = 3.0;
-        _node_max_distance = 5.0;
-        getCurrentPositionOfDrone();
-        cout << "[ INFO] [testUtility] Current Position of drone: ";
-        cout << "(" << _node_current_pos_of_drone[0] << ", " << _node_current_pos_of_drone[1] 
-                << ", " << _node_current_pos_of_drone[2] << ", " << _node_current_pos_of_drone[3] << ")\n";
-        doJLinkage();
-        // Render significant plane
-        //image_gui->setRender(false, true, true, false);
-        //cout << "[ INFO] [testUtility] Rendering the frames in the DRONE CAMERA FEED GUI\n";
-        //image_gui->setSigPlaneBoundingBoxPoints(jlink_all_continuous_bounding_box_points[_sig_plane_index]);
-        //image_gui->renderFrame();
-        adjustTopBottomEdges();
-        cout << "[ INFO] [testUtility] Adjusting to top edge completed\n";
-    }
-    else if(test_no == 5)
-    {
-        cout << "[ INFO] [testUtility] Testing for capture next part of the same plane\n";
-        _node_number_of_planes = 1;
-        _node_min_distance = 3.0;
-        _node_max_distance = 5.0;
-        getCurrentPositionOfDrone();
-        cout << "[ INFO] [testUtility] Current Position of drone: ";
-        cout << "(" << _node_current_pos_of_drone[0] << ", " << _node_current_pos_of_drone[1] 
-                << ", " << _node_current_pos_of_drone[2] << ", " << _node_current_pos_of_drone[3] << ")\n";
-        doJLinkage();
-        // Render significant plane
-        //image_gui->setRender(false, true, true, false);
-        //cout << "[ INFO] [testUtility] Rendering the frames in the DRONE CAMERA FEED GUI\n";
-        //image_gui->setSigPlaneBoundingBoxPoints(jlink_all_continuous_bounding_box_points[_sig_plane_index]);
-        //image_gui->renderFrame();
-        _next_plane_dir = CLOCKWISE;
-        _next_plane_angle = 0.0;
-        adjustForNextCapture();
-        cout << "[ INFO] [testUtility] Adjusting to capture next part of same plane completed\n";
-    }
-    else if(test_no == 6)
-    {
-        cout << "[ INFO] [testUtility] Testing for translation to the next plane\n";
-        _node_number_of_planes = 1;
-        _node_min_distance = 3.0;
-        _node_max_distance = 5.0;
-        getCurrentPositionOfDrone();
-        cout << "[ INFO] [testUtility] Current Position of drone: ";
-        cout << "(" << _node_current_pos_of_drone[0] << ", " << _node_current_pos_of_drone[1] 
-                << ", " << _node_current_pos_of_drone[2] << ", " << _node_current_pos_of_drone[3] << ")\n";
-        doJLinkage();
-        /*visited_plane_parameters.clear();
-        vector<float> pp;
-        pp.push_back(0.0208796);
-        pp.push_back(0.999466);
-        pp.push_back(0.0251287);
-        pp.push_back(-1.85729);
-        visited_plane_parameters.push_back(pp);*/
-        _next_plane_dir = COUNTERCLOCKWISE;
-        _next_plane_angle = 30.0;
-        adjustForNextCapture();
-        //pp.clear();
-        alignQuadcopterToNextPlaneAdvanced();
-    }
-    else if(test_no == 7)
-    {
-        cout << "[ INFO] [testUtility] Testing for translation to the next plane\n";
-        _node_number_of_planes = 1;
-        _node_min_distance = 3.0;
-        _node_max_distance = 5.0;
-        getCurrentPositionOfDrone();
-        cout << "[ INFO] [testUtility] Current Position of drone: ";
-        cout << "(" << _node_current_pos_of_drone[0] << ", " << _node_current_pos_of_drone[1] 
-                << ", " << _node_current_pos_of_drone[2] << ", " << _node_current_pos_of_drone[3] << ")\n";
-        doJLinkage();
-    }
-    else if(test_no == 8)
-    {
-        vector< Point3f > _in_points;
-        _in_points.clear();
-        pthread_mutex_lock(&keyPoint_CS);
-        for(unsigned int i = 0; i < _3d_points.size(); i++)
-        {
-            Point3f featurePt;
-            featurePt.x = _3d_points[i][0];
-            featurePt.y = _3d_points[i][1];
-            featurePt.z = _3d_points[i][2];
-            _in_points.push_back(featurePt);
-        }
-        pthread_mutex_unlock(&keyPoint_CS);
-        vector<float> plane_1, plane_2;
-        cout << "[ INFO] [testUtility] bestFitPlane\n";
-        plane_1 = bestFitPlane(_in_points);
-        cout << "[ INFO] [testUtility] fitPlane3D\n";
-        fitPlane3D(_in_points, plane_2);
-        print1dVector(plane_1, "[ INFO] [testUtility] 4 matrix");
-        print1dVector(plane_2, "[ INFO] [testUtility] 3 matrix");
-    }
-    else if(test_no == 9)
-    {
-        cout << "[ INFO] Testing for aligning the quadcopter to the current plane\n";
-        _node_number_of_planes = 1;
-        _node_min_distance = 3.0;
-        _node_max_distance = 5.0;
-        doJLinkage();
-        alignQuadcopterToCurrentPlane();
-        cout << "[ DEBUG] [testUtility] Alignment done\n";
-    }
-    else
-    {
-        cout << "[ ERROR] [testUtility] This test is not implemented\n";
-    }
-    cout << "[ DEBUG] [testUtility] Testing Completed\n";
-}
-
-/**
- * @brief Generates the set of points (smoothly distributed) which drone has to follow to move from start to end
- * @details The initial and end points are represented as (x, y, z, yaw)
- * @param [in] [vector< double >] start - Starting position of quadcopter (With yaw)
- * @param [in] [vector< double >] end - Ending position of quadcopter (With yaw)
- * @param [out] [vector< vector<double> >] _interm_path - Intermediate points from start to end (With yaw)
- * @return
- */
-void
-ControlUINode::designPathForDrone(const vector< double > &start,
-                    const vector< double > &end)
-{
-    assert(start.size() == end.size());
-    cout << "[ DEBUG] [designPathForDrone] Started\n";
-    clear2dVector(_interm_path);
-    // See getInitialPath for help
-    vector<double> start_3d_pos, end_3d_pos;
-    for (int i = 0; i < 3; ++i)
-    {
-        start_3d_pos.push_back(start[i]);
-        end_3d_pos.push_back(end[i]);
-    }
-    getInitialPath(start_3d_pos, end_3d_pos, start[3], end[3], _interm_path);
-    double a, b, c, d;
-    vector< vector<double> > test_interm_path;
-    //print2dVector(_interm_path, "[ DEBUG] [designPathForDrone] Initial Path Points for drone:");
-    for (unsigned int i = 0; i < _interm_path.size(); ++i)
-    {
-        if(i == 0)
-        {
-            a = _interm_path[i][0];
-            b = _interm_path[i][1];
-            c = _interm_path[i][2];
-            d = _interm_path[i][3];
-            test_interm_path.push_back(_interm_path[i]);
-        }
-        else
-        {
-            /*cout << "a: " << a << ", b: " << b << ", c: " << c << ", d: " << d << "\n";
-            cout << "0: " << _interm_path[i][0] << ", 1: " << _interm_path[i][1] 
-                    << ", 2: " << _interm_path[i][2] <<  ", 3: " << _interm_path[i][3] << "\n";*/
-            if( !( (fabs(a - _interm_path[i][0])<=0.0001) &&
-                    (fabs(b - _interm_path[i][1])<=0.0001) &&
-                    (fabs(c - _interm_path[i][2])<=0.0001) &&
-                    (fabs(d - _interm_path[i][3])<=0.0001) ))
-            {
-                test_interm_path.push_back(_interm_path[i]);
-                a = _interm_path[i][0]; b = _interm_path[i][1];
-                c = _interm_path[i][2]; d = _interm_path[i][3];
-            }
-            else
-            {
-                //cout << "[ DEBUG] [designPathForDrone] Linear: Not pushing this command\n";
-            }
-        }
-    }
-    clear2dVector(_interm_path);
-    for (unsigned int i = 0; i < test_interm_path.size(); ++i)
-    {
-        _interm_path.push_back(test_interm_path[i]);
-    }
-    cout << "[ DEBUG] [designPathForDrone] Final Path Points for drone:\n";
-    for (unsigned int i = 0; i < _interm_path.size(); ++i)
-    {
-        for (unsigned int j = 0; j < _interm_path[i].size(); ++j)
-        {
-            cout << _interm_path[i][j] << " ";
-        }
-        cout << "\n";
-    }
-    clear2dVector(test_interm_path);
-    cout << "[ DEBUG] [designPathForDrone] Completed\n";
-}
-
-/**
  * @brief Align the yaw of the quadcopter to the current plane's (the one which it is seeing) normal
  * @details
  */
@@ -2733,245 +2629,6 @@ ControlUINode::adjustLeftEdge()
         else {planeLeftVisible = false;}
     }
     cout << "[ DEBUG] [adjustLeftEdge] Completed\n";
-}
-
-/**
- *
- */
-void
-ControlUINode::designPathForDroneRelative(double dest, int direction)
-{
-    // 1 - Left
-    // 2 - Right
-    // 3 - Front
-    // 4 - Back
-    // 5 - Top
-    // 6 - Back
-    cout << "[ DEBUG] [designPathForDroneRelative] Started\n";
-    cout << "[ DEBUG] [designPathForDroneRelative] Direction: " << direction << "\n";
-    if(direction == MOVE_DIRECTIONS::LEFT) // Left
-    {
-        moveLeft(dest);
-    }
-    else if(direction == MOVE_DIRECTIONS::RIGHT) // Right
-    {
-        moveRight(dest);
-    }
-    else if(direction == MOVE_DIRECTIONS::FORWARD) // Front
-    {
-        moveForward(dest);
-    }
-    else if(direction == MOVE_DIRECTIONS::BACKWARD) // Back
-    {
-        moveBackward(dest);
-    }
-    else if(direction == MOVE_DIRECTIONS::UP) // Up
-    {
-        moveUp(dest);
-    }
-    else if(direction == MOVE_DIRECTIONS::DOWN) // Down
-    {
-        moveDown(dest);
-    }
-    else if(direction == MOVE_DIRECTIONS::CLOCK) // Clockwise
-    {
-        rotateClockwise(dest);
-    }
-    else if(direction == MOVE_DIRECTIONS::COUNTERCLOCK) // CounterClockwise
-    {
-        rotateCounterClockwise(dest);
-    }
-    else
-    {
-        cout << "[ DEBUG] [designPathForDroneRelative] I don't understand this direction\n";
-    }
-    cout << "[ DEBUG] [designPathForDroneRelative] Completed\n";
-    return ;
-}
-
-void
-ControlUINode::move(double distance, int i)
-{
-    cout << "[ DEBUG] [move] Started\n";
-    clear2dVector(_interm_path);
-    getCurrentPositionOfDrone();
-    _node_dest_pos_of_drone.clear();
-    _node_dest_pos_of_drone.push_back(0.0);
-    _node_dest_pos_of_drone.push_back(0.0);
-    _node_dest_pos_of_drone.push_back(0.0);
-    _node_dest_pos_of_drone.push_back(0.0);
-    print1dVector(_node_current_pos_of_drone, "[ DEBUG] [move] Current position of drone");
-    cout << "[ DEBUG] [move] Requested movement: " << distance << ", Direction: " << i << "\n";
-    double start = 0.0;
-    double move;
-    if(signbit(distance))
-    {
-        move = -1.0;
-    }
-    else
-    {
-        move = 1.0;
-    }
-    cout << "[ DEBUG] [move] Move: " << move << "\n";
-    bool to_move = false;
-    if(fabs(start - distance) < _move_heuristic)
-    {
-        start = distance;
-        _node_dest_pos_of_drone[i] = start;
-        print1dVector(_node_dest_pos_of_drone, "[ DEBUG] [move] Dest position of drone (relative)");
-        convertWRTQuadcopterOrigin(_node_current_pos_of_drone, _node_dest_pos_of_drone, _node_ac_dest_pos_of_drone);
-        _interm_path.push_back(_node_ac_dest_pos_of_drone);
-    }
-    else
-    {
-        to_move = true;
-    }
-    while(to_move)
-    {
-        if(fabs(start - distance) < _move_heuristic)
-        {
-            start = distance;
-            to_move = false;
-        }
-        else
-        {
-            start += (move * _move_heuristic);
-            to_move = true;
-        }
-        _node_dest_pos_of_drone[i] = start;
-        print1dVector(_node_dest_pos_of_drone, "[ DEBUG] [move] Dest position of drone (relative)");
-        convertWRTQuadcopterOrigin(_node_current_pos_of_drone, _node_dest_pos_of_drone, _node_ac_dest_pos_of_drone);
-        _interm_path.push_back(_node_ac_dest_pos_of_drone);
-    }
-    if(fabs(start - distance) < _move_heuristic)
-    {
-        start = distance;
-        _node_dest_pos_of_drone[i] = start;
-        convertWRTQuadcopterOrigin(_node_current_pos_of_drone, _node_dest_pos_of_drone, _node_ac_dest_pos_of_drone);
-        _interm_path.push_back(_node_ac_dest_pos_of_drone);
-    }
-    moveDroneViaSetOfPoints(_interm_path);
-    cout << "[ DEBUG] [move] Completed\n";
-    return ;
-}
-
-void
-ControlUINode::moveUp(double up_distance)
-{
-    cout << "[ DEBUG] [moveUp] Started\n";
-    move(up_distance, 2);
-    cout << "[ DEBUG] [moveUp] Completed\n";
-    return ;
-}
-
-void
-ControlUINode::moveDown(double down_distance)
-{
-    cout << "[ DEBUG] [moveDown] Started\n";
-    move(-down_distance, 2);
-    cout << "[ DEBUG] [moveDown] Completed\n";
-    return ;
-}
-
-void
-ControlUINode::moveLeft(double left_distance)
-{
-    cout << "[ DEBUG] [moveLeft] Started\n";
-    move(-left_distance, 0);
-    cout << "[ DEBUG] [moveLeft] Completed\n";
-    return ;
-}
-
-void
-ControlUINode::moveRight(double right_distance)
-{
-    cout << "[ DEBUG] [moveRight] Started\n";
-    move(right_distance, 0);
-    cout << "[ DEBUG] [moveRight] Completed\n";
-    return ;
-}
-
-void
-ControlUINode::moveForward(double forward_distance)
-{
-    cout << "[ DEBUG] [moveForward] Started\n";
-    move(forward_distance, 1);
-    cout << "[ DEBUG] [moveForward] Completed\n";
-    return ;
-}
-
-void
-ControlUINode::moveBackward(double backward_distance)
-{
-    cout << "[ DEBUG] [moveBackward] Started\n";
-    move(-backward_distance, 1);
-    cout << "[ DEBUG] [moveBackward] Completed\n";
-    return ;
-}
-
-void
-ControlUINode::moveInDirection(const vector<float> &dir, 
-                                        const vector<double> &position,
-                                        const vector<Point3f> &points)
-{
-    cout << "[ DEBUG] [moveInDirection] Started\n";
-    float point_distance = getPointToPlaneDistance(dir, position);
-    int move = (_fixed_distance >= point_distance) ? -1: 1;
-    float step_distance = fabs(_fixed_distance - point_distance);
-    cout << "[ DEBUG] [moveInDirection] Drone Distance: " << point_distance
-                << ", Fixed Distance: " << _fixed_distance << "\n";
-    cout << "[ DEBUG] [moveInDirection] Move: " << move << ", Step Distance: " << step_distance << "\n";
-    if(move == -1)
-    {
-        cout << "[ DEBUG] [moveInDirection] Moving backwards\n";
-    }
-    else if(move == 1)
-    {
-        cout << "[ DEBUG] [moveInDirection] Moving forwards\n";
-    }
-    Point3f pp, pos((float)position[0], (float)position[1], (float)position[2]);
-    float t, avg_a = 0.0, avg_b = 0.0, avg_c = 0.0;
-    float a = dir[0];
-    float b = dir[1];
-    float c = dir[2];
-    print1dVector(dir, "[ DEBUG] [moveInDirection] Plane Parameters for distance adjustment");
-    print1dVector(position, "[ DEBUG] [moveInDirection] Current position of drone");
-    unsigned int numberOfPointsInThisPlane = points.size();
-    for (unsigned int j = 0; j < numberOfPointsInThisPlane; ++j)
-    {
-        avg_a += points[j].x;
-        avg_b += points[j].y;
-        avg_c += points[j].z;
-    }
-    avg_a /= (float)points.size();
-    avg_b /= (float)points.size();
-    avg_c /= (float)points.size();
-    Point3f p(avg_a, avg_b, avg_c), qp;
-    float mag = ((a*a)+(b*b)+(c*c));
-    qp = pos - p;
-    t = (qp.x * (a/mag)) + (qp.y * (b/mag)) + ((qp.z * (c/mag)));
-    Point3f proj(pos.x - a*t, pos.y - b*t, pos.z - c*t);
-    Point3f dest;
-    cout << "[ DEBUG] [moveInDirection] t: " << t << "\n";
-    if(signbit(t)) {t = -1.0;}
-    else {t = 1.0;}
-    dest.x = proj.x + a*t*(_fixed_distance);
-    dest.y = proj.y + b*t*(_fixed_distance);
-    dest.z = proj.z + c*t*(_fixed_distance);
-    cout << "[ DEBUG] [moveInDirection] t: " << t*(_fixed_distance) << "\n";
-    cout << "[ DEBUG] [moveInDirection] Point on plane: " << proj << ", Point to move: " << dest << "\n";
-    vector<double> init_pos, dest_pos;
-    init_pos.push_back(position[0]);
-    init_pos.push_back(position[1]);
-    init_pos.push_back(position[2]);
-    dest_pos.push_back((double)dest.x);
-    dest_pos.push_back((double)dest.y);
-    dest_pos.push_back((double)dest.z);
-    clear2dVector(_interm_path);
-    getInitialPath(init_pos, dest_pos, position[3], position[3], _interm_path);
-    moveDroneViaSetOfPoints(_interm_path);
-    cout << "[ DEBUG] [moveInDirection] Completed\n";
-    return ;
 }
 
 /**
@@ -3659,4 +3316,203 @@ ControlUINode::alignQuadcopterToNextPlaneAdvanced()
     }
     cout << "[ DEBUG] [alignQuadcopterToNextPlaneAdvanced] Completed\n";
     return ;
+}
+
+/**
+ * @brief Code for performing module tests on functions written
+ * @details Called by pressing a numeric key from DRONE CAMERA FEED Window
+ *  Key 0 - Get the current position of drone
+ *  Key 1 - Changing the yaw of drone
+ *  Key 2 - Translation and rotation of drone
+ *  Key 3 - Aligning the quadcopter to see the left edge of the plane
+ *  Key 4 - Aligning the quadcopter to see the top and bottom edge of the plane
+ *  Key 5 - Capture next part of the same plane
+ *  Key 6 - Move quadcopter to the next unvisited plane
+ *  Key 7 - 
+ *  Key 8 - 
+ *  Key 9 - Align the quadcopter to the current plane
+ */
+void
+ControlUINode::testUtility(int test_no)
+{
+    cout << "[ INFO] [testUtility] Running test no.: " << test_no << "\n";
+    if(test_no == 0)
+    {
+        getCurrentPositionOfDrone();
+        cout << "Current Position of drone: ";
+        cout << "(" << _node_current_pos_of_drone[0] << ", " << _node_current_pos_of_drone[1] 
+                << ", " << _node_current_pos_of_drone[2] << ", " << _node_current_pos_of_drone[3] << ")\n";
+    }
+    else if(test_no == 1)
+    {
+        cout << "[ INFO] Testing for changing yaw of drone\n";
+        _node_number_of_planes = 1;
+        _node_min_distance = 3.0;
+        _node_max_distance = 5.0;
+        getCurrentPositionOfDrone();
+        cout << "Current Position of drone: ";
+        cout << "(" << _node_current_pos_of_drone[0] << ", " << _node_current_pos_of_drone[1] 
+                << ", " << _node_current_pos_of_drone[2] << ", " << _node_current_pos_of_drone[3] << ")\n";
+        designPathToChangeYaw(_node_current_pos_of_drone, 30.0);
+        cout << "[ DEBUG] [testUtility] Acquired changeyaw_CS Lock\n";
+        linearTraversal = false;
+        moveDroneViaSetOfPoints(_interm_path);
+        cout << "[ DEBUG] [testUtility] Moved drone changing yaw\n";
+    }
+    else if(test_no == 2)
+    {
+        cout << "[ INFO] [testUtility] Testing for linear translation and rotation of drone\n";
+        _node_number_of_planes = 1;
+        _node_min_distance = 3.0;
+        _node_max_distance = 5.0;
+        getCurrentPositionOfDrone();
+        cout << "[ INFO] [testUtility] Current Position of drone: ";
+        cout << "(" << _node_current_pos_of_drone[0] << ", " << _node_current_pos_of_drone[1] 
+                << ", " << _node_current_pos_of_drone[2] << ", " << _node_current_pos_of_drone[3] << ")\n";
+        _node_dest_pos_of_drone.clear();
+        _node_dest_pos_of_drone.push_back(-2.0);
+        _node_dest_pos_of_drone.push_back(-2.5);
+        _node_dest_pos_of_drone.push_back(2.0);
+        _node_dest_pos_of_drone.push_back(0.0);
+        convertWRTQuadcopterOrigin(_node_current_pos_of_drone, _node_dest_pos_of_drone, _node_ac_dest_pos_of_drone);
+        cout << "[ INFO] [testUtility] Final Expected Position of drone: ";
+        cout << "(" << _node_ac_dest_pos_of_drone[0] << ", " << _node_ac_dest_pos_of_drone[1] 
+                << ", " << _node_ac_dest_pos_of_drone[2] << ", " << _node_ac_dest_pos_of_drone[3] << ")\n";
+        // designPathForDrone(_node_current_pos_of_drone, _node_ac_dest_pos_of_drone);
+        // linearTraversal = true;
+        // moveDroneViaSetOfPoints(_interm_path);
+        cout << "[ DEBUG] [testUtility] Moved drone linearly\n";
+    }
+    else if(test_no == 3)
+    {
+        cout << "[ INFO] [testUtility] Testing for linear translation to the left edge of the plane\n";
+        _node_number_of_planes = 1;
+        _node_min_distance = 3.0;
+        _node_max_distance = 5.0;
+        getCurrentPositionOfDrone();
+        cout << "[ INFO] [testUtility] Current Position of drone: ";
+        cout << "(" << _node_current_pos_of_drone[0] << ", " << _node_current_pos_of_drone[1] 
+                << ", " << _node_current_pos_of_drone[2] << ", " << _node_current_pos_of_drone[3] << ")\n";
+        doJLinkage();
+        // Render significant plane
+        //image_gui->setRender(false, true, true, false);
+        //cout << "[ INFO] [testUtility] Rendering the frames in the DRONE CAMERA FEED GUI\n";
+        //image_gui->setSigPlaneBoundingBoxPoints(jlink_all_continuous_bounding_box_points[_sig_plane_index]);
+        //image_gui->renderFrame();
+        adjustLeftEdge();
+        cout << "[ INFO] [testUtility] Adjusting to left edge completed\n";
+    }
+    else if(test_no == 4)
+    {
+        cout << "[ INFO] [testUtility] Testing for linear translation to top and bottom edge of the plane\n";
+        _node_number_of_planes = 1;
+        _node_min_distance = 3.0;
+        _node_max_distance = 5.0;
+        getCurrentPositionOfDrone();
+        cout << "[ INFO] [testUtility] Current Position of drone: ";
+        cout << "(" << _node_current_pos_of_drone[0] << ", " << _node_current_pos_of_drone[1] 
+                << ", " << _node_current_pos_of_drone[2] << ", " << _node_current_pos_of_drone[3] << ")\n";
+        doJLinkage();
+        // Render significant plane
+        //image_gui->setRender(false, true, true, false);
+        //cout << "[ INFO] [testUtility] Rendering the frames in the DRONE CAMERA FEED GUI\n";
+        //image_gui->setSigPlaneBoundingBoxPoints(jlink_all_continuous_bounding_box_points[_sig_plane_index]);
+        //image_gui->renderFrame();
+        adjustTopBottomEdges();
+        cout << "[ INFO] [testUtility] Adjusting to top edge completed\n";
+    }
+    else if(test_no == 5)
+    {
+        cout << "[ INFO] [testUtility] Testing for capture next part of the same plane\n";
+        _node_number_of_planes = 1;
+        _node_min_distance = 3.0;
+        _node_max_distance = 5.0;
+        getCurrentPositionOfDrone();
+        cout << "[ INFO] [testUtility] Current Position of drone: ";
+        cout << "(" << _node_current_pos_of_drone[0] << ", " << _node_current_pos_of_drone[1] 
+                << ", " << _node_current_pos_of_drone[2] << ", " << _node_current_pos_of_drone[3] << ")\n";
+        doJLinkage();
+        // Render significant plane
+        //image_gui->setRender(false, true, true, false);
+        //cout << "[ INFO] [testUtility] Rendering the frames in the DRONE CAMERA FEED GUI\n";
+        //image_gui->setSigPlaneBoundingBoxPoints(jlink_all_continuous_bounding_box_points[_sig_plane_index]);
+        //image_gui->renderFrame();
+        _next_plane_dir = CLOCKWISE;
+        _next_plane_angle = 0.0;
+        adjustForNextCapture();
+        cout << "[ INFO] [testUtility] Adjusting to capture next part of same plane completed\n";
+    }
+    else if(test_no == 6)
+    {
+        cout << "[ INFO] [testUtility] Testing for translation to the next plane\n";
+        _node_number_of_planes = 1;
+        _node_min_distance = 3.0;
+        _node_max_distance = 5.0;
+        getCurrentPositionOfDrone();
+        cout << "[ INFO] [testUtility] Current Position of drone: ";
+        cout << "(" << _node_current_pos_of_drone[0] << ", " << _node_current_pos_of_drone[1] 
+                << ", " << _node_current_pos_of_drone[2] << ", " << _node_current_pos_of_drone[3] << ")\n";
+        doJLinkage();
+        /*visited_plane_parameters.clear();
+        vector<float> pp;
+        pp.push_back(0.0208796);
+        pp.push_back(0.999466);
+        pp.push_back(0.0251287);
+        pp.push_back(-1.85729);
+        visited_plane_parameters.push_back(pp);*/
+        _next_plane_dir = COUNTERCLOCKWISE;
+        _next_plane_angle = 30.0;
+        adjustForNextCapture();
+        //pp.clear();
+        alignQuadcopterToNextPlaneAdvanced();
+    }
+    else if(test_no == 7)
+    {
+        cout << "[ INFO] [testUtility] Testing for translation to the next plane\n";
+        _node_number_of_planes = 1;
+        _node_min_distance = 3.0;
+        _node_max_distance = 5.0;
+        getCurrentPositionOfDrone();
+        cout << "[ INFO] [testUtility] Current Position of drone: ";
+        cout << "(" << _node_current_pos_of_drone[0] << ", " << _node_current_pos_of_drone[1] 
+                << ", " << _node_current_pos_of_drone[2] << ", " << _node_current_pos_of_drone[3] << ")\n";
+        doJLinkage();
+    }
+    else if(test_no == 8)
+    {
+        vector< Point3f > _in_points;
+        _in_points.clear();
+        pthread_mutex_lock(&keyPoint_CS);
+        for(unsigned int i = 0; i < _3d_points.size(); i++)
+        {
+            Point3f featurePt;
+            featurePt.x = _3d_points[i][0];
+            featurePt.y = _3d_points[i][1];
+            featurePt.z = _3d_points[i][2];
+            _in_points.push_back(featurePt);
+        }
+        pthread_mutex_unlock(&keyPoint_CS);
+        vector<float> plane_1, plane_2;
+        cout << "[ INFO] [testUtility] bestFitPlane\n";
+        plane_1 = bestFitPlane(_in_points);
+        cout << "[ INFO] [testUtility] fitPlane3D\n";
+        fitPlane3D(_in_points, plane_2);
+        print1dVector(plane_1, "[ INFO] [testUtility] 4 matrix");
+        print1dVector(plane_2, "[ INFO] [testUtility] 3 matrix");
+    }
+    else if(test_no == 9)
+    {
+        cout << "[ INFO] Testing for aligning the quadcopter to the current plane\n";
+        _node_number_of_planes = 1;
+        _node_min_distance = 3.0;
+        _node_max_distance = 5.0;
+        doJLinkage();
+        alignQuadcopterToCurrentPlane();
+        cout << "[ DEBUG] [testUtility] Alignment done\n";
+    }
+    else
+    {
+        cout << "[ ERROR] [testUtility] This test is not implemented\n";
+    }
+    cout << "[ DEBUG] [testUtility] Testing Completed\n";
 }
