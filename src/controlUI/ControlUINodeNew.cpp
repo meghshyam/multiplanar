@@ -1510,7 +1510,7 @@ ControlUINode::newPoseCb (const tum_ardrone::filter_stateConstPtr statePtr)
  *
  */
 void
-ControlUINode::designPathForDroneRelative(double dest, int direction)
+ControlUINode::moveDroneByMeasure(double dest, int direction)
 {
     // 1 - Left
     // 2 - Right
@@ -1518,8 +1518,8 @@ ControlUINode::designPathForDroneRelative(double dest, int direction)
     // 4 - Back
     // 5 - Top
     // 6 - Back
-    cout << "[ DEBUG] [designPathForDroneRelative] Started\n";
-    cout << "[ DEBUG] [designPathForDroneRelative] Direction: " << direction << "\n";
+    cout << "[ DEBUG] [moveDroneByMeasure] Started\n";
+    cout << "[ DEBUG] [moveDroneByMeasure] Direction: " << direction << "\n";
     if(direction == MOVE_DIRECTIONS::LEFT) // Left
     {
         moveLeft(dest);
@@ -1554,9 +1554,9 @@ ControlUINode::designPathForDroneRelative(double dest, int direction)
     }
     else
     {
-        cout << "[ DEBUG] [designPathForDroneRelative] I don't understand this direction\n";
+        cout << "[ DEBUG] [moveDroneByMeasure] I don't understand this direction\n";
     }
-    cout << "[ DEBUG] [designPathForDroneRelative] Completed\n";
+    cout << "[ DEBUG] [moveDroneByMeasure] Completed\n";
     return ;
 }
 
@@ -2551,12 +2551,12 @@ ControlUINode::adjustTopBottomEdges()
     if(move == -1)
     {
         cout << "[ DEBUG] [adjustTopBottomEdges] Moving backwards\n";
-        designPathForDroneRelative(step_distance, MOVE_DIRECTIONS::BACKWARD);
+        moveDroneByMeasure(step_distance, MOVE_DIRECTIONS::BACKWARD);
     }
     else if(move == 1)
     {
         cout << "[ DEBUG] [adjustTopBottomEdges] Moving forwards\n";
-        designPathForDroneRelative(step_distance, MOVE_DIRECTIONS::FORWARD);
+        moveDroneByMeasure(step_distance, MOVE_DIRECTIONS::FORWARD);
     }
     getCurrentPositionOfDrone();
     print1dVector(_node_current_pos_of_drone, "[ DEBUG] [adjustTopBottomEdges] Current position of drone");
@@ -2577,12 +2577,12 @@ ControlUINode::adjustTopBottomEdges()
     if(move == -1)
     {
         cout << "[ DEBUG] [adjustTopBottomEdges] Moving down\n";
-        designPathForDroneRelative(step_distance, MOVE_DIRECTIONS::DOWN);
+        moveDroneByMeasure(step_distance, MOVE_DIRECTIONS::DOWN);
     }
     else if(move == 1)
     {
         cout << "[ DEBUG] [adjustTopBottomEdges] Moving up\n";
-        designPathForDroneRelative(step_distance, MOVE_DIRECTIONS::UP);
+        moveDroneByMeasure(step_distance, MOVE_DIRECTIONS::UP);
     }
     cout << "[ DEBUG] [adjustTopBottomEdges] Adjusting top and bottom done.\n";
     return ;
@@ -2615,12 +2615,12 @@ ControlUINode::adjustLeftEdge()
         if(move == -1)
         {
             cout << "[ DEBUG] [adjustLeftEdge] Moving left\n";
-            designPathForDroneRelative(_move_heuristic, MOVE_DIRECTIONS::LEFT);
+            moveDroneByMeasure(_move_heuristic, MOVE_DIRECTIONS::LEFT);
         }
         else if(move == 1)
         {
             cout << "[ DEBUG] [adjustLeftEdge] Moving right\n";
-            designPathForDroneRelative(_move_heuristic, MOVE_DIRECTIONS::RIGHT);
+            moveDroneByMeasure(_move_heuristic, MOVE_DIRECTIONS::RIGHT);
         }
         doJLinkage();
         move = checkVisibility(this_plane_parameters, this_continuous_bounding_box_points, 1);
