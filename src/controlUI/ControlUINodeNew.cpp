@@ -1320,8 +1320,7 @@ ControlUINode::newPoseCb (const tum_ardrone::filter_stateConstPtr statePtr)
     pthread_mutex_unlock(&pose_CS);
     // Goto commands left to be executed
     pthread_mutex_lock(&command_CS);
-    DEBUG_MSG << "[newPoseCb] Acquired command_CS Lock\n";
-    PRINT_DEBUG_MESSAGE(5);
+    DEBUG_PRINT(5, "[newPoseCb] Acquired command_CS Lock\n");
     static int numCommands = 0;
     /*cout << "[ DEBUG] [poseCb] Checking for just navigation commands\n";
     cout << "[ DEBUG] [poseCb] Number of commands left: " << just_navigation_commands.size() << "\n";
@@ -1331,8 +1330,7 @@ ControlUINode::newPoseCb (const tum_ardrone::filter_stateConstPtr statePtr)
     {
         pthread_mutex_unlock(&changeyaw_CS);
         changeyawLockReleased = 0;
-        DEBUG_MSG << "[newPoseCb] Released first changeyaw_CS Lock\n";
-        PRINT_DEBUG_MESSAGE(4);
+        DEBUG_PRINT(4, "[newPoseCb] Released first changeyaw_CS Lock\n");
     }
     else if(just_navigation_commands.size() > 0 && !justNavigation)
     {
@@ -1502,8 +1500,7 @@ ControlUINode::newPoseCb (const tum_ardrone::filter_stateConstPtr statePtr)
         // do nothing
     }
     pthread_mutex_unlock(&command_CS);
-    DEBUG_MSG << "[newPoseCb] Released command_CS Lock\n";
-    PRINT_DEBUG_MESSAGE(5);
+    DEBUG_PRINT(5, "[newPoseCb] Released command_CS Lock\n");
 }
 
 /**
@@ -1518,8 +1515,9 @@ ControlUINode::moveDroneByMeasure(double dest, int direction)
     // 4 - Back
     // 5 - Top
     // 6 - Back
-    cout << "[ DEBUG] [moveDroneByMeasure] Started\n";
-    cout << "[ DEBUG] [moveDroneByMeasure] Direction: " << direction << "\n";
+    DEBUG_MSG << "[moveDroneByMeasure] Started.\n";
+    DEBUG_MSG << "[moveDroneByMeasure] Direction: " << direction << ".\n";
+    PRINT_DEBUG_MESSAGE(3);
     if(direction == MOVE_DIRECTIONS::LEFT) // Left
     {
         moveLeft(dest);
@@ -1554,27 +1552,32 @@ ControlUINode::moveDroneByMeasure(double dest, int direction)
     }
     else
     {
-        cout << "[ DEBUG] [moveDroneByMeasure] I don't understand this direction\n";
+        DEBUG_PRINT(3, "[moveDroneByMeasure] I don't understand this direction\n");
     }
-    cout << "[ DEBUG] [moveDroneByMeasure] Completed\n";
+    DEBUG_PRINT(3, "[moveDroneByMeasure] Completed\n");
     return ;
 }
 
 void
 ControlUINode::move(double distance, int i)
 {
-    cout << "[ DEBUG] [move] Started\n";
+    DEBUG_PRINT(5, "[move] Started\n");
+    // Clearing the vector containing information about old path points
     clear2dVector(_interm_path);
+    // Get the current position of drone for calculation
     getCurrentPositionOfDrone();
+    // This vector contains the destination position of drone 
+    // assuming current position of drone as origin
     _node_dest_pos_of_drone.clear();
     _node_dest_pos_of_drone.push_back(0.0);
     _node_dest_pos_of_drone.push_back(0.0);
     _node_dest_pos_of_drone.push_back(0.0);
     _node_dest_pos_of_drone.push_back(0.0);
     print1dVector(_node_current_pos_of_drone, "[ DEBUG] [move] Current position of drone");
-    cout << "[ DEBUG] [move] Requested movement: " << distance << ", Direction: " << i << "\n";
-    double start = 0.0;
-    double move;
+    DEBUG_MSG << "[move] Requested movement: " << distance << ", Direction: " << i << "\n";
+    PRINT_DEBUG_MESSAGE(5);
+    double start = 0.0, move;
+    // Determine the direction of motion
     if(signbit(distance))
     {
         move = -1.0;
@@ -1583,13 +1586,16 @@ ControlUINode::move(double distance, int i)
     {
         move = 1.0;
     }
-    cout << "[ DEBUG] [move] Move: " << move << "\n";
+    DEBUG_MSG << "[move] Move sign: " << move << "\n";
     bool to_move = false;
+    // Use the destination point directly if it is at a very short distance from the current position
+    // Else generate intermediate points
     if(fabs(start - distance) < _move_heuristic)
     {
         start = distance;
         _node_dest_pos_of_drone[i] = start;
-        print1dVector(_node_dest_pos_of_drone, "[ DEBUG] [move] Dest position of drone (relative)");
+        print1dVector(_node_dest_pos_of_drone, "[ DEBUG] [move] Dest. position of drone (relative)", "");
+        // Convert the destination position of drone wrt to world origin
         convertWRTQuadcopterOrigin(_node_current_pos_of_drone, _node_dest_pos_of_drone, _node_ac_dest_pos_of_drone);
         _interm_path.push_back(_node_ac_dest_pos_of_drone);
     }
@@ -1597,6 +1603,7 @@ ControlUINode::move(double distance, int i)
     {
         to_move = true;
     }
+    // Generate commands until you've reached the destination point
     while(to_move)
     {
         if(fabs(start - distance) < _move_heuristic)
@@ -1609,8 +1616,10 @@ ControlUINode::move(double distance, int i)
             start += (move * _move_heuristic);
             to_move = true;
         }
+        // Change the position according to the direction index
         _node_dest_pos_of_drone[i] = start;
-        print1dVector(_node_dest_pos_of_drone, "[ DEBUG] [move] Dest position of drone (relative)");
+        print1dVector(_node_dest_pos_of_drone, "[ DEBUG] [move] Dest position of drone (relative)", "");
+        // Convert the generated position wrt world's origin
         convertWRTQuadcopterOrigin(_node_current_pos_of_drone, _node_dest_pos_of_drone, _node_ac_dest_pos_of_drone);
         _interm_path.push_back(_node_ac_dest_pos_of_drone);
     }
@@ -1618,72 +1627,75 @@ ControlUINode::move(double distance, int i)
     {
         start = distance;
         _node_dest_pos_of_drone[i] = start;
+        // Convert the generated position wrt world's origin
         convertWRTQuadcopterOrigin(_node_current_pos_of_drone, _node_dest_pos_of_drone, _node_ac_dest_pos_of_drone);
         _interm_path.push_back(_node_ac_dest_pos_of_drone);
     }
+    // Move the drone via the generated set of points
     moveDroneViaSetOfPoints(_interm_path);
-    cout << "[ DEBUG] [move] Completed\n";
+    DEBUG_PRINT(5, "[move] Completed\n");
     return ;
 }
 
 void
 ControlUINode::moveUp(double up_distance)
 {
-    cout << "[ DEBUG] [moveUp] Started\n";
+    DEBUG_PRINT(5, "[moveUp] Started\n");
     move(up_distance, 2);
-    cout << "[ DEBUG] [moveUp] Completed\n";
+    DEBUG_PRINT(5, "[moveUp] Completed\n");
     return ;
 }
 
 void
 ControlUINode::moveDown(double down_distance)
 {
-    cout << "[ DEBUG] [moveDown] Started\n";
+    DEBUG_PRINT(5, "[moveDown] Started\n");
     move(-down_distance, 2);
-    cout << "[ DEBUG] [moveDown] Completed\n";
+    DEBUG_PRINT(5, "[moveDown] Completed\n");
     return ;
 }
 
 void
 ControlUINode::moveLeft(double left_distance)
 {
-    cout << "[ DEBUG] [moveLeft] Started\n";
+    DEBUG_PRINT(5, "[moveLeft] Started\n");
     move(-left_distance, 0);
-    cout << "[ DEBUG] [moveLeft] Completed\n";
+    DEBUG_PRINT(5, "[moveLeft] Completed\n");
     return ;
 }
 
 void
 ControlUINode::moveRight(double right_distance)
 {
-    cout << "[ DEBUG] [moveRight] Started\n";
+    DEBUG_PRINT(5, "[moveRight] Started\n");
     move(right_distance, 0);
-    cout << "[ DEBUG] [moveRight] Completed\n";
+    DEBUG_PRINT(5, "[moveRight] Completed\n");
     return ;
 }
 
 void
 ControlUINode::moveForward(double forward_distance)
 {
-    cout << "[ DEBUG] [moveForward] Started\n";
+    DEBUG_PRINT(5, "[moveForward] Started\n");
     move(forward_distance, 1);
-    cout << "[ DEBUG] [moveForward] Completed\n";
+    DEBUG_PRINT(5, "[moveForward] Completed\n");
     return ;
 }
 
 void
 ControlUINode::moveBackward(double backward_distance)
 {
-    cout << "[ DEBUG] [moveBackward] Started\n";
+    DEBUG_PRINT(5, "[moveBackward] Started\n");
     move(-backward_distance, 1);
-    cout << "[ DEBUG] [moveBackward] Completed\n";
+    DEBUG_PRINT(5, "[moveBackward] Completed\n");
     return ;
 }
 
+// TODO: Please look into what this function does
 void
-ControlUINode::moveInDirection(const vector<float> &dir, 
-                                        const vector<double> &position,
-                                        const vector<Point3f> &points)
+ControlUINode::moveInDirection(const vector<float> &dir,
+                               const vector<double> &position,
+                               const vector<Point3f> &points)
 {
     cout << "[ DEBUG] [moveInDirection] Started\n";
     float point_distance = getPointToPlaneDistance(dir, position);
@@ -1745,73 +1757,73 @@ ControlUINode::moveInDirection(const vector<float> &dir,
     return ;
 }
 
-/**
- * @brief Move the drone to the destination point via a set of points
- * @details Each point is represented as (x, y, z, yaw)
- * @param [vector< vector<double> >] dest_points - Points to where quadcopter has to travel
- *                                  Includes yaw in the vector
- * @return
- */
 void
 ControlUINode::moveDroneViaSetOfPoints(const vector< vector<double> > &dest_points)
 {
+    LOG_PRINT(1, "[moveDroneViaSetOfPoints] Started.\n");
     pthread_mutex_lock(&changeyaw_CS);
     changeyawLockReleased = 1;
-    cout << "[ DEBUG] [moveDroneViaSetOfPoints] Acquired first changeyaw_CS Lock\n";
-    cout << "[ DEBUG] [moveDroneViaSetOfPoints] Started\n";
+    DEBUG_PRINT(3, "[moveDroneViaSetOfPoints] Acquired first changeyaw_CS Lock\n");
     char buf[100];
     just_navigation_commands.clear();
     targetPoints.clear();
     just_navigation_total_commands = dest_points.size();
     just_navigation_command_number = 0;
-    cout << "[ DEBUG] [moveDroneViaSetOfPoints] Total Commands: " << just_navigation_total_commands << "\n";
+    DEBUG_MSG << "[moveDroneViaSetOfPoints] Total commands generated: " << just_navigation_total_commands << "\n";
+    PRINT_DEBUG_MESSAGE(3);
     print2dVector(dest_points, "[ DEBUG] [moveDroneViaSetOfPoints] Moving points");
     for (unsigned int i = 0; i < dest_points.size(); ++i)
     {
         snprintf(buf, 100, "c goto %lf %lf %lf %lf",
             dest_points[i][0], dest_points[i][1], dest_points[i][2], dest_points[i][3]);
+        // Contains the set of points generated by the code and
+        // traversed by the drone
+        DEBUG_MSG << "Target point: (" << dest_points[i][0] << ", " << dest_points[i][1]
+                    << ", " << dest_points[i][2] << ", " << dest_points[i][3] << ")\n";
+        PRINT_DEBUG_MESSAGE(3);
         visited_motion_points.push_back(dest_points[i]);
         std_msgs::String s;
         s.data = buf;
         just_navigation_commands.push_back(s);
         targetPoints.push_back(dest_points[i]);
     }
-    cout << "[ DEBUG] [moveDroneViaSetOfPoints] Commands Ready\n";
-    cout << "[ DEBUG] [moveDroneViaSetOfPoints] Commands to execute: " << just_navigation_commands.size() << "\n";
+    DEBUG_MSG << "[moveDroneViaSetOfPoints] Commands to execute: " << just_navigation_commands.size() << "\n";
+    PRINT_DEBUG_MESSAGE(3);
+    // Once the commands are done, give an indication to release the lock
     if(just_navigation_commands.size() == 0)
     {
         changeyawLockReleased = -1;
     }
     pthread_mutex_lock(&changeyaw_CS);
-    cout << "[ DEBUG] [moveDroneViaSetOfPoints] Acquired second changeyaw_CS Lock\n";
+    DEBUG_PRINT(3, "[moveDroneViaSetOfPoints] Acquired second changeyaw_CS Lock\n");
     pthread_mutex_unlock(&changeyaw_CS);
     getCurrentPositionOfDrone();
     print1dVector(_node_current_pos_of_drone, "[ DEBUG] [moveDroneViaSetOfPoints] Current position of drone after movement");
-    cout << "[ DEBUG] [moveDroneViaSetOfPoints] Released second changeyaw_CS Lock\n";
+    DEBUG_PRINT(3, "[moveDroneViaSetOfPoints] Released second changeyaw_CS Lock\n");
     just_navigation_total_commands = -1;
     just_navigation_command_number = -1;
+    LOG_PRINT(1, "[moveDroneViaSetOfPoints] Completed.\n");
 }
 
 void
 ControlUINode::rotateClockwise(double step_angle)
 {
-    cout << "[ DEBUG] [rotateClockwise] Started\n";
+    DEBUG_PRINT(5, "[rotateClockwise] Started.\n");
     getCurrentPositionOfDrone();
     designPathToChangeYaw(_node_current_pos_of_drone, _node_current_pos_of_drone[3]+step_angle);
     moveDroneViaSetOfPoints(_interm_path);
-    cout << "[ DEBUG] [rotateClockwise] Completed\n";
+    DEBUG_PRINT(5, "[rotateClockwise] Completed\n");
     return ;
 }
 
 void
 ControlUINode::rotateCounterClockwise(double step_angle)
 {
-    cout << "[ DEBUG] [rotateCounterClockwise] Started\n";
-    clear2dVector(_interm_path);
+    DEBUG_PRINT(5, "[rotateCounterClockwise] Started\n");
     getCurrentPositionOfDrone();
     designPathToChangeYaw(_node_current_pos_of_drone, _node_current_pos_of_drone[3]-step_angle);
     moveDroneViaSetOfPoints(_interm_path);
-    cout << "[ DEBUG] [rotateCounterClockwise] Completed\n";
+    DEBUG_PRINT(5, "[rotateCounterClockwise] Completed\n");
     return ;
 }
 
@@ -1824,52 +1836,50 @@ ControlUINode::rotateCounterClockwise(double step_angle)
  */
 void
 ControlUINode::designPathToChangeYaw(const vector<double> &curr_point,
-                double dest_yaw)
+                                     double dest_yaw)
 {
+    DEBUG_PRINT(5, "[designPathToChangeYaw] Started\n");
     clear2dVector(_interm_path);
     vector<double> interm_point;
     double currentYaw = curr_point[3], desiredYaw = dest_yaw;
-    cout << "[ DEBUG] [designPathToChangeYaw] Changing yaw by " << _angle_heuristic << " step\n";
-    cout << "[ DEBUG] [designPathToChangeYaw] Current Yaw: " << currentYaw << "\n";
-    cout << "[ DEBUG] [designPathToChangeYaw] Destination Yaw: " << desiredYaw << "\n";
+    DEBUG_MSG << "[designPathToChangeYaw] Changing yaw by " << _angle_heuristic << " step\n";
+    DEBUG_MSG << "[designPathToChangeYaw] Current Yaw: " << currentYaw << "\n";
+    DEBUG_MSG << "[designPathToChangeYaw] Destination Yaw: " << desiredYaw << "\n";
+    PRINT_DEBUG_MESSAGE(5);
     double move; bool to_move = true;
     if(currentYaw > desiredYaw) {move = -1.0;}
     else {move = 1.0;}
-    cout << "[ DEBUG] [designPathToChangeYaw] Started\n";
+    DEBUG_MSG << "[designPathToChangeYaw] Started\n";
     double prog_yaw = currentYaw;
     if(move == 1.0)
     {
-        cout << "[ DEBUG] [designPathToChangeYaw] Move clockwise\n";
+        DEBUG_MSG << "[designPathToChangeYaw] Move clockwise\n";
     }
     else
     {
-        cout << "[ DEBUG] [designPathToChangeYaw] Move counter-clockwise\n";
+        DEBUG_MSG << "[designPathToChangeYaw] Move counter-clockwise\n";
     }
+    PRINT_DEBUG_MESSAGE(5);
     while(to_move)
     {
         if(fabs(desiredYaw - prog_yaw) < _angle_heuristic)
         {
-            //prog_yaw = desiredYaw;
             if(move == -1.0)
             {
                 if(desiredYaw < -180.0)
                 {
-                    desiredYaw = 360.0+desiredYaw;
-                    prog_yaw = desiredYaw;
+                    desiredYaw = 360.0+desiredYaw; prog_yaw = desiredYaw;
                 }
             }
             else if(move == 1.0)
             {
                 if(desiredYaw >= 180.0)
                 {
-                    desiredYaw = -360.0+desiredYaw;
-                    prog_yaw = desiredYaw;
+                    desiredYaw = -360.0+desiredYaw; prog_yaw = desiredYaw;
                 }
             }
             else
-            {
-
-            }
+            { }
             to_move = false;
         }
         else
@@ -1879,22 +1889,18 @@ ControlUINode::designPathToChangeYaw(const vector<double> &curr_point,
             {
                 if(prog_yaw < -180.0)
                 {
-                    prog_yaw = 360.0+prog_yaw;
-                    desiredYaw = 360.0+desiredYaw;
+                    prog_yaw = 360.0+prog_yaw; desiredYaw = 360.0+desiredYaw;
                 }
             }
             else if(move == 1.0)
             {
                 if(prog_yaw >= 180.0)
                 {
-                    prog_yaw = -360.0+prog_yaw;
-                    desiredYaw = -360.0+desiredYaw;
+                    prog_yaw = -360.0+prog_yaw; desiredYaw = -360.0+desiredYaw;
                 }
             }
             else
-            {
-
-            }
+            { }
             to_move = true;
         }
         interm_point.clear();
@@ -1903,7 +1909,7 @@ ControlUINode::designPathToChangeYaw(const vector<double> &curr_point,
         _interm_path.push_back(interm_point);
     }
     print2dVector(_interm_path, "[ DEBUG] [designPathToChangeYaw] Final Path");
-    cout << "[ DEBUG] [designPathToChangeYaw] Completed\n";
+    DEBUG_PRINT(5, "[designPathToChangeYaw] Completed\n");
 }
 
 void

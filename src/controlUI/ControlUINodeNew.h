@@ -996,6 +996,13 @@ class ControlUINode
         void
         captureTheCurrentPlane();
 
+        /**
+         * @brief Move the drone to the destination point via a set of points
+         * @details Each point is represented as (x, y, z, yaw)
+         * @param [vector< vector<double> >] dest_points - Points to where quadcopter has to travel
+         *                                  Includes yaw in the vector
+         * @return
+         */
         void
         moveDroneViaSetOfPoints(const vector< vector<double> > &dest_points);
 
