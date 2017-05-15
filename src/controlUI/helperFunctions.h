@@ -270,38 +270,75 @@ print3dPoints(std::vector< std::vector<double> > points)
 	}
 }
 
-
-
-
-/***********************************************************************************************
-NEW FUNCITONS ADDED ON 08-OCT-2016
-************************************************************************************************/
-
 /**
  * @brief
  * @details
  */
-inline static void
-print2dVector(const vector< vector<Point3f> > &two_d_vector, string vec_name = "vector")
+inline static string
+print2dVector(const vector< vector<Point3f> > &two_d_vector, string vec_name = "vector",
+				string style="matlab")
 {
-	//cout << "Printing the vector: " << vec_name << "\n";
-	cout << vec_name << "\n";
-	cout << "[...\n";
-	for (unsigned int i = 0; i < two_d_vector.size(); ++i)
+	stringstream output_string;
+	output_string << vec_name;
+	if (style == "matlab")
 	{
-		for (unsigned int j = 0; j < two_d_vector[i].size(); ++j)
+		output_string << "\n[...\n";
+		for (unsigned int i = 0; i < two_d_vector.size(); ++i)
 		{
-			cout << "\t[ ";
-			cout << two_d_vector[i][j].x << "; "
-					<< two_d_vector[i][j].y << "; ";
-			if(j!=two_d_vector[i].size()-1)
-				cout << two_d_vector[i][j].z << "], ...\n";
-			else
-				cout << two_d_vector[i][j].z << "]...\n";
+			for (unsigned int j = 0; j < two_d_vector[i].size(); ++j)
+			{
+				output_string << "\t[ ";
+				output_string << two_d_vector[i][j].x << "; "
+						<< two_d_vector[i][j].y << "; ";
+				if(j!=two_d_vector[i].size()-1)
+					output_string << two_d_vector[i][j].z << "], ...\n";
+				else
+					output_string << two_d_vector[i][j].z << "]...\n";
+			}
 		}
+		output_string << "]\n";
 	}
-	cout << "]\n";
-	return ;
+	else if (style == "normal")
+	{
+		output_string << ": ";
+		for (unsigned int i = 0; i < two_d_vector.size(); ++i)
+		{
+			for (unsigned int j = 0; j < two_d_vector[i].size(); ++j)
+			{
+				output_string << "\t(";
+				output_string << two_d_vector[i][j].x << ", "
+						<< two_d_vector[i][j].y << ", ";
+				if(j!=two_d_vector[i].size()-1)
+					output_string << two_d_vector[i][j].z << ")\n";
+				else
+					output_string << two_d_vector[i][j].z << ")\n";
+			}
+			output_string << "\n";
+		}
+		output_string << "\n";
+	}
+	else
+	{
+		output_string << ": ";
+		for (unsigned int i = 0; i < two_d_vector.size(); ++i)
+		{
+			for (unsigned int j = 0; j < two_d_vector[i].size(); ++j)
+			{
+				output_string << "\t(";
+				output_string << two_d_vector[i][j].x << ", "
+						<< two_d_vector[i][j].y << ", ";
+				if(j!=two_d_vector[i].size()-1)
+					output_string << two_d_vector[i][j].z << ")\n";
+				else
+					output_string << two_d_vector[i][j].z << ")\n";
+			}
+			output_string << "\n";
+		}
+		output_string << "\n";
+	}
+	string answer = output_string.str();
+	output_string.str(string());
+	return answer;
 }
 
 /**
@@ -309,37 +346,51 @@ print2dVector(const vector< vector<Point3f> > &two_d_vector, string vec_name = "
  * @details
  */
 template<typename T>
-inline static void
-print2dVector(const vector< vector<T> > &two_d_vector, string vec_name = "vector")
+inline static string
+print2dVector(const vector< vector<T> > &two_d_vector, string vec_name = "vector",
+				string style="matlab")
 {
-	//cout << "Printing the vector: " << vec_name << "\n";
-	cout << vec_name << "\n";
-	cout << "[...\n";
-	for (unsigned int i = 0; i < two_d_vector.size(); ++i)
+	stringstream output_string;
+	output_string << vec_name;
+	if (style == "matlab")
 	{
-		cout << "\t[ ";
-		for (unsigned int j = 0; j < two_d_vector[i].size(); ++j)
+		output_string << "[...\n";
+		for (unsigned int i = 0; i < two_d_vector.size(); ++i)
 		{
-			if(j!=two_d_vector[i].size()-1)
+			output_string << "\t[ ";
+			for (unsigned int j = 0; j < two_d_vector[i].size(); ++j)
 			{
-				cout << two_d_vector[i][j] << "; ";
+				if(j!=two_d_vector[i].size()-1)
+				{
+					output_string << two_d_vector[i][j] << "; ";
+				}
+				else
+				{
+					output_string << two_d_vector[i][j] << "";
+				}
+			}
+			if(i!=two_d_vector.size()-1)
+			{
+				output_string << "], ...\n";
 			}
 			else
 			{
-				cout << two_d_vector[i][j] << "";
+				output_string << "] ...\n";
 			}
 		}
-		if(i!=two_d_vector.size()-1)
-		{
-			cout << "], ...\n";
-		}
-		else
-		{
-			cout << "] ...\n";
-		}
+		output_string << "]\n";
 	}
-	cout << "]\n";
-	return ;
+	else if (style == "normal")
+	{
+
+	}
+	else
+	{
+
+	}
+	string answer = output_string.str();
+	output_string.str(string());
+	return answer;
 }
 
 /**
