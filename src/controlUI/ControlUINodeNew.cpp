@@ -1395,7 +1395,7 @@ ControlUINode::newPoseCb (const tum_ardrone::filter_stateConstPtr statePtr)
                 PRINT_DEBUG_MESSAGE(3);
                 getCurrentPositionOfDrone();
                 DEBUG_MSG << print1dVector(_node_current_pos_of_drone, 
-                                  "[ DEBUG] [newPoseCb] Current position of drone after command", "");
+                                  "[newPoseCb] Current position of drone after command", "");
                 PRINT_DEBUG_MESSAGE(3);
                 if(just_navigation_commands.size() == 0) {changeyawLockReleased = -1;}
                 return;
@@ -1572,7 +1572,7 @@ ControlUINode::move(double distance, int i)
     _node_dest_pos_of_drone.push_back(0.0);
     _node_dest_pos_of_drone.push_back(0.0);
     _node_dest_pos_of_drone.push_back(0.0);
-    DEBUG_MSG << print1dVector(_node_current_pos_of_drone, "[ DEBUG] [move] Current position of drone");
+    DEBUG_MSG << print1dVector(_node_current_pos_of_drone, "[move] Current position of drone");
     PRINT_DEBUG_MESSAGE(3);
     DEBUG_MSG << "[move] Requested movement: " << distance << ", Direction: " << i << "\n";
     PRINT_DEBUG_MESSAGE(5);
@@ -1594,7 +1594,7 @@ ControlUINode::move(double distance, int i)
     {
         start = distance;
         _node_dest_pos_of_drone[i] = start;
-        DEBUG_MSG << print1dVector(_node_dest_pos_of_drone, "[ DEBUG] [move] Dest. position of drone (relative)", "");
+        DEBUG_MSG << print1dVector(_node_dest_pos_of_drone, "[move] Dest. position of drone (relative)", "");
         PRINT_DEBUG_MESSAGE(3);
         // Convert the destination position of drone wrt to world origin
         convertWRTQuadcopterOrigin(_node_current_pos_of_drone, _node_dest_pos_of_drone, _node_ac_dest_pos_of_drone);
@@ -1619,7 +1619,7 @@ ControlUINode::move(double distance, int i)
         }
         // Change the position according to the direction index
         _node_dest_pos_of_drone[i] = start;
-        DEBUG_MSG << print1dVector(_node_dest_pos_of_drone, "[ DEBUG] [move] Dest position of drone (relative)", "");
+        DEBUG_MSG << print1dVector(_node_dest_pos_of_drone, "[move] Dest position of drone (relative)", "");
         PRINT_DEBUG_MESSAGE(3);
         // Convert the generated position wrt world's origin
         convertWRTQuadcopterOrigin(_node_current_pos_of_drone, _node_dest_pos_of_drone, _node_ac_dest_pos_of_drone);
@@ -1719,8 +1719,8 @@ ControlUINode::moveInDirection(const vector<float> &dir,
     float a = dir[0];
     float b = dir[1];
     float c = dir[2];
-    DEBUG_MSG << print1dVector(dir, "[ DEBUG] [moveInDirection] Plane Parameters for distance adjustment");
-    DEBUG_MSG << print1dVector(position, "[ DEBUG] [moveInDirection] Current position of drone");
+    DEBUG_MSG << print1dVector(dir, "[moveInDirection] Plane Parameters for distance adjustment");
+    DEBUG_MSG << print1dVector(position, "[moveInDirection] Current position of drone");
     PRINT_DEBUG_MESSAGE(5);
     unsigned int numberOfPointsInThisPlane = points.size();
     for (unsigned int j = 0; j < numberOfPointsInThisPlane; ++j)
@@ -1773,7 +1773,7 @@ ControlUINode::moveDroneViaSetOfPoints(const vector< vector<double> > &dest_poin
     just_navigation_total_commands = dest_points.size();
     just_navigation_command_number = 0;
     DEBUG_MSG << "[moveDroneViaSetOfPoints] Total commands generated: " << just_navigation_total_commands << "\n";
-    DEBUG_MSG << print2dVector(dest_points, "[ DEBUG] [moveDroneViaSetOfPoints] Moving points");
+    DEBUG_MSG << print2dVector(dest_points, "[moveDroneViaSetOfPoints] Moving points");
     PRINT_DEBUG_MESSAGE(3);
     for (unsigned int i = 0; i < dest_points.size(); ++i)
     {
@@ -1912,7 +1912,7 @@ ControlUINode::designPathToChangeYaw(const vector<double> &curr_point,
         interm_point.push_back(curr_point[2]); interm_point.push_back(prog_yaw);
         _interm_path.push_back(interm_point);
     }
-    DEBUG_MSG << print2dVector(_interm_path, "[ DEBUG] [designPathToChangeYaw] Final Path");
+    DEBUG_MSG << print2dVector(_interm_path, "[designPathToChangeYaw] Final Path");
     PRINT_DEBUG_MESSAGE(5);
     DEBUG_PRINT(5, "[designPathToChangeYaw] Completed\n");
 }
@@ -1939,11 +1939,11 @@ ControlUINode::copyNecessaryInfo()
         //new_plane_params[3] = _plane_d/(float)_plane_d_num;
         vector<Point3f> new_bounding_box_points;
         new_bounding_box_points.clear();
-        DEBUG_MSG << print1dVector(aug_plane_bounding_box_points, "[ DEBUG] [copyNecessaryInfo] Aug CBB");
+        DEBUG_MSG << print1dVector(aug_plane_bounding_box_points, "[copyNecessaryInfo] Aug CBB");
         PRINT_DEBUG_MESSAGE(5);
         cout << "[ DEBUG] [copyNecessaryInfo] Calculating the bounding box points\n";
         projectPointsOnPlane(aug_plane_bounding_box_points, new_plane_params, new_bounding_box_points);
-        DEBUG_MSG << print1dVector(new_bounding_box_points, "[ DEBUG] [copyNecessaryInfo] New CBB");
+        DEBUG_MSG << print1dVector(new_bounding_box_points, "[copyNecessaryInfo] New CBB");
         PRINT_DEBUG_MESSAGE(5);
         cout << "[ INFO] [copyNecessaryInfo] Copying the necessary information\n";
         visited_plane_parameters.push_back(new_plane_params);
@@ -1954,9 +1954,9 @@ ControlUINode::copyNecessaryInfo()
     }
     /*this_plane_parameters.clear();
     this_continuous_bounding_box_points.clear();*/
-    DEBUG_MSG << print2dVector(visited_plane_parameters, "[ INFO] [copyNecessaryInfo] Visited Plane Parameters");
-    DEBUG_MSG << print2dVector(visited_continuous_bounding_box_points, "[ INFO] [copyNecessaryInfo] Visited CBB");
-    PRINT_DEBUG_MESSAGE(5);
+    LOG_MSG << print2dVector(visited_plane_parameters, "[copyNecessaryInfo] Visited Plane Parameters");
+    LOG_MSG << print2dVector(visited_continuous_bounding_box_points, "[copyNecessaryInfo] Visited CBB");
+    PRINT_LOG_MESSAGE(5);
     _is_big_plane = false;
     _stage_of_plane_observation = true;
     _node_completed_number_of_planes++;
@@ -1999,7 +1999,7 @@ ControlUINode::augmentInfo()
         aug_plane_bounding_box_points.push_back(a2);
         aug_plane_bounding_box_points.push_back(a3);
         aug_plane_bounding_box_points.push_back(a0);
-        DEBUG_MSG << print1dVector(aug_plane_bounding_box_points, "[ DEBUG] [augmentInfo] Aug. Plane BB");
+        DEBUG_MSG << print1dVector(aug_plane_bounding_box_points, "[augmentInfo] Aug. Plane BB");
         PRINT_DEBUG_MESSAGE(5);
     }
     return ;
@@ -2115,8 +2115,8 @@ ControlUINode::checkVisibility(const vector<float> &plane_parameters,
     cout << "[ DEBUG] [checkVisibility] Started\n";
     int move = 0;
     vector<Point2f> image_bounding_box_points;
-    DEBUG_MSG << print1dVector(plane_parameters, "[ DEBUG] [checkVisibility] Plane Parameters:");
-    DEBUG_MSG << print1dVector(continuous_bounding_box_points, "[ DEBUG] [checkVisibility] CBB Points:");
+    DEBUG_MSG << print1dVector(plane_parameters, "[checkVisibility] Plane Parameters:");
+    DEBUG_MSG << print1dVector(continuous_bounding_box_points, "[checkVisibility] CBB Points:");
     PRINT_DEBUG_MESSAGE(5);
     if(which_side == 0) // Top and Bottom edge
     {
@@ -2273,11 +2273,11 @@ ControlUINode::doJLinkage()
     jlink_all_percentage_of_each_plane.clear();
     cout << "[ DEBUG] [doJLinkage] Calling JLinkage\n";
     getMultiplePlanes3d (jlink_all_plane_parameters, jlink_all_continuous_bounding_box_points, jlink_three_d_points, jlink_all_percentage_of_each_plane);
-    DEBUG_MSG << print2dVector(jlink_all_plane_parameters, "[ DEBUG] [doJLinkage] JLink Plane Params");
-    DEBUG_MSG << print2dVector(jlink_all_continuous_bounding_box_points, "[ DEBUG] [doJLinkage] JLink CBB");
-    DEBUG_MSG << print1dVector(jlink_all_percentage_of_each_plane, "[ DEBUG] [doJLinkage] JLink Pecentage");
-    DEBUG_MSG << print2dVector(visited_plane_parameters, "[ DEBUG] [doJLinkage] Visited PP");
-    DEBUG_MSG << print2dVector(visited_continuous_bounding_box_points, "[ DEBUG] [doJLinkage] Visited CBB");
+    DEBUG_MSG << print2dVector(jlink_all_plane_parameters, "[doJLinkage] JLink Plane Params");
+    DEBUG_MSG << print2dVector(jlink_all_continuous_bounding_box_points, "[doJLinkage] JLink CBB");
+    DEBUG_MSG << print1dVector(jlink_all_percentage_of_each_plane, "[doJLinkage] JLink Pecentage");
+    DEBUG_MSG << print2dVector(visited_plane_parameters, "[doJLinkage] Visited PP");
+    DEBUG_MSG << print2dVector(visited_continuous_bounding_box_points, "[doJLinkage] Visited CBB");
     PRINT_DEBUG_MESSAGE(5);
     _sig_plane_index = getCurrentPlaneIndex(visited_plane_parameters, jlink_all_plane_parameters, jlink_all_percentage_of_each_plane);
     _actual_plane_index = _sig_plane_index;
@@ -2290,8 +2290,8 @@ ControlUINode::doJLinkage()
                                                                 jlink_all_percentage_of_each_plane, _actual_plane_index,
                                                                 this_plane_parameters, this_continuous_bounding_box_points,
                                                                 this_sorted_3d_points);
-    DEBUG_MSG << print1dVector(this_plane_parameters, "[ DEBUG] [doJLinkage] Sig PP");
-    DEBUG_MSG << print1dVector(this_continuous_bounding_box_points, "[ DEBUG] [doJLinkage] Sig CBB");
+    DEBUG_MSG << print1dVector(this_plane_parameters, "[doJLinkage] Sig PP");
+    DEBUG_MSG << print1dVector(this_continuous_bounding_box_points, "[doJLinkage] Sig CBB");
     PRINT_DEBUG_MESSAGE(5);
     cout << "[ DEBUG] [doJLinkage] Completed\n";
     return ;
@@ -2309,11 +2309,11 @@ ControlUINode::doJLinkage(const vector<int> &ccPoints, const vector< vector<int>
     getMultiplePlanes3d (ccPoints, pointsClicked, jlink_all_plane_parameters, 
                         jlink_all_continuous_bounding_box_points, jlink_three_d_points, 
                         jlink_all_percentage_of_each_plane);
-    DEBUG_MSG << print2dVector(jlink_all_plane_parameters, "[ DEBUG] [doJLinkage] JLink Plane Params");
-    DEBUG_MSG << print2dVector(jlink_all_continuous_bounding_box_points, "[ DEBUG] [doJLinkage] JLink CBB");
-    DEBUG_MSG << print1dVector(jlink_all_percentage_of_each_plane, "[ DEBUG] [doJLinkage] JLink Pecentage");
-    DEBUG_MSG << print2dVector(visited_plane_parameters, "[ DEBUG] [doJLinkage] Visited PP");
-    DEBUG_MSG << print2dVector(visited_continuous_bounding_box_points, "[ DEBUG] [doJLinkage] Visited CBB");
+    DEBUG_MSG << print2dVector(jlink_all_plane_parameters, "[doJLinkage] JLink Plane Params");
+    DEBUG_MSG << print2dVector(jlink_all_continuous_bounding_box_points, "[doJLinkage] JLink CBB");
+    DEBUG_MSG << print1dVector(jlink_all_percentage_of_each_plane, "[doJLinkage] JLink Pecentage");
+    DEBUG_MSG << print2dVector(visited_plane_parameters, "[doJLinkage] Visited PP");
+    DEBUG_MSG << print2dVector(visited_continuous_bounding_box_points, "[doJLinkage] Visited CBB");
     PRINT_DEBUG_MESSAGE(5);
     _sig_plane_index = getCurrentPlaneIndex(visited_plane_parameters, jlink_all_plane_parameters, jlink_all_percentage_of_each_plane);
     _actual_plane_index = _sig_plane_index;
@@ -2326,8 +2326,8 @@ ControlUINode::doJLinkage(const vector<int> &ccPoints, const vector< vector<int>
                                 jlink_all_percentage_of_each_plane, _actual_plane_index,
                                 this_plane_parameters, this_continuous_bounding_box_points,
                                 this_sorted_3d_points);
-    DEBUG_MSG << print1dVector(this_plane_parameters, "[ DEBUG] [doJLinkage] Sig PP");
-    DEBUG_MSG << print1dVector(this_continuous_bounding_box_points, "[ DEBUG] [doJLinkage] Sig CBB");
+    DEBUG_MSG << print1dVector(this_plane_parameters, "[doJLinkage] Sig PP");
+    DEBUG_MSG << print1dVector(this_continuous_bounding_box_points, "[doJLinkage] Sig CBB");
     PRINT_DEBUG_MESSAGE(5);
     cout << "[ DEBUG] [doJLinkage] Completed\n";
     return ;
@@ -2459,9 +2459,9 @@ ControlUINode::getCompleteCurrentPlaneInfo(const vector< vector<float> > &plane_
         projectPointsOnPlane(bbp, out_plane_parameters, out_cbb);
         three_d_points.clear();
         bbp.clear();
-        DEBUG_MSG << print1dVector(out_plane_parameters, "[ INFO] [getCompleteCurrentPlaneInfo] Current visible plane parameters");
-        DEBUG_MSG << print1dVector(out_cbb, "[ INFO] [getCompleteCurrentPlaneInfo] Current visible cbb");
-        PRINT_DEBUG_MESSAGE(5);
+        LOG_MSG << print1dVector(out_plane_parameters, "[getCompleteCurrentPlaneInfo] Current visible plane parameters");
+        LOG_MSG << print1dVector(out_cbb, "[getCompleteCurrentPlaneInfo] Current visible cbb");
+        PRINT_LOG_MESSAGE(5);
     }
     cout << "[ INFO] [getCompleteCurrentPlaneInfo] Completed\n";
     return ;
@@ -2491,12 +2491,12 @@ ControlUINode::checkPlaneParametersSign(const vector<double> &position,
     float centroidZ = z_c;
     Point3f p(centroidX, centroidY, centroidZ), qp;
     cout << "[ DEBUG] [checkPlaneParametersSign] Centroid: " << p << "\n";
-    DEBUG_MSG << print1dVector(position, "[ DEBUG] [checkPlaneParametersSign] Position of drone");
+    DEBUG_MSG << print1dVector(position, "[checkPlaneParametersSign] Position of drone");
     float a = plane_parameters[0];
     float b = plane_parameters[1];
     float c = plane_parameters[2];
     float mag = ((a*a)+(b*b)+(c*c));
-    DEBUG_MSG << print1dVector(plane_parameters, "[ DEBUG] [checkPlaneParametersSign] Old Plane Parameters");
+    DEBUG_MSG << print1dVector(plane_parameters, "[checkPlaneParametersSign] Old Plane Parameters");
     PRINT_DEBUG_MESSAGE(5);
     Point3f pos((float)position[0], (float)position[1], (float)position[2]);
     qp = pos - p;
@@ -2511,7 +2511,7 @@ ControlUINode::checkPlaneParametersSign(const vector<double> &position,
         plane_parameters[2] = -plane_parameters[2];
         plane_parameters[3] = -plane_parameters[3];
     }
-    DEBUG_MSG << print1dVector(plane_parameters, "[ DEBUG] [checkPlaneParametersSign] New Plane Parameters");
+    DEBUG_MSG << print1dVector(plane_parameters, "[checkPlaneParametersSign] New Plane Parameters");
     PRINT_DEBUG_MESSAGE(5);
     cout << "[ INFO] [checkPlaneParametersSign] Completed\n";
     return ;
@@ -2559,8 +2559,8 @@ ControlUINode::adjustYawToCurrentPlane()
 {
     cout << "[ INFO] [adjustYawToCurrentPlane] Started\n";
     getCurrentPositionOfDrone();
-    DEBUG_MSG << print1dVector(_node_current_pos_of_drone, "[ INFO] [adjustYawToCurrentPlane] Current position of drone");
-    PRINT_DEBUG_MESSAGE(5);
+    LOG_MSG << print1dVector(_node_current_pos_of_drone, "[adjustYawToCurrentPlane] Current position of drone");
+    PRINT_LOG_MESSAGE(5);
     _node_dest_pos_of_drone.clear();
     _node_dest_pos_of_drone.push_back(0.0);
     _node_dest_pos_of_drone.push_back(1.0);
@@ -2598,10 +2598,11 @@ ControlUINode::adjustTopBottomEdges()
     cout << "[ INFO] [adjustTopBottomEdges] Started\n";
     float step_distance;
     float point_distance, height;
-    DEBUG_MSG << print1dVector(this_plane_parameters, "[ DEBUG] [adjustTopBottomEdges] Sig PP");
-    print1dVector(this_continuous_bounding_box_points, "[ DEBUG] [adjustTopBottomEdges] Sig CBB");
+    DEBUG_MSG << print1dVector(this_plane_parameters, "[adjustTopBottomEdges] Sig PP");
+    DEBUG_MSG << print1dVector(this_continuous_bounding_box_points, "[adjustTopBottomEdges] Sig CBB");
+    PRINT_DEBUG_MESSAGE(5);
     getCurrentPositionOfDrone();
-    DEBUG_MSG << print1dVector(_node_current_pos_of_drone, "[ DEBUG] [adjustTopBottomEdges] Current position of drone");
+    DEBUG_MSG << print1dVector(_node_current_pos_of_drone, "[adjustTopBottomEdges] Current position of drone");
     PRINT_DEBUG_MESSAGE(5);
     point_distance = getPointToPlaneDistance(this_plane_parameters, _node_current_pos_of_drone);
     cout << "[ DEBUG] [adjustTopBottomEdges] Distance from the plane: " << point_distance << "\n";
@@ -2619,7 +2620,7 @@ ControlUINode::adjustTopBottomEdges()
         moveDroneByMeasure(step_distance, MOVE_DIRECTIONS::FORWARD);
     }
     getCurrentPositionOfDrone();
-    DEBUG_MSG << print1dVector(_node_current_pos_of_drone, "[ DEBUG] [adjustTopBottomEdges] Current position of drone");
+    DEBUG_MSG << print1dVector(_node_current_pos_of_drone, "[adjustTopBottomEdges] Current position of drone");
     PRINT_DEBUG_MESSAGE(5);
     if(!_fixed_height_set)
     {
@@ -2740,14 +2741,14 @@ ControlUINode::captureTheCurrentPlane()
         test_plane_parameters.push_back(visited_plane_parameters[i]);
     }
     test_plane_parameters.push_back(this_plane_parameters);
-    DEBUG_MSG << print2dVector(visited_plane_parameters, "[ DEBUG] [captureTheCurrentPlane] All planes visited completely");
-    DEBUG_MSG << print2dVector(test_plane_parameters, "[ DEBUG] [captureTheCurrentPlane] All planes visited completely including the current one");
+    DEBUG_MSG << print2dVector(visited_plane_parameters, "[captureTheCurrentPlane] All planes visited completely");
+    DEBUG_MSG << print2dVector(test_plane_parameters, "[captureTheCurrentPlane] All planes visited completely including the current one");
     PRINT_DEBUG_MESSAGE(5);
     if(_node_completed_number_of_planes == 0 && _stage_of_plane_observation)
     {
         cout << "[ INFO] [captureTheCurrentPlane] Checking if adjustment is required\n";
         getCurrentPositionOfDrone();
-        DEBUG_MSG << print1dVector(_node_current_pos_of_drone, "[ DEBUG] [captureTheCurrentPlane] Current position of drone");
+        DEBUG_MSG << print1dVector(_node_current_pos_of_drone, "[captureTheCurrentPlane] Current position of drone");
         PRINT_DEBUG_MESSAGE(5);
         Point3f top_mid = (this_continuous_bounding_box_points[0]+this_continuous_bounding_box_points[1]);
         top_mid.x = top_mid.x/(float)2.0;
@@ -2837,10 +2838,10 @@ ControlUINode::captureTheCurrentPlane()
         {
             image_gui->WriteInfoToFile(visited_continuous_bounding_box_points[i], visited_plane_parameters[i], i+1, filename);
         }
-        DEBUG_MSG << print2dVector(visited_plane_parameters, "[ INFO] [captureTheCurrentPlane] All Plane Parameters");
-        DEBUG_MSG << print2dVector(visited_continuous_bounding_box_points, "[ INFO] [captureTheCurrentPlane] All Plane BBP");
-        DEBUG_MSG << print2dVector(visited_motion_points, "[ INFO] [captureTheCurrentPlane] All motion points");
-        PRINT_DEBUG_MESSAGE(5);
+        LOG_MSG << print2dVector(visited_plane_parameters, "[captureTheCurrentPlane] All Plane Parameters");
+        LOG_MSG << print2dVector(visited_continuous_bounding_box_points, "[captureTheCurrentPlane] All Plane BBP");
+        LOG_MSG << print2dVector(visited_motion_points, "[captureTheCurrentPlane] All motion points");
+        PRINT_LOG_MESSAGE(5);
     }
     else
     {
@@ -2894,9 +2895,9 @@ ControlUINode::adjustForNextCapture()
             test_plane_parameters.push_back(visited_plane_parameters[i]);
         }
         test_plane_parameters.push_back(this_plane_parameters);
-        DEBUG_MSG << print2dVector(visited_plane_parameters, "[ INFO] [adjustForNextCapture] All planes visited completely");
-        DEBUG_MSG << print2dVector(test_plane_parameters, "[ INFO] [adjustForNextCapture] All planes visited completely including the current one");
-        PRINT_DEBUG_MESSAGE(5);
+        LOG_MSG << print2dVector(visited_plane_parameters, "[adjustForNextCapture] All planes visited completely");
+        LOG_MSG << print2dVector(test_plane_parameters, "[adjustForNextCapture] All planes visited completely including the current one");
+        PRINT_LOG_MESSAGE(5);
         if(_node_completed_number_of_planes == _node_number_of_planes-1)
         {
             cout << "[ INFO] [adjustForNextCapture] Observe the plane without rotation\n";
@@ -2987,9 +2988,9 @@ ControlUINode::adjustForNextCapture()
             test_plane_parameters.push_back(visited_plane_parameters[i]);
         }
         test_plane_parameters.push_back(this_plane_parameters);
-        DEBUG_MSG << print2dVector(visited_plane_parameters, "[ INFO] [adjustForNextCapture] All planes visited completely");
-        DEBUG_MSG << print2dVector(test_plane_parameters, "[ INFO] [adjustForNextCapture] All planes visited completely including the current one");
-        PRINT_DEBUG_MESSAGE(5);
+        LOG_MSG << print2dVector(visited_plane_parameters, "[adjustForNextCapture] All planes visited completely");
+        LOG_MSG << print2dVector(test_plane_parameters, "[adjustForNextCapture] All planes visited completely including the current one");
+        PRINT_LOG_MESSAGE(5);
         if(_node_completed_number_of_planes == _node_number_of_planes-1)
         {
             cout << "[ DEBUG] [adjustForNextCapture] Observe the plane without rotation\n";
@@ -3027,8 +3028,8 @@ ControlUINode::adjustForNextCapture()
             // _is_plane_covered = false;
             _is_big_plane = true;
             getCurrentPositionOfDrone();
-            DEBUG_MSG << print1dVector(_node_current_pos_of_drone, "[ INFO] [adjustForNextCapture] Current position of drone");
-            PRINT_DEBUG_MESSAGE(5);
+            LOG_MSG << print1dVector(_node_current_pos_of_drone, "[adjustForNextCapture] Current position of drone");
+            PRINT_LOG_MESSAGE(5);
             cout << "[ INFO] The plane in inspection is a big one. Restoring the yaw back to complete this plane\n";
             designPathToChangeYaw(_node_current_pos_of_drone, _node_current_pos_of_drone[3]+(_next_plane_angle/5.0));
             moveDroneViaSetOfPoints(_interm_path);
@@ -3038,8 +3039,8 @@ ControlUINode::adjustForNextCapture()
     {
         cout << "[ DEBUG] [adjustForNextCapture] VPP size: " << visited_plane_parameters.size() << "\n";
         assert(visited_plane_parameters.size() == visited_continuous_bounding_box_points.size());
-        DEBUG_MSG << print2dVector(visited_plane_parameters, "[ DEBUG] [adjustForNextCapture] VPP");
-        DEBUG_MSG << print2dVector(visited_continuous_bounding_box_points, "[ DEBUG] [adjustForNextCapture] VCBB");
+        DEBUG_MSG << print2dVector(visited_plane_parameters, "[adjustForNextCapture] VPP");
+        DEBUG_MSG << print2dVector(visited_continuous_bounding_box_points, "[adjustForNextCapture] VCBB");
         PRINT_DEBUG_MESSAGE(5);
         string filename = "Plane_Info.txt";
         cout << "[ DEBUG] [adjustForNextCapture] Writing info gathered to " << filename << "\n";
@@ -3047,10 +3048,10 @@ ControlUINode::adjustForNextCapture()
         {
             image_gui->WriteInfoToFile(visited_continuous_bounding_box_points[i], visited_plane_parameters[i], i+1, filename);
         }
-        DEBUG_MSG << print2dVector(visited_plane_parameters, "[ INFO] [adjustForNextCapture] All Plane Parameters");
-        DEBUG_MSG << print2dVector(visited_continuous_bounding_box_points, "[ INFO] [adjustForNextCapture] All Plane BBP");
-        DEBUG_MSG << print2dVector(visited_motion_points, "[ INFO] [adjustForNextCapture] All motion points");
-        PRINT_DEBUG_MESSAGE(5);
+        LOG_MSG << print2dVector(visited_plane_parameters, "[adjustForNextCapture] All Plane Parameters");
+        LOG_MSG << print2dVector(visited_continuous_bounding_box_points, "[adjustForNextCapture] All Plane BBP");
+        LOG_MSG << print2dVector(visited_motion_points, "[adjustForNextCapture] All motion points");
+        PRINT_LOG_MESSAGE(5);
         cout << "[ INFO] [adjustForNextCapture] All planes are covered!\n";
         cout << "[ INFO] [adjustForNextCapture] Landing the quadcopter\n";
         sendLand();
@@ -3060,7 +3061,7 @@ ControlUINode::adjustForNextCapture()
     {
             cout << "[ INFO] [adjustForNextCapture] Current plane is covered. All planes are covered\n";
             cout << "[ DEBUG] [adjustForNextCapture] VPP: \n";
-            DEBUG_MSG << print2dVector(visited_plane_parameters, "[ DEBUG] [adjustForNextCapture] Visited plane parameters");
+            DEBUG_MSG << print2dVector(visited_plane_parameters, "[adjustForNextCapture] Visited plane parameters");
             PRINT_DEBUG_MESSAGE(5);
             cout << "[ INFO] [adjustForNextCapture] Aligning quadcoter to next plane\n";
             _is_adjusted = true;
@@ -3250,16 +3251,18 @@ ControlUINode::alignQuadcopterToNextPlaneAdvanced()
                                             this_plane_parameters[1], this_plane_parameters[2]);
                 cout << "[ DEBUG] [alignQuadcopterToNextPlaneAdvanced] Normal new plane: " << normal_new_plane << "\n";
                 getCurrentPositionOfDrone();
-                DEBUG_MSG << print1dVector(_node_current_pos_of_drone, "[ DEBUG] [alignQuadcopterToNextPlaneAdvanced] Current position of drone");
+                DEBUG_MSG << print1dVector(_node_current_pos_of_drone, "[alignQuadcopterToNextPlaneAdvanced] Current position of drone");
+                PRINT_DEBUG_MESSAGE(5);
                 _node_dest_pos_of_drone.clear();
                 _node_dest_pos_of_drone.push_back(0.0);
                 _node_dest_pos_of_drone.push_back(1.0);
                 _node_dest_pos_of_drone.push_back(0.0);
                 _node_dest_pos_of_drone.push_back(0.0);
                 convertWRTQuadcopterOrigin(_node_current_pos_of_drone, _node_dest_pos_of_drone, _node_ac_dest_pos_of_drone);
-                DEBUG_MSG << print1dVector(_node_current_pos_of_drone, "[ INFO] [alignQuadcopterToNextPlaneAdvanced] Current position of drone");
-                DEBUG_MSG << print1dVector(_node_dest_pos_of_drone, "[ DEBUG] [alignQuadcopterToNextPlaneAdvanced] Dest position of drone");
-                DEBUG_MSG << print1dVector(_node_ac_dest_pos_of_drone, "[ INFO] [alignQuadcopterToNextPlaneAdvanced] Actual dest position of drone");
+                LOG_MSG << print1dVector(_node_current_pos_of_drone, "[alignQuadcopterToNextPlaneAdvanced] Current position of drone");
+                DEBUG_MSG << print1dVector(_node_dest_pos_of_drone, "[alignQuadcopterToNextPlaneAdvanced] Dest position of drone");
+                LOG_MSG << print1dVector(_node_ac_dest_pos_of_drone, "[alignQuadcopterToNextPlaneAdvanced] Actual dest position of drone");
+                PRINT_LOG_MESSAGE(5);
                 PRINT_DEBUG_MESSAGE(5);
                 Point3f pYAxis(_node_ac_dest_pos_of_drone[0], _node_ac_dest_pos_of_drone[1], _node_ac_dest_pos_of_drone[2]);
                 Point3f pOrigin(_node_current_pos_of_drone[0], _node_current_pos_of_drone[1], _node_current_pos_of_drone[2]);
@@ -3568,9 +3571,9 @@ ControlUINode::testUtility(int test_no)
         plane_1 = bestFitPlane(_in_points);
         cout << "[ INFO] [testUtility] fitPlane3D\n";
         fitPlane3D(_in_points, plane_2);
-        DEBUG_MSG << print1dVector(plane_1, "[ INFO] [testUtility] 4 matrix");
-        DEBUG_MSG << print1dVector(plane_2, "[ INFO] [testUtility] 3 matrix");
-        PRINT_DEBUG_MESSAGE(5);
+        LOG_MSG << print1dVector(plane_1, "[testUtility] 4 matrix");
+        LOG_MSG << print1dVector(plane_2, "[testUtility] 3 matrix");
+        PRINT_LOG_MESSAGE(5);
     }
     else if(test_no == 9)
     {
