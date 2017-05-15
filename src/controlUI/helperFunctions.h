@@ -346,45 +346,50 @@ print2dVector(const vector< vector<T> > &two_d_vector, string vec_name = "vector
  * @brief
  * @details
  */
-inline static void
+inline static string
 print1dVector(const vector<Point3f> &one_d_vector, string vec_name = "vector",
 			  string style="matlab")
 {
-	cout << vec_name << "\n";
+	stringstream output_string;
+	output_string << vec_name;
 	if (style == "matlab")
 	{
-		cout << "[...\n";
+		output_string << "\n[...\n";
 		for (unsigned int i = 0; i < one_d_vector.size(); ++i)
 		{
-			cout << "\t[ ";
-			cout << one_d_vector[i].x << "; "
+			output_string << "\t[ ";
+			output_string << one_d_vector[i].x << "; "
 					<< one_d_vector[i].y << "; ";
 			if(i!=one_d_vector.size()-1)
-				cout << one_d_vector[i].z << "], ...\n";
+				output_string << one_d_vector[i].z << "], ...\n";
 			else
-				cout << one_d_vector[i].z << "] ...\n";
+				output_string << one_d_vector[i].z << "] ...\n";
 		}
-		cout << "]\n";
+		output_string << "]\n";
 	}
 	else if (style == "normal")
 	{
+		output_string << ": ";
 		for (unsigned int i = 0; i < one_d_vector.size(); ++i)
 		{
-			cout << "(" << one_d_vector[i].x << ", " 
+			output_string << "\t(" << one_d_vector[i].x << ", " 
 				<< one_d_vector[i].y << ", " <<
 				one_d_vector[i].z << ")\n";
 		}
 	}
 	else
 	{
+		output_string << ": ";
 		for (unsigned int i = 0; i < one_d_vector.size(); ++i)
 		{
-			cout << "(" << one_d_vector[i].x << ", " 
+			output_string << "\t(" << one_d_vector[i].x << ", " 
 				<< one_d_vector[i].y << ", " <<
 				one_d_vector[i].z << ")\n";
 		}
 	}
-	return ;
+	string answer = output_string.str();
+	output_string.str(string());
+	return answer;
 }
 
 /**
@@ -392,48 +397,51 @@ print1dVector(const vector<Point3f> &one_d_vector, string vec_name = "vector",
  * @details
  */
 template<typename T>
-inline static void
+inline static string
 print1dVector(const vector<T> &one_d_vector, string vec_name = "vector",
 			  string style="matlab")
 {
-	cout << vec_name << "\n";
+	stringstream output_string;
+	output_string << vec_name << "\n";
 	if (style == "matlab")
 	{
-		cout << "[...\n\t[ ";
+		output_string << "[...\n\t[ ";
 		for (unsigned int i = 0; i < one_d_vector.size(); ++i)
 		{
 			if(i!=one_d_vector.size()-1)
-				cout << one_d_vector[i] << "; ";
+				output_string << one_d_vector[i] << "; ";
 			else
-				cout << one_d_vector[i] << "";
+				output_string << one_d_vector[i] << "";
 		}
-		cout << "]...\n]\n";
+		output_string << "]...\n]\n";
 	}
 	else if (style == "normal")
 	{
-		cout << "(";
+		output_string << "(";
 		for (unsigned int i = 0; i < one_d_vector.size(); ++i)
 		{
 			if(i!=one_d_vector.size()-1)
-				cout << one_d_vector[i] << ", ";
+				output_string << one_d_vector[i] << ", ";
 			else
-				cout << one_d_vector[i] << "";
+				output_string << one_d_vector[i] << "";
 		}
-		cout << ")\n";
+		output_string << ")\n";
 	}
 	else
 	{
-		cout << "(";
+		output_string << "(";
 		for (unsigned int i = 0; i < one_d_vector.size(); ++i)
 		{
 			if(i!=one_d_vector.size()-1)
-				cout << one_d_vector[i] << ", ";
+				output_string << one_d_vector[i] << ", ";
 			else
-				cout << one_d_vector[i] << "";
+				output_string << one_d_vector[i] << "";
 		}
-		cout << ")\n";
+		output_string << ")\n";
 	}
-	return ;
+	string answer = output_string.str();
+	output_string.str(string());
+	return answer;
 }
 
 
