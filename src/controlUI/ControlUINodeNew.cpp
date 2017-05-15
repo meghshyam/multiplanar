@@ -2284,16 +2284,50 @@ ControlUINode::doJLinkage()
     return ;
 }
 
+void
+ControlUINode::doJLinkage(const vector<int> &ccPoints, const vector< vector<int> > &pointsClicked)
+{
+    cout << "[ DEBUG] [doJLinkage] Started\n";
+    clear2dVector(jlink_all_plane_parameters);
+    clear2dVector(jlink_all_continuous_bounding_box_points);
+    clear2dVector(jlink_three_d_points);
+    jlink_all_percentage_of_each_plane.clear();
+    cout << "[ DEBUG] [doJLinkage] Calling JLinkage\n";
+    getMultiplePlanes3d (ccPoints, pointsClicked, jlink_all_plane_parameters, 
+                        jlink_all_continuous_bounding_box_points, jlink_three_d_points, 
+                        jlink_all_percentage_of_each_plane);
+    print2dVector(jlink_all_plane_parameters, "[ DEBUG] [doJLinkage] JLink Plane Params");
+    print2dVector(jlink_all_continuous_bounding_box_points, "[ DEBUG] [doJLinkage] JLink CBB");
+    print1dVector(jlink_all_percentage_of_each_plane, "[ DEBUG] [doJLinkage] JLink Pecentage");
+    print2dVector(visited_plane_parameters, "[ DEBUG] [doJLinkage] Visited PP");
+    print2dVector(visited_continuous_bounding_box_points, "[ DEBUG] [doJLinkage] Visited CBB");
+    _sig_plane_index = getCurrentPlaneIndex(visited_plane_parameters, jlink_all_plane_parameters, jlink_all_percentage_of_each_plane);
+    _actual_plane_index = _sig_plane_index;
+    if(_actual_plane_index == -2) {_actual_plane_index = 0;}
+    if(_actual_plane_index == -1) {_actual_plane_index = (int)jlink_all_plane_parameters.size()-1;}
+    cout << "[ DEBUG] Sig Plane Index: " << _sig_plane_index << ", Actual Plane Index: " << _actual_plane_index << "\n";
+    //assert(_sig_plane_index >= 0);
+    getCompleteCurrentPlaneInfo(jlink_all_plane_parameters, jlink_all_continuous_bounding_box_points,
+                                jlink_three_d_points,
+                                jlink_all_percentage_of_each_plane, _actual_plane_index,
+                                this_plane_parameters, this_continuous_bounding_box_points,
+                                this_sorted_3d_points);
+    print1dVector(this_plane_parameters, "[ DEBUG] [doJLinkage] Sig PP");
+    print1dVector(this_continuous_bounding_box_points, "[ DEBUG] [doJLinkage] Sig CBB");
+    cout << "[ DEBUG] [doJLinkage] Completed\n";
+    return ;
+}
+
 
 void
 ControlUINode::getCompleteCurrentPlaneInfo(const vector< vector<float> > &plane_parameters,
-                                                                                    const vector< vector<Point3f> > &cbb,
-                                                                                    const vector< vector<Point3f> > &points,
-                                                                                    const vector<float> &percPlane,
-                                                                                    int currPlaneIndex,
-                                                                                    vector<float> &out_plane_parameters,
-                                                                                    vector<Point3f> &out_cbb,
-                                                                                    vector<Point3f> &out_3d_points)
+                                            const vector< vector<Point3f> > &cbb,
+                                            const vector< vector<Point3f> > &points,
+                                            const vector<float> &percPlane,
+                                            int currPlaneIndex,
+                                            vector<float> &out_plane_parameters,
+                                            vector<Point3f> &out_cbb,
+                                            vector<Point3f> &out_3d_points)
 {
     cout << "[ INFO] [getCompleteCurrentPlaneInfo] Started\n";
     if(currPlaneIndex < 0 && currPlaneIndex != -1)
@@ -2419,8 +2453,8 @@ ControlUINode::getCompleteCurrentPlaneInfo(const vector< vector<float> > &plane_
 
 void
 ControlUINode::checkPlaneParametersSign(const vector<double> &position, 
-                                                                                const vector<Point3f> &points,
-                                                                                vector<float> &plane_parameters)
+                                        const vector<Point3f> &points,
+                                        vector<float> &plane_parameters)
 {
     assert(points.size() >= 3);
     cout << "[ INFO] [checkPlaneParametersSign] Started\n";
@@ -2667,7 +2701,7 @@ ControlUINode::captureTheCurrentPlane()
     cout << "[ INFO] [captureTheCurrentPlane] Get multiple planes from the clicked points using JLinkage\n";
     // Calls JLinkage and finds all planes within the clicked region
     vector< vector<float> > test_plane_parameters;
-    doJLinkage();
+    doJLinkage(cc_points, points_clicked);
     // Render significant plane
     image_gui->setContinuousBoundingBoxPoints(jlink_all_continuous_bounding_box_points);
     image_gui->setSigPlaneBoundingBoxPoints(this_continuous_bounding_box_points);

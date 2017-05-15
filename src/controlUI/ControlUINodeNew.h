@@ -1075,6 +1075,9 @@ class ControlUINode
         doJLinkage();
 
         void
+        doJLinkage(const vector<int> &ccPoints, const vector< vector<int> > &pointsClicked);
+
+        void
         augmentInfo();
 
         void
