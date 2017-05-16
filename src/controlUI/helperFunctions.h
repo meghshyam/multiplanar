@@ -370,23 +370,49 @@ print2dVector(const vector< vector<T> > &two_d_vector, string vec_name = "vector
 				}
 			}
 			if(i!=two_d_vector.size()-1)
-			{
 				output_string << "], ...\n";
-			}
 			else
-			{
 				output_string << "] ...\n";
-			}
 		}
 		output_string << "]\n";
 	}
 	else if (style == "normal")
 	{
-
+		output_string << ": ";
+		for (unsigned int i = 0; i < two_d_vector.size(); ++i)
+		{
+			for (unsigned int j = 0; j < two_d_vector[i].size(); ++j)
+			{
+				output_string << "\t(";
+				output_string << two_d_vector[i][j] << ", "
+						<< two_d_vector[i][j] << ", ";
+				if(j!=two_d_vector[i].size()-1)
+					output_string << two_d_vector[i][j] << ")\n";
+				else
+					output_string << two_d_vector[i][j] << ")\n";
+			}
+			output_string << "\n";
+		}
+		output_string << "\n";
 	}
 	else
 	{
-
+		output_string << ": ";
+		for (unsigned int i = 0; i < two_d_vector.size(); ++i)
+		{
+			for (unsigned int j = 0; j < two_d_vector[i].size(); ++j)
+			{
+				output_string << "\t(";
+				output_string << two_d_vector[i][j] << ", "
+						<< two_d_vector[i][j] << ", ";
+				if(j!=two_d_vector[i].size()-1)
+					output_string << two_d_vector[i][j] << ")\n";
+				else
+					output_string << two_d_vector[i][j] << ")\n";
+			}
+			output_string << "\n";
+		}
+		output_string << "\n";
 	}
 	string answer = output_string.str();
 	output_string.str(string());
