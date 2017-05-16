@@ -86,8 +86,9 @@ TopView::init()
 void
 TopView::originalScreen()
 {
-	DEBUG_MSG << "[ ACTION] Default Screen Called\n";
-	DEBUG_MSG << "[ DEBUG] Creating Menu\n";
+	DEBUG_MSG(10) << "[ ACTION] Default Screen Called\n";
+	DEBUG_MSG(10) << "[ DEBUG] Creating Menu\n";
+	PRINT_DEBUG_MESSAGE(10);
 
 	menuGenerateButtonBoxes();
 	menuDrawOpenSurface();
@@ -141,31 +142,31 @@ TopView::myMouse(int button, int state, int x, int y)
 	{
 		if( (button == GLUT_LEFT_BUTTON) && (state == GLUT_DOWN) )
 		{
-			DEBUG_MSG << "[ MOUSE] Left Mouse Button Down\n";
+			DEBUG_MSG(10) << "[ MOUSE] Left Mouse Button Down\n";
 			if( (x >= 20.0) && (x <= 780.0) && (y >= 50.0) && (y <= 500.0) )
 			{
 				_points.push_back(Point2f(x, y));
 				_temp_points.push_back(Point2f(x, y));
-				DEBUG_MSG << "LBD0: x: " << x << ", y: " << y << "\n";
+				DEBUG_MSG(10) << "LBD0: x: " << x << ", y: " << y << "\n";
 			}
 			else
 			{
-				DEBUG_MSG << "LBD0: Point not in range: (" << x << ", " << y << ")\n";
+				DEBUG_MSG(10) << "LBD0: Point not in range: (" << x << ", " << y << ")\n";
 			}
 		}
 	}
 	if( (button == GLUT_LEFT_BUTTON) && (state == GLUT_UP) )
 	{
-		DEBUG_MSG << "[ MOUSE] Left Mouse Button Up\n";
+		DEBUG_MSG(10) << "[ MOUSE] Left Mouse Button Up\n";
 		if( (x >= 20.0) && (x <= 780.0) && (y >= 50.0) && (y <= 500.0) )
 		{
 			_points.push_back(Point2f(x, y));
 			_temp_points.push_back(Point2f(x, y));
-			DEBUG_MSG << "LBD: x: " << x << ", y: " << y << "\n";
+			DEBUG_MSG(10) << "LBD: x: " << x << ", y: " << y << "\n";
 		}
 		else
 		{
-			DEBUG_MSG << "LBU: Point not in range: (" << x << ", " << y << ")\n";
+			DEBUG_MSG(10) << "LBU: Point not in range: (" << x << ", " << y << ")\n";
 		}
 		checkMenu(x, y);
 	}
@@ -177,7 +178,7 @@ TopView::myPressedMove(int x, int y)
 	// Bottom Left corner of the screen is: (0, 0);
 	// Top right corner of the screen is: (this->_window_width, this->_window_height)
 	// Scaling of window not done
-	DEBUG_MSG << "[ KEY] Drag\n";
+	DEBUG_MSG(10) << "[ KEY] Drag\n";
 	int yy = glutGet(GLUT_WINDOW_HEIGHT);
 	glClearColor(1.0f, 1.0f, 1.0f, 0.0);
 	glClear(GL_COLOR_BUFFER_BIT);
@@ -188,7 +189,7 @@ TopView::myPressedMove(int x, int y)
 	glLoadIdentity();
 	glPointSize(5.0);
 	originalScreen();
-	DEBUG_MSG << "MP: " << x << ", " << yy << ", " << y << ", " << yy-y << "\n";
+	DEBUG_MSG(10) << "MP: " << x << ", " << yy << ", " << y << ", " << yy-y << "\n";
 	if( !( (x >= 20.0) && (x <= 780.0) ) )
 	{
 		if( x < 20.0) x = 20.0;
@@ -223,7 +224,7 @@ TopView::myPressedMove(int x, int y)
 void
 TopView::checkMenu(float x, float y)
 {
-	DEBUG_MSG << "CM\n";
+	DEBUG_MSG(10) << "CM\n";
 	glClearColor(1.0f, 1.0f, 1.0f, 0.0);
 	glClear(GL_COLOR_BUFFER_BIT);
 	glMatrixMode(GL_PROJECTION);
@@ -234,7 +235,7 @@ TopView::checkMenu(float x, float y)
 	glPointSize(5.0);
 	if( (x >= 170.0) && (x <= 300.0) && (y >= 515.0) && (y <= 535.0) )
 	{
-		DEBUG_MSG << "[ ACTION] Draw Open Surface\n";
+		DEBUG_MSG(10) << "[ ACTION] Draw Open Surface\n";
 		drawing_option = SHAPES::POLYLINE;
 		_type_of_surface = SURFACES::OPEN;
 		_viewing_direction = VIEWING_DIRECTION::FRONT;
@@ -245,7 +246,7 @@ TopView::checkMenu(float x, float y)
 	}
 	else if( (x >= 20.0) && (x <= 150.0) && (y >= 515.0) && (y <= 535.0) )
 	{
-		DEBUG_MSG << "[ ACTION] Draw Closed Surface\n";
+		DEBUG_MSG(10) << "[ ACTION] Draw Closed Surface\n";
 		drawing_option = SHAPES::POLYGON;
 		_type_of_surface = SURFACES::CLOSED;
 		_viewing_direction = VIEWING_DIRECTION::OUT;
@@ -256,7 +257,7 @@ TopView::checkMenu(float x, float y)
 	}
 	else if( (x >= 470.0) && (x <= 600.0) && (y >= 540.0) && (y <= 560.0) )
 	{
-		DEBUG_MSG << "[ ACTION] Clear Screen\n";
+		DEBUG_MSG(10) << "[ ACTION] Clear Screen\n";
 		originalScreen();
 		clearScreen();
 		glFlush();
@@ -265,7 +266,7 @@ TopView::checkMenu(float x, float y)
 	else if( (x >= 170.0) && (x <= 300.0) && (y >= 540.0) && (y <= 560.0) )
 	{
 		originalScreen();
-		DEBUG_MSG << "[ ACTION] Delete Last Line\n";
+		DEBUG_MSG(10) << "[ ACTION] Delete Last Line\n";
 		if (_points.size() > 2)
 		{
 			_points.pop_back();
@@ -280,7 +281,7 @@ TopView::checkMenu(float x, float y)
 	}
 	else if( (x >= 320.0) && (x <= 450.0) && (y >= 540.0) && (y <= 560.0) )
 	{
-		DEBUG_MSG << "[ ACTION] Calculating angles\n";
+		DEBUG_MSG(10) << "[ ACTION] Calculating angles\n";
 		originalScreen();
 		myObjectDrawing();
 		calculateAngles();
@@ -289,8 +290,8 @@ TopView::checkMenu(float x, float y)
 	}
 	else if( (x >= 20.0) && (x <= 150.0) && (y >= 540.0) && (y <= 560.0) )
 	{
-		DEBUG_MSG << "[ ACTION] Changing the viewing direction\n";
-		DEBUG_MSG << "VD: " << _viewing_direction << "\n";
+		DEBUG_MSG(10) << "[ ACTION] Changing the viewing direction\n";
+		DEBUG_MSG(10) << "VD: " << _viewing_direction << "\n";
 		if(_type_of_surface == SURFACES::OPEN)
 		{
 			if(_viewing_direction == VIEWING_DIRECTION::FRONT)
@@ -320,7 +321,7 @@ TopView::checkMenu(float x, float y)
 	}
 	else if( (x >= 620.0) && (x <= 750.0) && (y >= 540.0) && (y <= 560.0) )
 	{
-		DEBUG_MSG << "[ CLICK_ACTION] Quitting the application\n";
+		DEBUG_MSG(10) << "[ CLICK_ACTION] Quitting the application\n";
 		calculateAngles();
 		originalScreen();
 		_points.clear();
@@ -357,7 +358,7 @@ TopView::checkMenu(float x, float y)
 	}
 	else
 	{
-		DEBUG_MSG << "[ CLICK_ACTION] No action available here\n";
+		DEBUG_MSG(10) << "[ CLICK_ACTION] No action available here\n";
 		originalScreen();
 		myObjectDrawing();
 		glFlush();
@@ -376,7 +377,7 @@ TopView::myObjectDrawing()
 	else if(drawing_option == SHAPES::POLYGON)
 		myDisplay(GL_LINE_LOOP);
 	else
-		DEBUG_MSG << "Wrong Direction\n";
+		DEBUG_MSG(10) << "Wrong Direction\n";
 }
 
 /**
@@ -390,7 +391,7 @@ TopView::myObjectDrawingTemp()
 	else if(drawing_option == SHAPES::POLYGON)
 		myDisplay(GL_LINE_STRIP);
 	else
-		DEBUG_MSG << "Wrong Direction\n";
+		DEBUG_MSG(10) << "Wrong Direction\n";
 }
 
 /**
@@ -403,7 +404,7 @@ TopView::calculateAngles()
 	direction.clear();
 	Point2f point1, point2, point3;
 	// Reference: http://www.math-principles.com/2013/07/derivation-angle-between-two-lines.html
-	DEBUG_MSG << _viewing_direction << "\n";
+	DEBUG_MSG(10) << _viewing_direction << "\n";
 	if( _points.size() >= 3 )
 	{
 		for (int i = 1; i < _points.size()-1; ++i)
@@ -630,16 +631,16 @@ TopView::clearScreen()
 void
 TopView::myDisplay(GLenum mode)
 {
-	DEBUG_MSG << "[FUNC] myDisplay Function\n";
+	DEBUG_MSG(10) << "[FUNC] myDisplay Function\n";
 
 	if(_points.size() >= 1)
 	{
-		DEBUG_MSG << "Current Points in the points buffer\n";
+		DEBUG_MSG(10) << "Current Points in the points buffer\n";
 		for (size_t i = 0; i < _points.size(); i += 1)
 		{
-			DEBUG_MSG << "(" << _points[i].x << ", " << _points[i].y << "); ";
+			DEBUG_MSG(10) << "(" << _points[i].x << ", " << _points[i].y << "); ";
 		}
-		DEBUG_MSG << "\n";
+		DEBUG_MSG(10) << "\n";
 		//cout << points.size() << "\n";
 		if(_points.size() >= 1)
 			drawPoints(_points);
@@ -788,13 +789,13 @@ TopView::menuShowDrawingMode()
 	if(drawing_option == SHAPES::POLYLINE)
 	{
 		draw_message += draw_mode[SHAPES::POLYLINE];
-		DEBUG_MSG << draw_message << "\n";
+		DEBUG_MSG(10) << draw_message << "\n";
 		drawMessage(draw_message, 600.0, 10.0);
 	}
 	else if(drawing_option == SHAPES::POLYGON)
 	{
 		draw_message += draw_mode[SHAPES::POLYGON];
-		DEBUG_MSG << draw_message << "\n";
+		DEBUG_MSG(10) << draw_message << "\n";
 		drawMessage(draw_message, 600.0, 10.0);
 	}
 	else

@@ -36,7 +36,7 @@ void setDebug(int level)
 {
     DEBUG_ACTIVATE = true; debugMessage.str(string());
     DEBUG_LEVEL = level;
-    DEBUG_MSG << "DEBUG IS ACTIVATED WITH LEVEL " << DEBUG_LEVEL << ".\n";
+    DEBUG_MSG(1) << "DEBUG IS ACTIVATED WITH LEVEL " << DEBUG_LEVEL << ".\n";
     printDebugMessage(1, debugMessage);
 }
 
@@ -46,7 +46,7 @@ void setDebug(string filename)
     debugFileOpen = true;
     debugMessage.str(string());
     debugOutFile.open(debugFile.c_str(), ofstream::out);
-    DEBUG_MSG << "DEBUG TO FILE \"" << debugFile << "\" ACTIVATED.\n";
+    DEBUG_MSG(1) << "DEBUG TO FILE \"" << debugFile << "\" ACTIVATED.\n";
     cout << "DEBUG TO FILE \"" << debugFile << "\" ACTIVATED.\n";
     printDebugMessage(1, debugMessage);
 }

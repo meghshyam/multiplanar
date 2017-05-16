@@ -32,7 +32,7 @@ extern string debugFile;
 extern bool debugFileOpen;
 extern ofstream debugOutFile;
 
-#define DEBUG_MSG if(DEBUG_ACTIVATE) debugMessage
+#define DEBUG_MSG(level) if(DEBUG_ACTIVATE && level <= DEBUG_LEVEL) debugMessage
 
 #define SET_DEBUG setDebug()
 #define SET_DEBUG_LEVEL(level) setDebug(level)

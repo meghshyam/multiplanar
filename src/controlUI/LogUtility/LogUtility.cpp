@@ -45,7 +45,7 @@ void setLog(int level)
 {
     LOG_ACTIVATE = true; logMessage.str(string());
     LOG_LEVEL = level;
-    LOG_MSG << "LOG IS ACTIVATED WITH LEVEL " << LOG_LEVEL << ".\n";
+    LOG_MSG(1) << "LOG IS ACTIVATED WITH LEVEL " << LOG_LEVEL << ".\n";
     printLogMessage(1, logMessage);
 }
 
@@ -55,7 +55,7 @@ void setLog(string filename)
     logFileOpen = true;
     logMessage.str(string());
     logOutFile.open(logFile.c_str(), ofstream::out);
-    LOG_MSG << "LOG TO FILE \"" << logFile << "\" ACTIVATED.\n";
+    LOG_MSG(1) << "LOG TO FILE \"" << logFile << "\" ACTIVATED.\n";
     cout << "LOG TO FILE \"" << logFile << "\" ACTIVATED.\n";
     printLogMessage(1, logMessage);
 }

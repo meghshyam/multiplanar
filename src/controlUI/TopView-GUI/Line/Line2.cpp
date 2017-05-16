@@ -206,18 +206,19 @@ double
 Line2f::angleBetweenLines(int viewing_direction, const Line2f &dest_line)
 {
 	double answer = 0.0;
-	DEBUG_MSG << "[ FUNC] angleBetweenLines\n";
-	DEBUG_MSG << "Viewing Direction: " << viewing_direction << "\n";
-	DEBUG_MSG << "This line: ";
-	DEBUG_MSG << "(" << start.x << ", " << start.y << "); ";
-	DEBUG_MSG << "(" << end.x << ", " << end.y << ");\n";
-	DEBUG_MSG << this->angleWithXAxis() << "\n";
-	DEBUG_MSG << "Called line: ";
-	DEBUG_MSG << "(" << dest_line.start.x << ", " << dest_line.start.y << "); ";
-	DEBUG_MSG << "(" << dest_line.end.x << ", " << dest_line.end.y << ");\n";
-	DEBUG_MSG << dest_line.angleWithXAxis() << "\n";
+	DEBUG_MSG(10) << "[ FUNC] angleBetweenLines\n";
+	DEBUG_MSG(10) << "Viewing Direction: " << viewing_direction << "\n";
+	DEBUG_MSG(10) << "This line: ";
+	DEBUG_MSG(10) << "(" << start.x << ", " << start.y << "); ";
+	DEBUG_MSG(10) << "(" << end.x << ", " << end.y << ");\n";
+	DEBUG_MSG(10) << this->angleWithXAxis() << "\n";
+	DEBUG_MSG(10) << "Called line: ";
+	DEBUG_MSG(10) << "(" << dest_line.start.x << ", " << dest_line.start.y << "); ";
+	DEBUG_MSG(10) << "(" << dest_line.end.x << ", " << dest_line.end.y << ");\n";
+	DEBUG_MSG(10) << dest_line.angleWithXAxis() << "\n";
 	answer = -this->angleWithXAxis() + dest_line.angleWithXAxis();
-	DEBUG_MSG << "Answer: " << answer << "\n";
+	DEBUG_MSG(10) << "Answer: " << answer << "\n";
+	PRINT_DEBUG_MESSAGE(10);
 	if(viewing_direction == 0)
 	{
 		int divisor = answer / 360;
@@ -246,17 +247,18 @@ double
 Line2f::angleBetweenLines(const Line2f &dest_line)
 {
 	double answer = 0.0;
-	DEBUG_MSG << "[ FUNC] angleBetweenLines\n";
-	DEBUG_MSG << "This line: ";
-	DEBUG_MSG << "(" << start.x << ", " << start.y << "); ";
-	DEBUG_MSG << "(" << end.x << ", " << end.y << ");\n";
-	DEBUG_MSG << this->angleWithXAxis() << "\n";
-	DEBUG_MSG << "Called line: ";
-	DEBUG_MSG << "(" << dest_line.start.x << ", " << dest_line.start.y << "); ";
-	DEBUG_MSG << "(" << dest_line.end.x << ", " << dest_line.end.y << ");\n";
-	DEBUG_MSG << dest_line.angleWithXAxis() << "\n";
+	DEBUG_MSG(10) << "[ FUNC] angleBetweenLines\n";
+	DEBUG_MSG(10) << "This line: ";
+	DEBUG_MSG(10) << "(" << start.x << ", " << start.y << "); ";
+	DEBUG_MSG(10) << "(" << end.x << ", " << end.y << ");\n";
+	DEBUG_MSG(10) << this->angleWithXAxis() << "\n";
+	DEBUG_MSG(10) << "Called line: ";
+	DEBUG_MSG(10) << "(" << dest_line.start.x << ", " << dest_line.start.y << "); ";
+	DEBUG_MSG(10) << "(" << dest_line.end.x << ", " << dest_line.end.y << ");\n";
+	DEBUG_MSG(10) << dest_line.angleWithXAxis() << "\n";
 	answer = -this->angleWithXAxis() + dest_line.angleWithXAxis();
-	DEBUG_MSG << "Answer: " << answer << "\n";
+	DEBUG_MSG(10) << "Answer: " << answer << "\n";
+	PRINT_DEBUG_MESSAGE(10);
 	int divisor = answer / 360;
 	answer = answer + (360*divisor);
 	return answer;
@@ -283,11 +285,12 @@ Line2f::rotate(const Line2f &line)
 	dest = dest.translate(Point2f(0.0, 0.0));
 	int origin_angle = (int)origin.angleWithXAxis();
 	int dest_angle = (int)dest.angleWithXAxis();
-	DEBUG_MSG << "Origin Line: " << *this;
-	DEBUG_MSG << "Destination Line: " << line;
-	DEBUG_MSG << "Origin Normal Line: " << origin;
-	DEBUG_MSG << "Destination Normal Line: " << dest;
-	DEBUG_MSG << "Origin Angle: " << origin_angle << ", Destination Angle: " << dest_angle << "\n";
+	DEBUG_MSG(10) << "Origin Line: " << *this;
+	DEBUG_MSG(10) << "Destination Line: " << line;
+	DEBUG_MSG(10) << "Origin Normal Line: " << origin;
+	DEBUG_MSG(10) << "Destination Normal Line: " << dest;
+	DEBUG_MSG(10) << "Origin Angle: " << origin_angle << ", Destination Angle: " << dest_angle << "\n";
+	PRINT_DEBUG_MESSAGE(10);
 	if( ( origin_angle >= 180.0 && origin_angle <= 360.0) && (dest_angle >= 0.0 && dest_angle <= 180.0) )
 	{
 		dest_angle = 360.0 + dest_angle;

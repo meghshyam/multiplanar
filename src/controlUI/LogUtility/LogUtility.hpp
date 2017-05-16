@@ -33,7 +33,7 @@ extern ofstream logOutFile;
 extern stringstream logMessage;
 extern stringstream logExceptionMessage;
 
-#define LOG_MSG if(LOG_ACTIVATE) logMessage
+#define LOG_MSG(level) if(LOG_ACTIVATE && level <= LOG_LEVEL) logMessage
 
 #define SET_LOG setLog()
 #define SET_LOG_LEVEL(level) setLog(level)
