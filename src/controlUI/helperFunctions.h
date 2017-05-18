@@ -378,18 +378,17 @@ print2dVector(const vector< vector<T> > &two_d_vector, string vec_name = "vector
 	}
 	else if (style == "normal")
 	{
-		output_string << ": ";
+		output_string << ": \n";
 		for (unsigned int i = 0; i < two_d_vector.size(); ++i)
 		{
+			output_string << "\t[ ";
 			for (unsigned int j = 0; j < two_d_vector[i].size(); ++j)
 			{
-				output_string << "\t(";
-				output_string << two_d_vector[i][j] << ", "
-						<< two_d_vector[i][j] << ", ";
+				output_string << two_d_vector[i][j];
 				if(j!=two_d_vector[i].size()-1)
-					output_string << two_d_vector[i][j] << ")\n";
+					output_string << two_d_vector[i][j] << ", ";
 				else
-					output_string << two_d_vector[i][j] << ")\n";
+					output_string << two_d_vector[i][j] << "]\n";
 			}
 			output_string << "\n";
 		}
@@ -397,18 +396,17 @@ print2dVector(const vector< vector<T> > &two_d_vector, string vec_name = "vector
 	}
 	else
 	{
-		output_string << ": ";
+		output_string << ": \n";
 		for (unsigned int i = 0; i < two_d_vector.size(); ++i)
 		{
+			output_string << "\t[ ";
 			for (unsigned int j = 0; j < two_d_vector[i].size(); ++j)
 			{
-				output_string << "\t(";
-				output_string << two_d_vector[i][j] << ", "
-						<< two_d_vector[i][j] << ", ";
+				output_string << two_d_vector[i][j];
 				if(j!=two_d_vector[i].size()-1)
-					output_string << two_d_vector[i][j] << ")\n";
+					output_string << two_d_vector[i][j] << ", ";
 				else
-					output_string << two_d_vector[i][j] << ")\n";
+					output_string << two_d_vector[i][j] << "]\n";
 			}
 			output_string << "\n";
 		}
@@ -428,10 +426,10 @@ print1dVector(const vector<Point3f> &one_d_vector, string vec_name = "vector",
 			  string style="matlab")
 {
 	stringstream output_string;
-	output_string << vec_name;
+	output_string << vec_name << ":\n";
 	if (style == "matlab")
 	{
-		output_string << "\n[...\n";
+		output_string << "[...\n";
 		for (unsigned int i = 0; i < one_d_vector.size(); ++i)
 		{
 			output_string << "\t[ ";
@@ -446,7 +444,6 @@ print1dVector(const vector<Point3f> &one_d_vector, string vec_name = "vector",
 	}
 	else if (style == "normal")
 	{
-		output_string << ": ";
 		for (unsigned int i = 0; i < one_d_vector.size(); ++i)
 		{
 			output_string << "\t(" << one_d_vector[i].x << ", " 
@@ -456,7 +453,6 @@ print1dVector(const vector<Point3f> &one_d_vector, string vec_name = "vector",
 	}
 	else
 	{
-		output_string << ": ";
 		for (unsigned int i = 0; i < one_d_vector.size(); ++i)
 		{
 			output_string << "\t(" << one_d_vector[i].x << ", " 
@@ -479,7 +475,7 @@ print1dVector(const vector<T> &one_d_vector, string vec_name = "vector",
 			  string style="matlab")
 {
 	stringstream output_string;
-	output_string << vec_name << "\n";
+	output_string << vec_name << ":\n";
 	if (style == "matlab")
 	{
 		output_string << "[...\n\t[ ";
@@ -494,7 +490,7 @@ print1dVector(const vector<T> &one_d_vector, string vec_name = "vector",
 	}
 	else if (style == "normal")
 	{
-		output_string << "(";
+		output_string << "\t[";
 		for (unsigned int i = 0; i < one_d_vector.size(); ++i)
 		{
 			if(i!=one_d_vector.size()-1)
@@ -502,11 +498,11 @@ print1dVector(const vector<T> &one_d_vector, string vec_name = "vector",
 			else
 				output_string << one_d_vector[i] << "";
 		}
-		output_string << ")\n";
+		output_string << "]\n";
 	}
 	else
 	{
-		output_string << "(";
+		output_string << "\t[";
 		for (unsigned int i = 0; i < one_d_vector.size(); ++i)
 		{
 			if(i!=one_d_vector.size()-1)
@@ -514,7 +510,7 @@ print1dVector(const vector<T> &one_d_vector, string vec_name = "vector",
 			else
 				output_string << one_d_vector[i] << "";
 		}
-		output_string << ")\n";
+		output_string << "]\n";
 	}
 	string answer = output_string.str();
 	output_string.str(string());
