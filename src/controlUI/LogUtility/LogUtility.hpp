@@ -34,6 +34,7 @@ extern stringstream logMessage;
 extern stringstream logExceptionMessage;
 
 #define LOG_MSG(level) if(LOG_ACTIVATE && level <= LOG_LEVEL) logMessage
+#define PRINT_LOG(level, message) LOG_MSG(level) << message; PRINT_LOG_MESSAGE(level);
 
 #define SET_LOG setLog()
 #define SET_LOG_LEVEL(level) setLog(level)
