@@ -345,10 +345,13 @@ ImageView::renderFrame()
 			glVertex2i(p[0], p[1]);
 		}
 		glEnd();
+		renderSignificantPlane = false;
 	}
 	if(renderVisitedPlanes)
 	{
+		// cout << "Rendering visited planes\n";
 		unsigned int size = visitedBoundingBoxPoints.size();
+		// cout << size << "\n";
 		for(unsigned int planeIndex = 0; planeIndex < size; planeIndex++)
 		{
 			vector<Point3f> planeBoundingBoxPoints = visitedBoundingBoxPoints[planeIndex];
@@ -364,12 +367,11 @@ ImageView::renderFrame()
 				p[1] = imagePts[pointIndex].y;
 				glVertex2i(p[0],p[1]);
 			}
-		
 			glEnd();
 		}
+		renderVisitedPlanes = false;
 	}
 	glDisable(GL_BLEND);
-
 	myGLWindow->swap_buffers();
 	myGLWindow->HandlePendingEvents();
 }
@@ -1219,6 +1221,7 @@ ImageView::setContinuousBoundingBoxPoints(const vector< vector<Point3f> > &conti
 void
 ImageView::setVisitedBoundingBoxPoints(const vector< vector<Point3f> > &visit_bound_box_points)
 {
+	cout << "set visit cbb\n";
 	unsigned int size = visitedBoundingBoxPoints.size();
 	for (unsigned int i = 0; i < size; ++i)
 	{
@@ -1233,7 +1236,7 @@ ImageView::setVisitedBoundingBoxPoints(const vector< vector<Point3f> > &visit_bo
 		{
 			dummy_points.push_back(visit_bound_box_points[i][j]);
 		}
-		continuousBoundingBoxPoints.push_back(dummy_points);
+		visitedBoundingBoxPoints.push_back(dummy_points);
 	}
 }
 
