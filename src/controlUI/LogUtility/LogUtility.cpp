@@ -65,14 +65,14 @@ void printLogMessage(   int level,
 {
     if (LOG_ACTIVATE && !logFileOpen && level <= LOG_LEVEL)
     {
-        cout << "[ LOG] " << logMessageToPrint.str();
+        cout << "[   LOG] " << logMessageToPrint.str();
         clearLog(logMessageToPrint);
     }
     else if (LOG_ACTIVATE && logFileOpen && level <= LOG_LEVEL)
     {
         streambuf *coutbuf = cout.rdbuf();
         cout.rdbuf(logOutFile.rdbuf());
-        cout << "[ LOG] " << logMessageToPrint.str();
+        cout << "[   LOG] " << logMessageToPrint.str();
         clearLog(logMessageToPrint);
         cout.rdbuf(coutbuf);
     }
@@ -95,13 +95,13 @@ void printLogMessage(   int level,
     }
     if (LOG_ACTIVATE && !logFileOpen && level <= LOG_LEVEL)
     {
-        cout << "[ LOG] " << logMessageToPrint;
+        cout << "[   LOG] " << logMessageToPrint;
     }
     else if (LOG_ACTIVATE && logFileOpen && level <= LOG_LEVEL)
     {
         streambuf *coutbuf = cout.rdbuf();
         cout.rdbuf(logOutFile.rdbuf());
-        cout << "[ LOG] " << logMessageToPrint;
+        cout << "[   LOG] " << logMessageToPrint;
         logMessageToPrint = "";
         cout.rdbuf(coutbuf);
     }
