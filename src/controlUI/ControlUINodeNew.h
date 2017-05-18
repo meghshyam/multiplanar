@@ -602,6 +602,8 @@ class ControlUINode
         static pthread_mutex_t command_CS;
         static pthread_mutex_t changeyaw_CS;
 
+        bool testing_code = true;
+
 
 
     public:
@@ -861,7 +863,8 @@ class ControlUINode
          * @return
          */
         void
-        write3DPointsToCSV(std::vector<std::vector<double> > &_3d_points, string filename="points.txt");
+        write3DPointsToCSV(std::vector<std::vector<double> > &_3d_points, string filename="points.txt",
+                            string separator=" ");
 
         /**
          * @brief A helper function to get the number of key points in the current frame
