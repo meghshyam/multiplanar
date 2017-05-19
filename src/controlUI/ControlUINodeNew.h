@@ -760,7 +760,7 @@ class ControlUINode
          */
         void
         getInitialPath(const vector<double> &prevPosition, const vector<double> &tPoint,
-                                                double prevYaw, double desiredYaw, vector<vector<double> > &xyz_yaw);
+                       double prevYaw, double desiredYaw, vector<vector<double> > &xyz_yaw);
 
         //Find target points for plane not parallel to XZ plane
         /**
@@ -1045,10 +1045,17 @@ class ControlUINode
         void
         adjustLeftEdge();
 
+        /**
+         * @brief Helper functions which derives if it can see the top, bottom, left edge
+         *          depending on which_side variable
+         * @details 
+         *      which_side 0 - Top and Bottom edge
+         *      which_side 1 - Left edge
+         */
         int
         checkVisibility(const vector<float> &planeParameters, 
-                                const vector<Point3f> &continuous_bounding_box_points,
-                                int which_side);
+                        const vector<Point3f> &continuous_bounding_box_points,
+                        int which_side);
 
         void
         moveUp(double step_distance = 0.5);
