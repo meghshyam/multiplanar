@@ -313,7 +313,7 @@ print2dVector(const vector< vector<Point3f> > &two_d_vector, string vec_name = "
 					output_string << two_d_vector[i][j].z << ")\n";
 			}
 		}
-		output_string << "\n";
+		// output_string << "\n";
 	}
 	else
 	{
@@ -330,7 +330,7 @@ print2dVector(const vector< vector<Point3f> > &two_d_vector, string vec_name = "
 					output_string << two_d_vector[i][j].z << ")\n";
 			}
 		}
-		output_string << "\n";
+		// output_string << "\n";
 	}
 	string answer = output_string.str();
 	output_string.str(string());
@@ -385,7 +385,7 @@ print2dVector(const vector< vector<T> > &two_d_vector, string vec_name = "vector
 					output_string << two_d_vector[i][j] << "]\n";
 			}
 		}
-		output_string << "\n";
+		// output_string << "\n";
 	}
 	else
 	{
@@ -400,7 +400,7 @@ print2dVector(const vector< vector<T> > &two_d_vector, string vec_name = "vector
 					output_string << two_d_vector[i][j] << "]\n";
 			}
 		}
-		output_string << "\n";
+		// output_string << "\n";
 	}
 	string answer = output_string.str();
 	output_string.str(string());
