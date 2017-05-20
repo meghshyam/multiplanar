@@ -2807,35 +2807,35 @@ ControlUINode::captureTheCurrentPlane()
 void
 ControlUINode::adjustForNextCapture()
 {
-    cout << "[ INFO] [adjustForNextCapture] Started\n";
+    PRINT_LOG(1, "Started\n");
     vector< vector<float> > test_plane_parameters;
     Point3f top_left = this_continuous_bounding_box_points[0];
     Point3f top_right = this_continuous_bounding_box_points[1];
     double width_of_3d_plane = (double)fabs(sqrt( (top_right.x - top_left.x)*(top_right.x - top_left.x) +
                                         (top_right.y - top_left.y)*(top_right.y - top_left.y) +
                                         (top_right.z - top_left.z)*(top_right.z - top_left.z) ));
-    cout << "[ INFO] [adjustForNextCapture] Width of the plane is: " << width_of_3d_plane << "\n";
+    PRINT_LOG(3, "Width of the plane is: " << width_of_3d_plane << "\n");
     // Direction of next plane
     if(_next_plane_dir == CLOCKWISE)
     {
-        cout << "[ INFO] [adjustForNextCapture] Next plane is CLOCKWISE wrt current plane\n";
+        PRINT_LOG(3, "Next plane is CLOCKWISE wrt current plane\n");
         getCurrentPositionOfDrone();
         /*cout << "[ INFO] [adjustForNextCapture] Moving by width of plane by 4\n";
         moveRight(width_of_3d_plane/(double)4.0);*/
         if(_node_completed_number_of_planes != _node_number_of_planes-1)
         {
-            cout << "[ INFO] [adjustForNextCapture] Changing the yaw clockwise by " << (3*fabs(_next_plane_angle)/4.0) << "\n";
+            PRINT_LOG(3, "Changing the yaw clockwise by " << (3*fabs(_next_plane_angle)/4.0) << "\n");
             rotateClockwise(3*fabs(_next_plane_angle)/4.0);
-            cout << "[ INFO] [adjustForNextCapture] Moving backwards by 0.5\n";
+            PRINT_LOG(3, "Moving backwards by 0.5\n");
             moveBackward(0.5);
-            cout << "[ INFO] [adjustForNextCapture] Moving forwards by 0.5\n";
+            PRINT_LOG(3, "Moving forwards by 0.5\n");
             moveForward(0.5);
         }
         else
         {
-            cout << "[ DEBUG] [adjustForNextCapture] Last plane to cover\n";
+            PRINT_DEBUG(3, "Last plane to cover\n");
         }
-        cout << "[ INFO] [adjustForNextCapture] Estimating multiple planes -> call to JLinkage\n";
+        PRINT_LOG(3, "Estimating multiple planes -> call to JLinkage\n");
         doJLinkage();
         // Adding the currently seeing plane to find out if a new plane another than the
         // current one is visible by rotating the drone
@@ -2849,29 +2849,28 @@ ControlUINode::adjustForNextCapture()
         PRINT_LOG(5, print2dVector(test_plane_parameters, "All planes visited completely including the current one"));
         if(_node_completed_number_of_planes == _node_number_of_planes-1)
         {
-            cout << "[ INFO] [adjustForNextCapture] Observe the plane without rotation\n";
+            PRINT_LOG(3, "Observe the plane without rotation\n");
             _is_plane_covered = isNewPlaneVisible(test_plane_parameters,
                                             jlink_all_plane_parameters, jlink_all_percentage_of_each_plane, false);
         }
         else
         {
-            cout << "[ INFO] [adjustForNextCapture] Observe the plane by rotation: " 
-                        << _next_plane_dir << "\n";
+            PRINT_LOG(3, "Observe the plane by rotation: " << _next_plane_dir << "\n");
             _is_plane_covered = isNewPlaneVisible(test_plane_parameters,
                                             jlink_all_plane_parameters, jlink_all_percentage_of_each_plane, true, _next_plane_dir);
         }
-        cout << "[ DEBUG] [adjustForNextCapture] Is plane covered: " << _is_plane_covered << "\n";
+        PRINT_DEBUG(3, "Is plane covered: " << _is_plane_covered << "\n");
         if(_is_plane_covered && 
             (_node_completed_number_of_planes != _node_number_of_planes-1) )
         {
-            cout << "[ INFO] [adjustForNextCapture] Checking if the plane is covered\n";
+            PRINT_LOG(3, "Checking if the plane is covered\n");
             getCurrentPositionOfDrone();
             if(_actual_plane_index+1 < jlink_all_plane_parameters.size() && _actual_plane_index+1 >= 0)
             {
                 float check_dist = 
                         getPointToPlaneDistance(jlink_all_plane_parameters[_actual_plane_index+1], 
                                                 _node_current_pos_of_drone);
-                cout << "[ DEBUG] [adjustForNextCapture] Check_dist: " << check_dist << ", Max. Dist: " << _node_max_distance << "\n";
+                PRINT_DEBUG(3, "Check_dist: " << check_dist << ", Max. Dist: " << _node_max_distance << "\n");
                 if(check_dist > _node_max_distance+1.0)
                 {
                     _is_plane_covered = false;
@@ -2879,12 +2878,12 @@ ControlUINode::adjustForNextCapture()
             }
             else
             {
-                cout << "[ INFO] [adjustForNextCapture] Current plane is the right most plane visible\n";
+                PRINT_LOG(3, "Current plane is the right most plane visible\n");
             }
         }
         if(!_is_plane_covered)
         {
-            cout << "[ DEBUG] [adjustForNextCapture] Checking if right edge is within the frame to reach a conclusion\n";
+            PRINT_DEBUG(3, "Checking if right edge is within the frame to reach a conclusion\n");
             int move = checkVisibility(this_plane_parameters, this_continuous_bounding_box_points, 2);
             if(move==0)
             {
@@ -2894,9 +2893,9 @@ ControlUINode::adjustForNextCapture()
             {
                 _is_plane_covered = false;
             }
-            cout << "[ DEBUG] [adjustForNextCapture] Is plane covered: " << _is_plane_covered << ", Move: " << move << "\n";
+            PRINT_DEBUG(3, "Is plane covered: " << _is_plane_covered << ", Move: " << move << "\n");
         }
-        cout << "[ DEBUG] [adjustForNextCapture] Is plane covered: " << _is_plane_covered << "\n";
+        PRINT_DEBUG(3, "Is plane covered: " << _is_plane_covered << "\n");
         if(_is_plane_covered)
         {
             copyNecessaryInfo();
@@ -2904,32 +2903,32 @@ ControlUINode::adjustForNextCapture()
         else
         {
             // _is_plane_covered = false;
-            cout << "[ INFO] [adjustForNextCapture] Restoring the yaw back and moving right by width_of_plane by 2\n";
+            PRINT_LOG(3, "Restoring the yaw back and moving right by width_of_plane by 2\n");
             _is_big_plane = true;
             if(_node_completed_number_of_planes != _node_number_of_planes-1)
             {
-                cout << "[ DEBUG] [adjustForNextCapture] Restoring the yaw. Rotating CounterClockwise by " << 3*fabs(_next_plane_angle)/4.0 << "\n";
+                PRINT_DEBUG(3, "Restoring the yaw. Rotating CounterClockwise by " << 3*fabs(_next_plane_angle)/4.0 << "\n");
                 rotateCounterClockwise(3*fabs(_next_plane_angle)/4.0);
             }
             else
             {
-                cout << "[ DEBUG] [adjustForNextCapture] Last plane to cover. Moving right\n";
+                PRINT_DEBUG(3, "Last plane to cover. Moving right\n");
             }
-            cout << "[ DEBUG] [adjustForNextCapture] Moving right by " << width_of_3d_plane/(double)2.0 << "\n";
+            PRINT_DEBUG(3, "Moving right by " << width_of_3d_plane/(double)2.0 << "\n");
             moveRight(width_of_3d_plane/(double)2.0);
         }
     }
     else if(_next_plane_dir == COUNTERCLOCKWISE)
     {
-        cout << "[ INFO] [adjustForNextCapture] Next plane is COUNTERCLOCKWISE wrt current plane\n";
+        PRINT_LOG(3, "Next plane is COUNTERCLOCKWISE wrt current plane\n");
         getCurrentPositionOfDrone();
-        cout << "[ INFO] [adjustForNextCapture] Moving the drone horizontally by " << width_of_3d_plane << "\n";
+        PRINT_LOG(3, "Moving the drone horizontally by " << width_of_3d_plane << "\n");
         moveRight(width_of_3d_plane);
-        cout << "[ INFO] [adjustForNextCapture] Changing the yaw counterclockwise by " << (_next_plane_angle/5.0) << "\n";
+        PRINT_LOG(3, "Changing the yaw counterclockwise by " << (_next_plane_angle/5.0) << "\n");
         getCurrentPositionOfDrone();
         designPathToChangeYaw(_node_current_pos_of_drone, _node_current_pos_of_drone[3]-(_next_plane_angle/5.0));
         moveDroneViaSetOfPoints(_interm_path);
-        cout << "[ INFO] [adjustForNextCapture] Calling Jlinkage\n";
+        PRINT_LOG(3, "Calling Jlinkage\n");
         doJLinkage();
         clear2dVector(test_plane_parameters);
         for (unsigned int i = 0; i < visited_plane_parameters.size(); ++i)
@@ -2941,21 +2940,20 @@ ControlUINode::adjustForNextCapture()
         PRINT_LOG(5, print2dVector(test_plane_parameters, "All planes visited completely including the current one"));
         if(_node_completed_number_of_planes == _node_number_of_planes-1)
         {
-            cout << "[ DEBUG] [adjustForNextCapture] Observe the plane without rotation\n";
+            PRINT_DEBUG(3, "Observe the plane without rotation\n");
             _is_plane_covered = isNewPlaneVisible(test_plane_parameters,
                                             jlink_all_plane_parameters, jlink_all_percentage_of_each_plane, false);
         }
         else
         {
-            cout << "[ DEBUG] [adjustForNextCapture] Observe the plane by rotation: " 
-                        << _next_plane_dir << "\n";
+            PRINT_DEBUG(3, "Observe the plane by rotation: " << _next_plane_dir << "\n");
             _is_plane_covered = isNewPlaneVisible(test_plane_parameters,
                                             jlink_all_plane_parameters, jlink_all_percentage_of_each_plane, true, _next_plane_dir);
         }
-        cout << "[ DEBUG] [adjustForNextCapture] Is plane covered: " << _is_plane_covered << "\n";
+        PRINT_DEBUG(3, "Is plane covered: " << _is_plane_covered << "\n");
         if(!_is_plane_covered)
         {
-            cout << "[ DEBUG] [adjustForNextCapture] Checking if the right edge is visible within heuristics\n";
+            PRINT_DEBUG(3, "Checking if the right edge is visible within heuristics\n");
             int move = checkVisibility(this_plane_parameters, this_continuous_bounding_box_points, 2);
             if(move==0)
             {
@@ -2965,7 +2963,7 @@ ControlUINode::adjustForNextCapture()
             {
                 _is_plane_covered = false;
             }
-            cout << "[ DEBUG] [adjustForNextCapture] Is plane covered: " << _is_plane_covered << ", Move: " << move << "\n";
+            PRINT_DEBUG(3, "Is plane covered: " << _is_plane_covered << ", Move: " << move << "\n");
         }
         if(_is_plane_covered)
         {
@@ -2977,19 +2975,19 @@ ControlUINode::adjustForNextCapture()
             _is_big_plane = true;
             getCurrentPositionOfDrone();
             PRINT_LOG(5, print1dVector(_node_current_pos_of_drone, "Current position of drone"));
-            cout << "[ INFO] The plane in inspection is a big one. Restoring the yaw back to complete this plane\n";
+            PRINT_LOG(3, "The plane in inspection is a big one. Restoring the yaw back to complete this plane\n");
             designPathToChangeYaw(_node_current_pos_of_drone, _node_current_pos_of_drone[3]+(_next_plane_angle/5.0));
             moveDroneViaSetOfPoints(_interm_path);
         }
     }
     if(_node_completed_number_of_planes == _node_number_of_planes)
     {
-        cout << "[ DEBUG] [adjustForNextCapture] VPP size: " << visited_plane_parameters.size() << "\n";
+        PRINT_DEBUG(3, "VPP size: " << visited_plane_parameters.size() << "\n");
         assert(visited_plane_parameters.size() == visited_continuous_bounding_box_points.size());
         PRINT_DEBUG(5, print2dVector(visited_plane_parameters, "VPP"));
         PRINT_DEBUG(5, print2dVector(visited_continuous_bounding_box_points, "VCBB"));
         string filename = "Plane_Info.txt";
-        cout << "[ DEBUG] [adjustForNextCapture] Writing info gathered to " << filename << "\n";
+        PRINT_DEBUG(3, "Writing info gathered to " << filename << "\n");
         for (unsigned int i = 0; i < visited_plane_parameters.size(); ++i)
         {
             image_gui->WriteInfoToFile(visited_continuous_bounding_box_points[i], visited_plane_parameters[i], i+1, filename);
@@ -2997,25 +2995,25 @@ ControlUINode::adjustForNextCapture()
         PRINT_LOG(5, print2dVector(visited_plane_parameters, "All Plane Parameters"));
         PRINT_LOG(5, print2dVector(visited_continuous_bounding_box_points, "All Plane BBP"));
         PRINT_LOG(5, print2dVector(visited_motion_points, "All motion points"));
-        cout << "[ INFO] [adjustForNextCapture] All planes are covered!\n";
-        cout << "[ INFO] [adjustForNextCapture] Landing the quadcopter\n";
+        PRINT_LOG(3, "All planes are covered!\n");
+        PRINT_LOG(3, "anding the quadcopter\n");
         sendLand();
     }
     if((_is_plane_covered) &&
             (_node_completed_number_of_planes != _node_number_of_planes))
     {
-            cout << "[ INFO] [adjustForNextCapture] Current plane is covered. All planes are covered\n";
-            cout << "[ DEBUG] [adjustForNextCapture] VPP: \n";
+            PRINT_LOG(3, "Current plane is covered. All planes are covered\n");
+            PRINT_DEBUG(3, "VPP: \n");
             PRINT_DEBUG(5, print2dVector(visited_plane_parameters, "Visited plane parameters"));
-            cout << "[ INFO] [adjustForNextCapture] Aligning quadcoter to next plane\n";
+            PRINT_LOG(3, "Aligning quadcoter to next plane\n");
             _is_adjusted = true;
             alignQuadcopterToNextPlaneAdvanced();
     }
     else
     {
-        cout << "[ INFO] [adjustForNextCapture] Please click 4 points on the DRONE CAMERA FEED window\n";
+        PRINT_LOG(3, "Please click 4 points on the DRONE CAMERA FEED window\n");
     }
-    cout << "[ INFO] [adjustForNextCapture] Completed\n";
+    PRINT_LOG(1, "Completed\n");
 }
 
 /**
