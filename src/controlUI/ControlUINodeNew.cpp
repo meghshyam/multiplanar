@@ -2652,9 +2652,9 @@ ControlUINode::adjustLeftEdge()
 void
 ControlUINode::captureTheCurrentPlane()
 {
-    cout << "[ INFO] [captureTheCurrentPlane] Started\n";
-    cout << "[ INFO] [captureTheCurrentPlane] Number of planes: " << _node_number_of_planes 
-            << ", Number of planes covered: " << _node_completed_number_of_planes << "\n";
+    PRINT_LOG(1, "Started\n");
+    PRINT_LOG(3, "Number of planes: " << _node_number_of_planes 
+            << ", Number of planes covered: " << _node_completed_number_of_planes << "\n");
     // 2d image points clicked on the DRONE CAMERA FEED Screen
     vector< vector<int> > points_clicked;
     // the 3d keypoints of control node for nearest keypoints
@@ -2665,14 +2665,14 @@ ControlUINode::captureTheCurrentPlane()
     // Second param: Number of Key points detected
     image_gui->setNumberOfPoints(0, 0);
     // RendeRect: false, RenderPoly: false, RenderSignificantPlane: false
-    cout << "[ DEBUG] [captureTheCurrentPlane] Stopped rendering of frame\n";
+    PRINT_DEBUG(3, "Stopped rendering of frame\n");
     image_gui->setRender(false, false, true, true);
     image_gui->getPointsClicked(points_clicked);
-    cout << "[ INFO] [captureTheCurrentPlane] Extracting Bounding Poly\n";
+    PRINT_LOG(3, "Extracting Bounding Poly\n");
     image_gui->extractBoundingPoly();
     _sig_plane_index = 0;
     image_gui->getCCPoints(cc_points);
-    cout << "[ INFO] [captureTheCurrentPlane] Get multiple planes from the clicked points using JLinkage\n";
+    PRINT_LOG(3, "Get multiple planes from the clicked points using JLinkage\n");
     // Calls JLinkage and finds all planes within the clicked region
     vector< vector<float> > test_plane_parameters;
     doJLinkage(cc_points, points_clicked);
@@ -2680,11 +2680,11 @@ ControlUINode::captureTheCurrentPlane()
     image_gui->setContinuousBoundingBoxPoints(jlink_all_continuous_bounding_box_points);
     image_gui->setSigPlaneBoundingBoxPoints(this_continuous_bounding_box_points);
     image_gui->setVisitedBoundingBoxPoints(visited_continuous_bounding_box_points);
-    cout << "[ INFO] [captureTheCurrentPlane] Rendering the frames in the DRONE CAMERA FEED GUI\n";
+    PRINT_LOG(3, "Rendering the frames in the DRONE CAMERA FEED GUI\n");
     image_gui->setRender(false, false, true, true);
-    cout << "[ DEBUG] [captureTheCurrentPlane] SigPlaneIndex: " << _sig_plane_index << "\n";
-    cout << "[ DEBUG] [captureTheCurrentPlane] ActualPlaneIndex: " << _actual_plane_index << "\n";
-    cout << "[ DEBUG] [captureTheCurrentPlane] Rendering poly and sig plane and visited planes\n";
+    PRINT_DEBUG(3, "SigPlaneIndex: " << _sig_plane_index << "\n");
+    PRINT_DEBUG(3, "ActualPlaneIndex: " << _actual_plane_index << "\n");
+    PRINT_DEBUG(3, "Rendering poly and sig plane and visited planes\n");
     image_gui->renderFrame();
     // Check if the plane is completed by finding if a new plane is visible or not other than current one
     clear2dVector(test_plane_parameters);
@@ -2697,7 +2697,7 @@ ControlUINode::captureTheCurrentPlane()
     PRINT_DEBUG(5, print2dVector(test_plane_parameters, "All planes visited completely including the current one"));
     if(_node_completed_number_of_planes == 0 && _stage_of_plane_observation)
     {
-        cout << "[ INFO] [captureTheCurrentPlane] Checking if adjustment is required\n";
+        PRINT_LOG(3, "Checking if adjustment is required\n");
         getCurrentPositionOfDrone();
         PRINT_DEBUG(5, print1dVector(_node_current_pos_of_drone, "Current position of drone"));
         Point3f top_mid = (this_continuous_bounding_box_points[0]+this_continuous_bounding_box_points[1]);
@@ -2711,12 +2711,12 @@ ControlUINode::captureTheCurrentPlane()
         float step_distance = fabs(distance - point_distance);
         if(move == -1)
         {
-            cout << "[ DEBUG] [captureTheCurrentPlane] Moving backwards\n";
+            PRINT_DEBUG(3, "Moving backwards");
             moveBackward(step_distance);
         }
         else if(move == 1)
         {
-            cout << "[ DEBUG] [captureTheCurrentPlane] Moving forwards\n";
+            PRINT_DEBUG(3, "Moving forwards");
             moveForward(step_distance);
         }
         getCurrentPositionOfDrone();
@@ -2727,23 +2727,23 @@ ControlUINode::captureTheCurrentPlane()
         step_distance = fabs(_node_current_pos_of_drone[2] - height);
         if(move == -1)
         {
-            cout << "[ DEBUG] [captureTheCurrentPlane] Moving down\n";
+            PRINT_DEBUG(3, "Moving down");
             moveDown(step_distance);
         }
         else if(move == 1)
         {
-            cout << "[ DEBUG] [captureTheCurrentPlane] Moving up\n";
+            PRINT_DEBUG(3, "Moving up");
             moveUp(step_distance);
         }
         doJLinkage();
     }
-    cout << "[ DEBUG] [captureTheCurrentPlane] Observe the plane without rotation\n";
+    PRINT_DEBUG(3, "Observe the plane without rotation\n");
     _is_plane_covered = isNewPlaneVisible(test_plane_parameters,
                                         jlink_all_plane_parameters, jlink_all_percentage_of_each_plane, false);
-    cout << "[ DEBUG] [captureTheCurrentPlane] Is plane covered: " << _is_plane_covered << "\n";
+    PRINT_DEBUG(3, "Is plane covered: " << _is_plane_covered << "\n");
     if(!_is_plane_covered)
     {
-        cout << "[ DEBUG] [captureTheCurrentPlane] Checking if right edge is within the frame to reach a conclusion\n";
+        PRINT_DEBUG(3, "Checking if right edge is within the frame to reach a conclusion\n");
         int move = checkVisibility(this_plane_parameters, this_continuous_bounding_box_points, 2);
         if(move==0)
         {
@@ -2753,37 +2753,37 @@ ControlUINode::captureTheCurrentPlane()
         {
             _is_plane_covered = false;
         }
-        cout << "[ DEBUG] [captureTheCurrentPlane] Is plane covered: " << _is_plane_covered << ", Move: " << move << "\n";
+        PRINT_DEBUG(3, "Is plane covered: " << _is_plane_covered << ", Move: " << move << "\n");
     }
     if(_is_plane_covered)
     {
         copyNecessaryInfo();
         if(_node_completed_number_of_planes != _node_number_of_planes)
         {
-            cout << "[ INFO] [captureTheCurrentPlane] Completed plane no.: " << _node_completed_number_of_planes << "\n";
-            cout << "[ INFO] [captureTheCurrentPlane] Aligning the quadcopter to the next plane\n";
+            PRINT_LOG(3, "Completed plane no.: " << _node_completed_number_of_planes << "\n");
+            PRINT_LOG(3, "Aligning the quadcopter to the next plane\n");
             alignQuadcopterToNextPlaneAdvanced();
         }
         else
         {
-            cout << "[ INFO] [captureTheCurrentPlane] All planes covered\n";
-            cout << "[ INFO] [captureTheCurrentPlane] Landing the quadcopter\n";
+            PRINT_LOG(3, "All planes covered\n");
+            PRINT_LOG(3, "Landing the quadcopter\n");
             sendLand();
         }
     }
     else
     {
         augmentInfo();
-        cout << "[ INFO] [captureTheCurrentPlane] Adjusting quadcopter for next capture of the same plane\n";
+        PRINT_LOG(3, "Adjusting quadcopter for next capture of the same plane\n");
         adjustForNextCapture();
-        cout << "[ INFO] [captureTheCurrentPlane] Adjusted for next capture. Please click the 4 points on the DRONE CAMERA FEED\n";
+        PRINT_LOG(3, "Adjusted for next capture. Please click the 4 points on the DRONE CAMERA FEED\n");
     }
     if(_node_completed_number_of_planes == _node_number_of_planes)
     {
         assert(visited_plane_parameters.size() == visited_continuous_bounding_box_points.size());
-        cout << "[ INFO] [captureTheCurrentPlane] All planes are completed\n";
+        PRINT_LOG(3, "All planes are completed\n");
         string filename = "Plane_Info.txt";
-        cout << "[ INFO] [captureTheCurrentPlane] Writing info gathered to " << filename << "\n";
+        PRINT_LOG(3, "Writing info gathered to " << filename << "\n");
         for (unsigned int i = 0; i < visited_plane_parameters.size(); ++i)
         {
             image_gui->WriteInfoToFile(visited_continuous_bounding_box_points[i], visited_plane_parameters[i], i+1, filename);
@@ -2794,9 +2794,10 @@ ControlUINode::captureTheCurrentPlane()
     }
     else
     {
-        cout << "[ INFO] [captureTheCurrentPlane] All planes are not completed\n";
+        PRINT_LOG(3, "All planes are not completed\n");
     }
-    cout << "[ INFO] [captureTheCurrentPlane] Completed\n";
+    PRINT_LOG(1, "Completed\n");
+
 }
 
 /**
