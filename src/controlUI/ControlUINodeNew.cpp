@@ -1607,7 +1607,6 @@ ControlUINode::move(double distance, int i)
         // Change the position according to the direction index
         _node_dest_pos_of_drone[i] = start;
         PRINT_DEBUG(3, print1dVector(_node_dest_pos_of_drone, "Dest position of drone (relative): ", ""));
-        PRINT_DEBUG_MESSAGE(3);
         // Convert the generated position wrt world's origin
         convertWRTQuadcopterOrigin(_node_current_pos_of_drone, _node_dest_pos_of_drone, _node_ac_dest_pos_of_drone);
         _interm_path.push_back(_node_ac_dest_pos_of_drone);
@@ -1996,7 +1995,6 @@ ControlUINode::augmentInfo()
         aug_plane_bounding_box_points.push_back(a0);
     }
     PRINT_DEBUG(3, print1dVector(aug_plane_bounding_box_points, "Aug. Plane BB:\n"));
-    PRINT_DEBUG_MESSAGE(3);
     PRINT_LOG(1, "Completed\n");
     return ;
 }
@@ -2515,7 +2513,7 @@ ControlUINode::alignQuadcopterToCurrentPlane()
 void
 ControlUINode::adjustYawToCurrentPlane()
 {
-    cout << "[ INFO] [adjustYawToCurrentPlane] Started\n";
+    PRINT_LOG(1, "Started\n");
     getCurrentPositionOfDrone();
     PRINT_LOG(5, print1dVector(_node_current_pos_of_drone, "Current position of drone"));
     _node_dest_pos_of_drone.clear();
@@ -2523,26 +2521,26 @@ ControlUINode::adjustYawToCurrentPlane()
     _node_dest_pos_of_drone.push_back(1.0);
     _node_dest_pos_of_drone.push_back(0.0);
     _node_dest_pos_of_drone.push_back(0.0);
-    cout << "[ DEBUG] [adjustYawToCurrentPlane] Converting destination position wrt world quadcopter origin\n";
+    PRINT_DEBUG(3, "Converting destination position wrt world quadcopter origin\n");
     convertWRTQuadcopterOrigin(_node_current_pos_of_drone, _node_dest_pos_of_drone, _node_ac_dest_pos_of_drone);
     Point3f pYAxis(_node_ac_dest_pos_of_drone[0], _node_ac_dest_pos_of_drone[1], _node_ac_dest_pos_of_drone[2]);
     Point3f pOrigin(_node_current_pos_of_drone[0], _node_current_pos_of_drone[1], _node_current_pos_of_drone[2]);
     Point3f projectedNormal(pYAxis-pOrigin);
-    cout << "[ INFO] [adjustYawToCurrentPlane] Estimating multiple planes -> call to JLinkage\n";
+    PRINT_LOG(3, "Estimating multiple planes -> call to JLinkage\n");
     doJLinkage();
     Point3f plane_params(this_plane_parameters[0], this_plane_parameters[1], 0.0);
-    cout << "[ DEBUG] [adjustYawToCurrentPlane] pYAxis: " << pYAxis << "\n";
-    cout << "[ DEBUG] [adjustYawToCurrentPlane] pOrigin: " << pOrigin << "\n";
-    cout << "[ DEBUG] [adjustYawToCurrentPlane] projectedNormal: " << projectedNormal << "\n";
-    cout << "[ DEBUG] [adjustYawToCurrentPlane] PP: " << plane_params << "\n";
+    PRINT_DEBUG(3, "pYAxis: " << pYAxis << "\n");
+    PRINT_DEBUG(3, "pOrigin: " << pOrigin << "\n");
+    PRINT_DEBUG(3, "projectedNormal: " << projectedNormal << "\n");
+    PRINT_DEBUG(3, "PP: " << plane_params << "\n");
     float angle = findAngle(projectedNormal, plane_params);
-    cout << "[ DEBUG] [adjustYawToCurrentPlane] Angle (radians): " << angle << "\n";
+    PRINT_DEBUG(3, "Angle (radians): " << angle << "\n");
     angle = -angle*180/M_PI;
-    cout << "[ INFO] [adjustYawToCurrentPlane] Change the yaw of quadcopter\n";
-    cout << "[ INFO] [adjustYawToCurrentPlane] Angle to rotate: " << angle << "\n";
+    PRINT_LOG(3, "Change the yaw of quadcopter\n");
+    PRINT_LOG(3, "Angle to rotate: " << angle << "\n");
     designPathToChangeYaw(_node_current_pos_of_drone, _node_current_pos_of_drone[3]+angle);
     moveDroneViaSetOfPoints(_interm_path);
-    cout << "[ INFO] [adjustYawToCurrentPlane] Completed\n";
+    PRINT_LOG(1, "Completed\n");
 }
 
 /**
@@ -2552,7 +2550,7 @@ ControlUINode::adjustYawToCurrentPlane()
 void
 ControlUINode::adjustTopBottomEdges()
 {
-    cout << "[ INFO] [adjustTopBottomEdges] Started\n";
+    PRINT_LOG(1, "Started\n");
     float step_distance;
     float point_distance, height;
     PRINT_DEBUG(5, print1dVector(this_plane_parameters, "Sig PP"));
@@ -2560,47 +2558,47 @@ ControlUINode::adjustTopBottomEdges()
     getCurrentPositionOfDrone();
     PRINT_DEBUG(5, print1dVector(_node_current_pos_of_drone, "Current position of drone"));
     point_distance = getPointToPlaneDistance(this_plane_parameters, _node_current_pos_of_drone);
-    cout << "[ DEBUG] [adjustTopBottomEdges] Distance from the plane: " << point_distance << "\n";
+    PRINT_DEBUG(3, "Distance from the plane: " << point_distance << "\n");
     step_distance = fabs(_node_max_distance - point_distance);
     int move = (_node_max_distance >= point_distance) ? -1: 1;
-    cout << "[ DEBUG] [adjustTopBottomEdges] Move: " << move << ", Step Distance: " << step_distance << "\n";
+    PRINT_DEBUG(3, "Move: " << move << ", Step Distance: " << step_distance << "\n");
     if(move == -1)
     {
-        cout << "[ DEBUG] [adjustTopBottomEdges] Moving backwards\n";
+        PRINT_DEBUG(3, "Moving backwards\n");
         moveDroneByMeasure(step_distance, MOVE_DIRECTIONS::BACKWARD);
     }
     else if(move == 1)
     {
-        cout << "[ DEBUG] [adjustTopBottomEdges] Moving forwards\n";
+        PRINT_DEBUG(3, "Moving forwards\n");
         moveDroneByMeasure(step_distance, MOVE_DIRECTIONS::FORWARD);
     }
     getCurrentPositionOfDrone();
     PRINT_DEBUG(5, print1dVector(_node_current_pos_of_drone, "Current position of drone"));
     if(!_fixed_height_set)
     {
-        cout << "[ DEBUG] [adjustTopBottomEdges] Fixed height not set\n";
+        PRINT_DEBUG(3, "Fixed height not set\n");
         height = getHeightFromGround(this_plane_parameters, this_continuous_bounding_box_points, _node_current_pos_of_drone);
-        cout << "[ DEBUG] [adjustTopBottomEdges] Height: " << height << "\n";
+        PRINT_DEBUG(3, "Height: " << height << "\n");
         move = (_node_current_pos_of_drone[2] >= height) ? -1: 1;
         step_distance = fabs(_node_current_pos_of_drone[2] - height);
     }
     else
     {
-        cout << "[ DEBUG] [adjustTopBottomEdges] Fixed height set. Fixed Height: " << _fixed_height << "\n";
+        PRINT_DEBUG(3, "Fixed height set. Fixed Height: " << _fixed_height << "\n");
         move = (_node_current_pos_of_drone[2] >= _fixed_height) ? -1: 1;
         step_distance = fabs(_node_current_pos_of_drone[2] - _fixed_height);
     }
     if(move == -1)
     {
-        cout << "[ DEBUG] [adjustTopBottomEdges] Moving down\n";
+        PRINT_DEBUG(3, "Moving down\n");
         moveDroneByMeasure(step_distance, MOVE_DIRECTIONS::DOWN);
     }
     else if(move == 1)
     {
-        cout << "[ DEBUG] [adjustTopBottomEdges] Moving up\n";
+        PRINT_DEBUG(3, "Moving up\n");
         moveDroneByMeasure(step_distance, MOVE_DIRECTIONS::UP);
     }
-    cout << "[ DEBUG] [adjustTopBottomEdges] Adjusting top and bottom done.\n";
+    PRINT_DEBUG(3, "Adjusting top and bottom done.\n");
     return ;
 }
 
@@ -2611,8 +2609,8 @@ ControlUINode::adjustTopBottomEdges()
 void
 ControlUINode::adjustLeftEdge()
 {
-    cout << "[ DEBUG] [adjustLeftEdge] Started\n";
-    cout << "[ DEBUG] [adjustLeftEdge] Call Jlinkage\n";
+    PRINT_DEBUG(1, "Started\n");
+    PRINT_DEBUG(3, "Call Jlinkage\n");
     doJLinkage();
     bool planeLeftVisible;
     int move = checkVisibility(this_plane_parameters, this_continuous_bounding_box_points, 1);
@@ -2627,24 +2625,24 @@ ControlUINode::adjustLeftEdge()
     while(!planeLeftVisible)
     {
         getCurrentPositionOfDrone();
-        cout << "[ DEBUG] [adjustLeftEdge] Move: " << move << ", Step Distance: " << _move_heuristic << "\n";
+        PRINT_DEBUG(3, "Move: " << move << ", Step Distance: " << _move_heuristic << "\n");
         if(move == -1)
         {
-            cout << "[ DEBUG] [adjustLeftEdge] Moving left\n";
+            PRINT_DEBUG(3, "Moving left\n");
             moveDroneByMeasure(_move_heuristic, MOVE_DIRECTIONS::LEFT);
         }
         else if(move == 1)
         {
-            cout << "[ DEBUG] [adjustLeftEdge] Moving right\n";
+            PRINT_DEBUG(3, "Moving right\n");
             moveDroneByMeasure(_move_heuristic, MOVE_DIRECTIONS::RIGHT);
         }
         doJLinkage();
         move = checkVisibility(this_plane_parameters, this_continuous_bounding_box_points, 1);
-        cout << "[ DEBUG] [adjustLeftEdge] Move: " << move << "\n";
+        PRINT_DEBUG(3, "Move: " << move << "\n");
         if(move==0) {planeLeftVisible = true;}
         else {planeLeftVisible = false;}
     }
-    cout << "[ DEBUG] [adjustLeftEdge] Completed\n";
+    PRINT_LOG(1, "Completed\n");
 }
 
 /**
