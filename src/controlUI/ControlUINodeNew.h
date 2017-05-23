@@ -499,6 +499,7 @@ class ControlUINode
         std::list<std_msgs::String> commands;
         std::list<std::vector<double> > targetPoints;
         std::vector<int> startTargetPtIndex;
+        std::vector<int> moveDronePathPoints;
         int numberOfPlanes;
         int planeIndex;
 
@@ -761,6 +762,22 @@ class ControlUINode
         void
         getInitialPath(const vector<double> &prevPosition, const vector<double> &tPoint,
                        double prevYaw, double desiredYaw, vector<vector<double> > &xyz_yaw);
+
+        void
+        moveDroneBetweenPlanes(const vector<double> &previousPosition,
+                               const vector<Point3f> &curr_coord_box_points,
+                               const vector<Point3f> &next_coord_box_points,
+                               const vector<float> &curr_plane_parameters,
+                               const vector<float> &next_plane_parameters, int plane_index);
+
+        void
+        generatePathPoints(const vector<double> &startPosition, 
+                           const vector<double> &endPosition,
+                           vector< vector<double> > &pathPoints,
+                           bool rotation);
+
+        void
+        pushCommands(const vector< vector<double > > &pathPoints);
 
         //Find target points for plane not parallel to XZ plane
         /**
