@@ -678,9 +678,9 @@ ControlUINode::moveQuadcopter(const vector< vector<float> > &planeParameters,
     // UV axes for transformation between XYZ and UV co-ordinates
     vector<Point3f> uvAxes, xyzGridCoord;
     vector<float> uCoord, vCoord, uVector, vVector;
-    // Vector containing the number of commands to traverse each plane starting from a 
-    // distant position
-    // start????
+    // Vector containing the number of commands of recording videos for drone
+    // = No. of rows * No. of columns in the grid
+    // Cumulative counter
     startTargetPtIndex.resize(numberOfPlanes, 0);
     startTargetPtIndex[0] = 0;
     // The position from where drone is hovering in order to move to plane numbered plane_index
@@ -3023,10 +3023,10 @@ ControlUINode::adjustForNextCapture()
 void
 ControlUINode::alignQuadcopterToNextPlaneAdvanced()
 {
-    cout << "[ INFO] [alignQuadcopterToNextPlaneAdvanced] Started\n";
-    cout << "[ INFO] [alignQuadcopterToNextPlaneAdvanced] Completed no. of planes: " 
+    PRINT_LOG(1, "Started\n");
+    PRINT_LOG(3, "Completed no. of planes: " 
             << _node_completed_number_of_planes
-            << ", Total number of planes: " << _node_number_of_planes << "\n";
+            << ", Total number of planes: " << _node_number_of_planes << "\n")
     float angle;
     if(_next_plane_dir == COUNTERCLOCKWISE)
     {
@@ -3034,21 +3034,21 @@ ControlUINode::alignQuadcopterToNextPlaneAdvanced()
         if(!_is_adjusted)
         {
             yaw_change = true;
-            cout << "[ INFO] [alignQuadcopterToNextPlaneAdvanced] Not adjusted by width of plane\n";
+            PRINT_LOG(3, "Not adjusted by width of plane\n");
             Point3f top_left = visited_continuous_bounding_box_points.back()[0];
             Point3f top_right = visited_continuous_bounding_box_points.back()[1];
             double width_of_3d_plane = (double)fabs(sqrt( (top_right.x - top_left.x)*(top_right.x - top_left.x) +
                                                 (top_right.y - top_left.y)*(top_right.y - top_left.y) +
                                                 (top_right.z - top_left.z)*(top_right.z - top_left.z) ));
-            cout << "[ INFO] [alignQuadcopterToNextPlaneAdvanced] Width of the plane is: " << width_of_3d_plane << "\n";
-            cout << "[ INFO] [alignQuadcopterToNextPlaneAdvanced] Moving the drone horizontally by " << width_of_3d_plane << "\n";
+            PRINT_LOG(3, "Width of the plane is: " << width_of_3d_plane << "\n");
+            PRINT_LOG(3, "Moving the drone horizontally by " << width_of_3d_plane << "\n");
             moveRight(width_of_3d_plane);
             float m = 1.2;
             if(_next_plane_angle >= 70.0)
             {
                 do
                 {
-                    cout << "[ DEBUG] [alignQuadcopterToNextPlaneAdvanced] Not adjusted. Can't see a new plane\n";
+                    PRINT_DEBUG(3, "Not adjusted. Can't see a new plane\n");
                     moveRight(m);
                     doJLinkage();
                     m = m-0.2;
@@ -3062,7 +3062,7 @@ ControlUINode::alignQuadcopterToNextPlaneAdvanced()
             {
                 do
                 {
-                    cout << "[ DEBUG] [alignQuadcopterToNextPlaneAdvanced] Not adjusted. Can't see a new plane\n";
+                    PRINT_DEBUG(3, "Not adjusted. Can't see a new plane\n");
                     moveRight(m);
                     doJLinkage();
                     m = m-0.2;
@@ -3071,31 +3071,31 @@ ControlUINode::alignQuadcopterToNextPlaneAdvanced()
         }
         _is_adjusted = false;
         doJLinkage();
-        cout << "[ INFO] [alignQuadcopterToNextPlaneAdvanced] Next plane is counter clockwise to current plane\n";
+        PRINT_LOG(3, "Next plane is counter clockwise to current plane\n");
         image_gui->setContinuousBoundingBoxPoints(jlink_all_continuous_bounding_box_points);
         image_gui->setSigPlaneBoundingBoxPoints(this_continuous_bounding_box_points);
-        cout << "[ DEBUG] [alignQuadcopterToNextPlaneAdvanced] Rendering poly and sig plane\n";
+        PRINT_DEBUG(3, "Rendering poly and sig plane\n");
         image_gui->setRender(false, false, true, true);
         image_gui->renderFrame();
-        cout << "[ DEBUG] [alignQuadcopterToNextPlaneAdvanced] _sig_plane_index: " << _sig_plane_index << "\n";
-        cout << "[ DEBUG] [alignQuadcopterToNextPlaneAdvanced] _actual_plane_index: " << _actual_plane_index << "\n";
+        PRINT_DEBUG(3, "_sig_plane_index: " << _sig_plane_index << "\n");
+        PRINT_DEBUG(3, "_actual_plane_index: " << _actual_plane_index << "\n");
         bool move_drone = false;
         /*bool new_plane_visible = isNewPlaneVisible(visited_plane_parameters, jlink_all_plane_parameters,
                     jlink_all_percentage_of_each_plane, true, _next_plane_dir);*/
         if(_sig_plane_index == -2)
         {
-            cout << "[ DEBUG] [alignQuadcopterToNextPlaneAdvanced] Seems I can see only new planes\n";
+            PRINT_DEBUG(3, "Seems I can see only new planes\n");
             _actual_plane_index = 0;
             move_drone = true;
         }
         else if(_sig_plane_index == -1)
         {
-            cout << "[ DEBUG] [alignQuadcopterToNextPlaneAdvanced] Seems I can't see a new plane\n";
-            cout << "[ DEBUG] [alignQuadcopterToNextPlaneAdvanced] Moving more right by 1.2\n";
+            PRINT_DEBUG(3, "Seems I can't see a new plane\n");
+            PRINT_DEBUG(3, "Moving more right by 1.2\n");
             float m = 1.2;
             do
             {
-                cout << "[ DEBUG] [alignQuadcopterToNextPlaneAdvanced] Not adjusted. Can't see a new plane\n";
+                PRINT_DEBUG(3, "Not adjusted. Can't see a new plane\n");
                 moveRight(m);
                 doJLinkage();
                 m = m-0.2;
@@ -3103,7 +3103,7 @@ ControlUINode::alignQuadcopterToNextPlaneAdvanced()
         }
         else
         {
-            cout << "[ DEBUG] [alignQuadcopterToNextPlaneAdvanced] Seems I can see both new and old planes\n";
+            PRINT_DEBUG(3, "Seems I can see both new and old planes\n");
             move_drone = true;
         }
         if(move_drone)
@@ -3143,16 +3143,15 @@ ControlUINode::alignQuadcopterToNextPlaneAdvanced()
                 {
                     angle_to_rotate = _next_plane_angle/denom;
                 }
-                cout << "[ DEBUG] [alignQuadcopterToNextPlaneAdvanced] Round no.: " << rounds <<
-                            ", Next plane angle: " << _next_plane_angle << "\n";
+                PRINT_DEBUG(3, "Round no.: " << rounds << ", Next plane angle: " << _next_plane_angle << "\n");
                 if(yaw_change)
                 {
-                    cout << "[ DEBUG] [alignQuadcopterToNextPlaneAdvanced] Changing yaw cc by: " << angle_to_rotate << "\n";
+                    PRINT_DEBUG(3, "Changing yaw cc by: " << angle_to_rotate << "\n");
                     rotateCounterClockwise(angle_to_rotate);
                 }
                 yaw_change = true;
                 doJLinkage();
-                cout << "[ DEBUG] [alignQuadcopterToNextPlaneAdvanced] Linearly translating along X by " << initial_move << "\n";
+                PRINT_DEBUG(3, "Linearly translating along X by " << initial_move << "\n");
                 getCurrentPositionOfDrone();
                 /*float point_distance = getPointToPlaneDistance(this_plane_parameters, _node_current_pos_of_drone);
                 int move = (_fixed_distance >= point_distance) ? -1: 1;
@@ -3174,24 +3173,24 @@ ControlUINode::alignQuadcopterToNextPlaneAdvanced()
                 getCurrentPositionOfDrone();
                 int move = (_node_current_pos_of_drone[2] >= _fixed_height) ? -1:1;
                 float step_distance = fabs(_node_current_pos_of_drone[2] - _fixed_height);
-                cout << "[ DEBUG] [alignQuadcopterToNextPlaneAdvanced] Drone Height: " << _node_current_pos_of_drone[2]
-                            << ", Fixed Height: " << _fixed_height << "\n";
-                cout << "[ DEBUG] [alignQuadcopterToNextPlaneAdvanced] Move: " << move << ", Step Distance: " << step_distance << "\n";
+                PRINT_DEBUG(3, "Drone Height: " << _node_current_pos_of_drone[2]
+                            << ", Fixed Height: " << _fixed_height << "\n");
+                PRINT_DEBUG(3, "Move: " << move << ", Step Distance: " << step_distance << "\n");
                 if(move == -1)
                 {
-                    cout << "[ DEBUG] [alignQuadcopterToNextPlaneAdvanced] Moving down\n";
+                    PRINT_DEBUG(3, "Moving down\n");
                     moveDown(step_distance);
                 }
                 else if(move == 1)
                 {
-                    cout << "[ DEBUG] [alignQuadcopterToNextPlaneAdvanced] Moving up\n";
+                    PRINT_DEBUG(3, "Moving up\n");
                     moveUp(step_distance);
                 }
                 moveRight(initial_move);
                 doJLinkage();
                 Point3f normal_new_plane(this_plane_parameters[0],
                                             this_plane_parameters[1], this_plane_parameters[2]);
-                cout << "[ DEBUG] [alignQuadcopterToNextPlaneAdvanced] Normal new plane: " << normal_new_plane << "\n";
+                PRINT_DEBUG(3, "Normal new plane: " << normal_new_plane << "\n");
                 getCurrentPositionOfDrone();
                 PRINT_DEBUG(5, print1dVector(_node_current_pos_of_drone, "Current position of drone"));
                 _node_dest_pos_of_drone.clear();
@@ -3209,13 +3208,13 @@ ControlUINode::alignQuadcopterToNextPlaneAdvanced()
                 Point3f plane_params(normal_new_plane.x, normal_new_plane.y, 0.0);
                 projectedNormal.z = 0.0;
                 angle = findAngle(projectedNormal, plane_params);
-                cout << "[ DEBUG] [alignQuadcopterToNextPlaneAdvanced] Normal new plane: " << plane_params << "\n";
-                cout << "[ DEBUG] [alignQuadcopterToNextPlaneAdvanced] Normal of quadcopter: " << projectedNormal << "\n";
-                cout << "[ DEBUG] [alignQuadcopterToNextPlaneAdvanced] Opposite Normal of quadcopter: " << (-1.0)*projectedNormal << "\n";
-                cout << "[ DEBUG] [alignQuadcopterToNextPlaneAdvanced] Angle (radians): " << angle << "\n";
+                PRINT_DEBUG(3, "Normal new plane: " << plane_params << "\n");
+                PRINT_DEBUG(3, "Normal of quadcopter: " << projectedNormal << "\n");
+                PRINT_DEBUG(3, "Opposite Normal of quadcopter: " << (-1.0)*projectedNormal << "\n");
+                PRINT_DEBUG(3, "Angle (radians): " << angle << "\n");
                 angle = -angle*180/M_PI;
                 //float angle_diff = fabs(fabs(angle) - fabs(_node_current_pos_of_drone[3]));
-                cout << "[ DEBUG] [alignQuadcopterToNextPlaneAdvanced] angle: " << angle << "\n";
+                PRINT_DEBUG(3, "angle: " << angle << "\n");
                 /*cout << "[ DEBUG] [alignQuadcopterToNextPlaneAdvanced] drone_angle: " << _node_current_pos_of_drone[3] << "\n";
                 cout << "[ DEBUG] [alignQuadcopterToNextPlaneAdvanced] angle_diff: " << angle_diff << "\n";*/
                 if(fabs(angle) > 20.0)
@@ -3239,7 +3238,7 @@ ControlUINode::alignQuadcopterToNextPlaneAdvanced()
                     {
                         initial_move = 1.0;
                     }
-                    cout << "[ DEBUG] [alignQuadcopterToNextPlaneAdvanced] Next Move distance: " << initial_move << "\n";
+                    PRINT_DEBUG(3, "Next Move distance: " << initial_move << "\n");
                 }
                 else
                 {
@@ -3248,11 +3247,11 @@ ControlUINode::alignQuadcopterToNextPlaneAdvanced()
                 denom += 1.0;
             } while(!aligned);
         }
-        cout << "[ DEBUG] [alignQuadcopterToNextPlaneAdvanced] Aligning quadcopter to the new plane\n";
+        PRINT_DEBUG(3, "Aligning quadcopter to the new plane\n");
         alignQuadcopterToCurrentPlane();
         doJLinkage();
         adjustLeftEdge();
-        cout << "[ DEBUG] [alignQuadcopterToNextPlaneAdvanced] Aligned quadcopter to the new plane\n";
+        PRINT_DEBUG(3, "Aligning quadcopter to the new plane\n");
     }
     else if(_next_plane_dir == CLOCKWISE)
     {
@@ -3268,13 +3267,13 @@ ControlUINode::alignQuadcopterToNextPlaneAdvanced()
             cout << "[ INFO] [alignQuadcopterToNextPlaneAdvanced] Width of the plane is: " << width_of_3d_plane << "\n";
             cout << "[ INFO] [alignQuadcopterToNextPlaneAdvanced] Moving the drone horizontally by " << width_of_3d_plane/3.0 << "\n";
             moveRight(width_of_3d_plane/(double)4.0);*/
-            cout << "[ DEBUG] [alignQuadcopterToNextPlaneAdvanced] Not adjusted. Can't see a new plane\n";
-            cout << "[ DEBUG] [alignQuadcopterToNextPlaneAdvanced] Therefore, rotating clockwise by: " << 
-                    3*fabs(_next_plane_angle)/(double)4.0 << "\n";
+            PRINT_DEBUG(3, "Not adjusted. Can't see a new plane\n");
+            PRINT_DEBUG(3, "Therefore, rotating clockwise by: " << 
+                    3*fabs(_next_plane_angle)/(double)4.0 << "\n");
             rotateClockwise(3*fabs(_next_plane_angle)/(double)4.0);
-            cout << "[ INFO] [adjustForNextCapture] Moving backwards by 0.5\n";
+            PRINT_LOG(3, "Moving backwards by 0.5\n");
             moveBackward(0.5);
-            cout << "[ INFO] [adjustForNextCapture] Moving forwards by 0.5\n";
+            PRINT_LOG(3, "Moving forwards by 0.5\n");
             moveForward(0.5);
             while(_sig_plane_index == -1)
             {
@@ -3287,7 +3286,7 @@ ControlUINode::alignQuadcopterToNextPlaneAdvanced()
         {
             while(_sig_plane_index == -1)
             {
-                cout << "[ DEBUG] [alignQuadcopterToNextPlaneAdvanced] Adjusted. Can't see a new plane\n";
+                PRINT_DEBUG(3, "Adjusted. Can't see a new plane\n");
                 rotateClockwise(fabs(_next_plane_angle)/denom);
                 doJLinkage();
                 denom = denom + 1.0;
@@ -3298,19 +3297,20 @@ ControlUINode::alignQuadcopterToNextPlaneAdvanced()
         denom = denom + 1.0;
         rotateClockwise(fabs(_next_plane_angle)/denom);
         doJLinkage();
-        cout << "[ INFO] [alignQuadcopterToNextPlaneAdvanced] Next plane is clockwise to current plane\n";
+        PRINT_LOG(3, "Next plane is clockwise to current plane\n");
         image_gui->setContinuousBoundingBoxPoints(jlink_all_continuous_bounding_box_points);
         image_gui->setSigPlaneBoundingBoxPoints(this_continuous_bounding_box_points);
-        cout << "[ DEBUG] [alignQuadcopterToNextPlaneAdvanced] Rendering poly and sig plane\n";
+        PRINT_DEBUG(3, "Rendering poly and sig plane\n");
         image_gui->setRender(false, false, true, true);
         image_gui->renderFrame();
-        cout << "[ DEBUG] [alignQuadcopterToNextPlaneAdvanced] _sig_plane_index: " << _sig_plane_index << "\n";
-        cout << "[ DEBUG] [alignQuadcopterToNextPlaneAdvanced] _actual_plane_index: " << _actual_plane_index << "\n";
-        cout << "[ DEBUG] [alignQuadcopterToNextPlaneAdvanced] Moving backwards by 0.4\n";
+        PRINT_DEBUG(3, "_sig_plane_index: " << _sig_plane_index << "\n");
+        PRINT_DEBUG(3, "_actual_plane_index: " << _actual_plane_index << "\n");
+        PRINT_DEBUG(3, "Moving backwards by 0.4\n");
         moveBackward(0.4);
-        cout << "[ DEBUG] [alignQuadcopterToNextPlaneAdvanced] Moving forwards by 0.4\n";
+        PRINT_DEBUG(3, "Moving forwards by 0.4\n");
         moveForward(0.4);
         cout << "[ DEBUG] [alignQuadcopterToNextPlaneAdvanced] Aligning the quadcoper to the new plane\n";
+        PRINT_DEBUG(3, "Aligning the quadcoper to the new plane\n");
         alignQuadcopterToCurrentPlane();
         adjustLeftEdge();
     }
@@ -3327,7 +3327,7 @@ ControlUINode::alignQuadcopterToNextPlaneAdvanced()
         _next_plane_dir = _node_main_directions.front();
         _next_plane_angle = _node_main_angles.front();
     }
-    cout << "[ DEBUG] [alignQuadcopterToNextPlaneAdvanced] Completed\n";
+    PRINT_DEBUG(1, "Completed\n");
     return ;
 }
 
