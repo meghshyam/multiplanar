@@ -626,7 +626,7 @@ getCurrentPlaneIndex(const vector< vector<float> > &plane_parameters,
 	else
 	{
 		PRINT_DEBUG(3, print2dVector(temp_plane_parameters, "Current visible planes:\n"));
-		PRINT_DEBUG(3, print2dVector(temp_plane_parameters, "Already visited planes:\n"));
+		PRINT_DEBUG(3, print2dVector(plane_parameters, "Already visited planes:\n"));
 		for (unsigned int i = 0; i < temp_plane_parameters.size(); ++i)
 		{
 			bool found = false;
