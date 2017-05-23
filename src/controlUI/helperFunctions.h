@@ -590,7 +590,7 @@ getCurrentPlaneIndex(const vector< vector<float> > &plane_parameters,
 	dot_p_vec.clear();
 	if(plane_parameters.size() == 0)
 	{
-		cout << "[ DEBUG] [getCurrentPlaneIndex] No planes visited till now\n";
+		PRINT_DEBUG(3, "No planes visited till now\n");
 		planeIndex = -1;
 		plane_normal_1.clear();
 		plane_normal_1.push_back(0.0);
@@ -605,9 +605,9 @@ getCurrentPlaneIndex(const vector< vector<float> > &plane_parameters,
 			}
 			dot_p = normalized_dot_product(plane_normal_1, plane_normal_2); // yaw_axis[0]*a + yaw_axis[1]*b + yaw_axis[2]*c;
 			dot_p_vec.push_back(dot_p);
-			print1dVector(plane_normal_1, "[ DEBUG] [getCurrentPlaneIndex] Expected yaw of drone");
-			print1dVector(plane_normal_2, "[ DEBUG] [getCurrentPlaneIndex] Current plane visible");
-			cout << "[ DEBUG] [getCurrentPlaneIndex] dot_p: " << dot_p << "\n";
+			PRINT_DEBUG(3, print1dVector(plane_normal_1, "Expected yaw of drone: "));
+			PRINT_DEBUG(3, print1dVector(plane_normal_2, "Current plane visible: "));
+			PRINT_DEBUG(3, "dot_p: " << dot_p << "\n");
 			if(dot_p >= plane_heuristic)
 			{
 				planeIndex = (unsigned int)i; break;
@@ -632,17 +632,17 @@ getCurrentPlaneIndex(const vector< vector<float> > &plane_parameters,
 		}
 		if(planeIndex < 0)
 		{
-			cout << "[ DEBUG] [getCurrentPlaneIndex] planeIndex: " << planeIndex << "\n";
-			print1dVector(dot_p_vec, "[ DEBUG] [getCurrentPlaneIndex] Dot Product Values");
+			PRINT_DEBUG(3, "planeIndex: " << planeIndex << "\n");
+			PRINT_DEBUG(3, print1dVector(dot_p_vec, "Dot Product Values: "));
 			planeIndex = distance(dot_p_vec.begin(),
 					 std::max_element(dot_p_vec.begin(), dot_p_vec.end()));
-			cout << "[ DEBUG] [getCurrentPlaneIndex] planeIndex: " << planeIndex << "\n";
+			PRINT_DEBUG(3, "planeIndex: " << planeIndex << "\n");
 		}
 	}
 	else
 	{
-		print2dVector(temp_plane_parameters, "[ DEBUG] [getCurrentPlaneIndex] Current visible planes");
-		print2dVector(plane_parameters, "[ DEBUG] [getCurrentPlaneIndex] Already visited planes");
+		PRINT_DEBUG(3, print2dVector(temp_plane_parameters, "Current visible planes:\n"));
+		PRINT_DEBUG(3, print2dVector(plane_parameters, "Already visited planes:\n"));
 		for (unsigned int i = 0; i < temp_plane_parameters.size(); ++i)
 		{
 			bool found = false;
@@ -659,9 +659,9 @@ getCurrentPlaneIndex(const vector< vector<float> > &plane_parameters,
 					plane_normal_2.push_back(plane_parameters[j][k]);
 				}
 				dot_p = normalized_dot_product(plane_normal_1, plane_normal_2); //in_a*out_a + in_b*out_b + in_c*out_c;
-				print1dVector(plane_normal_2, "[ DEBUG] [getCurrentPlaneIndex] Visited plane");
-				print1dVector(plane_normal_1, "[ DEBUG] [getCurrentPlaneIndex] Current plane visible");
-				cout << "[ DEBUG] [getCurrentPlaneIndex] dot_p: " << dot_p << "\n";
+				PRINT_DEBUG(3, print1dVector(plane_normal_2, "Visited plane: "));
+				PRINT_DEBUG(3, print1dVector(plane_normal_1, "Current plane visible: "));
+				PRINT_DEBUG(3, "dot_p: " << dot_p << "\n");
 				if(dot_p >= plane_heuristic)
 				{
 					if(fabs(temp_plane_parameters[i][3]-plane_parameters[j][3]) < 0.8)
@@ -693,8 +693,8 @@ getCurrentPlaneIndex(const vector< vector<float> > &plane_parameters,
 					bool var4 = (fabs(a_4-b_4) < 1.5);
 					float mag = ( pow((a_1-b_1),2) + pow((a_2-b_2),2) + pow((a_3-b_3),2) );
 					bool var5 = (mag <= 0.25);
-					cout << "[ DEBUG] [getCurrentPlaneIndex] Magnitude: " << mag << ", D_Diff: " << fabs(a_4-b_4) << "\n";
-					cout << "[ DEBUG] [getCurrentPlaneIndex] Var1: " << var1 << ", Var2: " << var2 << ", Var3: " << var3 << ", Var4: " << var4 << ", Var5: " << var5 << "\n";
+					PRINT_DEBUG(3, "Magnitude: " << mag << ", D_Diff: " << fabs(a_4-b_4) << "\n");
+					PRINT_DEBUG(3, "Var1: " << var1 << ", Var2: " << var2 << ", Var3: " << var3 << ", Var4: " << var4 << ", Var5: " << var5 << "\n");
 					/*if(var1 & var2 & var3 & var4)
 					{
 						found = true; break;
@@ -745,13 +745,13 @@ getCurrentPlaneIndex(const vector< vector<float> > &plane_parameters,
 			break;
 		}*/
 	}
-	cout << "[ DEBUG] [getCurrentPlaneIndex] Current Plane Index: " << planeIndex << "\n";
+	PRINT_DEBUG(3, "Current Plane Index: " << planeIndex << "\n");
 	/*if(planeIndex == -1)
 	{
 		planeIndex = (int)temp_plane_parameters.size()-1;
 	}
 	cout << "[ DEBUG] [getCurrentPlaneIndex] Changed Current Plane Index: " << planeIndex << "\n";*/
-	cout << "[ DEBUG] [getCurrentPlaneIndex] Completed\n";
+	PRINT_DEBUG(1, "Completed\n");
 	return planeIndex;
 }
 
@@ -962,7 +962,7 @@ fixPlaneOrientation(const vector<double> &position,
 						vector<Point3f> &continuous_bounding_box_points)
 {
 	assert(points.size() >= 3);
-	cout << "[ INFO] [fixPlaneOrientation] Started\n";
+	PRINT_LOG(1, "Started\n");
 	/*print1dVector(plane_parameters, "[ DEBUG] [fixPlaneOrientation] Old PP");
 	print1dVector(continuous_bounding_box_points, "[ DEBUG] [fixPlaneOrientation] Old CBB");*/
 	// Create a matrix out of the vector of points: Dimension: numberOfPoints*3
@@ -981,21 +981,21 @@ fixPlaneOrientation(const vector<double> &position,
 	float centroidY = y_c;
 	float centroidZ = z_c;
 	Point3f p(centroidX, centroidY, centroidZ), qp;
-	cout << "[ DEBUG] [fixPlaneOrientation] Centroid: " << p << "\n";
-	print1dVector(position, "[ DEBUG] [fixPlaneOrientation] Position of drone");
+	PRINT_DEBUG(3, "Centroid: " << p << "\n");
+	PRINT_DEBUG(3, print1dVector(position, "Position of drone: "));
 	float a = plane_parameters[0];
 	float b = plane_parameters[1];
 	float c = plane_parameters[2];
 	float mag = ((a*a)+(b*b)+(c*c));
-	print1dVector(plane_parameters, "[ DEBUG] [fixPlaneOrientation] Old Plane Parameters");
+	PRINT_DEBUG(3, print1dVector(plane_parameters, "Old Plane Parameters: "));
 	Point3f pos((float)position[0], (float)position[1], (float)position[2]);
 	qp = pos - p;
-	cout << "[ DEBUG] [fixPlaneOrientation] qp: " << qp << "\n";
+	PRINT_DEBUG(3, "qp: " << qp << "\n");
 	float t = (qp.x * (a/mag)) + (qp.y * (b/mag)) + ((qp.z * (c/mag)));
-	cout << "[ DEBUG] [fixPlaneOrientation] t: " << t << "\n";
+	PRINT_DEBUG(3, "t: " << t << "\n");
 	if(!signbit(t))
 	{
-		cout << "[ DEBUG] [fixPlaneOrientation] Sign change required\n";
+		PRINT_DEBUG(3, "Sign change required\n");
 		plane_parameters[0] = -plane_parameters[0];
 		plane_parameters[1] = -plane_parameters[1];
 		plane_parameters[2] = -plane_parameters[2];
@@ -1013,7 +1013,7 @@ fixPlaneOrientation(const vector<double> &position,
 	}
 	/*print1dVector(plane_parameters, "[ DEBUG] [fixPlaneOrientation] New Plane Parameters");
 	print1dVector(continuous_bounding_box_points, "[ DEBUG] [fixPlaneOrientation] New CBB");*/
-	cout << "[ INFO] [fixPlaneOrientation] Completed\n";
+	PRINT_LOG(1 ,"Completed\n");
 	return ;
 }
 
@@ -1028,7 +1028,7 @@ orderPlanesFromQuadcopterPosition(const vector<double> &current_pos_of_drone,
 									vector< vector<Point3f> > &out_cbb,
 									vector<float> &out_p)
 {
-	cout << "[ DEBUG] [orderPlanesFromQuadcopterPosition] Started\n";
+	PRINT_DEBUG(1, "Started\n");
 	clear2dVector(out_points);
 	clear2dVector(out_pp);
 	clear2dVector(out_cbb);
@@ -1055,7 +1055,7 @@ orderPlanesFromQuadcopterPosition(const vector<double> &current_pos_of_drone,
 	}
 	// Sort the x centroids
 	sortData( xCentroidPoints, sortedXCentroidPoints, indices, true);
-	print1dVector(indices, "[ DEBUG] [orderPlanesFromQuadcopterPosition] New Plane Indices");
+	PRINT_DEBUG(3, print1dVector(indices, "New Plane Indices: "));
 	for (unsigned int i = 0; i < in_points.size(); ++i)
 	{
 		int index = indices[i];
@@ -1079,21 +1079,21 @@ orderPlanesFromQuadcopterPosition(const vector<double> &current_pos_of_drone,
 		out_points.push_back(dummy_points);
 		out_p.push_back(in_p[index]);
 	}
-	print2dVector(in_pp, "[ DEBUG] [orderPlanesFromQuadcopterPosition] Input Plane Parameters");
-	print2dVector(out_pp, "[ DEBUG] [orderPlanesFromQuadcopterPosition] Output Plane Parameters");
-	print2dVector(in_cbb, "[ DEBUG] [orderPlanesFromQuadcopterPosition] Input Plane CBB");
-	print2dVector(out_cbb, "[ DEBUG] [orderPlanesFromQuadcopterPosition] Output Plane CBB");
-	print1dVector(in_p, "[ DEBUG] [orderPlanesFromQuadcopterPosition] Input Plane Percentage");
-	print1dVector(out_p, "[ DEBUG] [orderPlanesFromQuadcopterPosition] Output Plane Percentage");
-	cout << "[ DEBUG] [orderPlanesFromQuadcopterPosition] Fixing orientations\n";
+	PRINT_DEBUG(3, print2dVector(in_pp, "Input Plane Parameters:\n"));
+	PRINT_DEBUG(3, print2dVector(out_pp, "Output Plane Parameters:\n"));
+	PRINT_DEBUG(3, print2dVector(in_cbb, "Input Plane CBB:\n"));
+	PRINT_DEBUG(3, print2dVector(out_cbb, "Output Plane CBB:\n"));
+	PRINT_DEBUG(3, print1dVector(in_p, "Input Plane Percentage: "));
+	PRINT_DEBUG(3, print1dVector(out_p, "Output Plane Percentage: "));
+	PRINT_DEBUG(3, "Fixing orientations\n");
 	for (unsigned int i = 0; i < out_pp.size(); ++i)
 	{
 		fixPlaneOrientation(current_pos_of_drone, out_points[i], out_pp[i], out_cbb[i]);
 	}
-	print2dVector(out_pp, "[ DEBUG] [orderPlanesFromQuadcopterPosition] Fixed Output Plane Parameters");
-	print2dVector(out_cbb, "[ DEBUG] [orderPlanesFromQuadcopterPosition] Fixed Output Plane CBB");
-	cout << "[ DEBUG] [orderPlanesFromQuadcopterPosition] Fixing Done\n";
-	cout << "[ DEBUG] [orderPlanesFromQuadcopterPosition] Completed\n";
+	PRINT_DEBUG(3, print2dVector(out_pp, "Fixed Output Plane Parameters:\n"));
+	PRINT_DEBUG(3, print2dVector(out_cbb, "Fixed Output PlaneCBB:\n"));
+	PRINT_DEBUG(3, "Fixing Done\n");
+	PRINT_DEBUG(1, "Completed\n");
 	dummy_points.clear();
 	dummy_pp.clear();
 	dummy_cbb.clear();
@@ -1186,11 +1186,11 @@ bestFitPlane(const vector<Point3f> &threed_points)
 	Mat vt(threed_points.size(), threed_points.size(), DataType<float>::type);
 	Mat u(3, 3, DataType<float>::type);
 	SVD::compute(Y, w, u, vt);
-	cout << "U:\n" << u << "\n";
-	cout << "S:\n" << w << "\n";
-	cout << "Vt:\n" << vt << "\n";
-	cout << "Method 3: (" << u.at<float>(0, 3) << ", " << u.at<float>(1, 3) << ", " 
-			<< u.at<float>(2, 3) << ", " << u.at<float>(3, 3) << ")\n";
+	PRINT_DEBUG(3, "U:\n" << u << "\n");
+	PRINT_DEBUG(3, "S:\n" << w << "\n");
+	PRINT_DEBUG(3, "Vt:\n" << vt << "\n");
+	PRINT_DEBUG(3, "Method 3: (" << u.at<float>(0, 3) << ", " << u.at<float>(1, 3) << ", " 
+			<< u.at<float>(2, 3) << ", " << u.at<float>(3, 3) << ")\n");
 	a = u.at<float>(0, 3);
 	b = u.at<float>(1, 3);
 	c = u.at<float>(2, 3);
@@ -1333,8 +1333,8 @@ getDistanceToSeePlane(int height)
 	Mat rotinv;
 	transpose(rot, rotinv);
 	tvec = -rotinv * tvec;
-	cout << "Expected Quadcopter Location to see height: " << height << "and width: " << width 
-		<< ": (" << tvec.at<double>(0) << ", " << tvec.at<double>(2) << ", " << -tvec.at<double>(1) << ")\n";
+	PRINT_DEBUG(3, "Expected Quadcopter Location to see height: " << height << "and width: " << width 
+		<< ": (" << tvec.at<double>(0) << ", " << tvec.at<double>(2) << ", " << -tvec.at<double>(1) << ")\n");
 	double dist = tvec.at<double>(2);
 	return dist;
 }
@@ -1415,7 +1415,7 @@ getHeightFromGround(const vector<float> &planeParameters,
 						const vector<Point3f> &continuousBoundingBoxPoints,
 						const vector<double> &current_pos_of_drone)
 {
-	cout << "[ DEBUG] [getHeightFromGround] Started\n";
+	PRINT_DEBUG(1, "Started\n");
 	double height;
 	Point3f top_mid = (continuousBoundingBoxPoints[0]+continuousBoundingBoxPoints[1]);
 	top_mid.x = top_mid.x/(float)2.0;
@@ -1432,21 +1432,21 @@ getHeightFromGround(const vector<float> &planeParameters,
 	/*mid.x = top_mid.x;
 	mid.y = top_mid.y;
 	mid.z = top_mid.z/(float)2.0;*/
-	cout << "[ DEBUG] [getHeightFromGround] Top mid: " << top_mid << "\n";
-	cout << "[ DEBUG] [getHeightFromGround] Mid: " << mid << "\n";
-	cout << "[ DEBUG] [getHeightFromGround] Bottom mid: " << bottom_mid << "\n";
-	cout << "[ DEBUG] [getHeightFromGround] Height of plane's mid point: " << mid << "\n";
+	PRINT_DEBUG(3, "Top mid: " << top_mid << "\n");
+	PRINT_DEBUG(3, "Mid: " << mid << "\n");
+	PRINT_DEBUG(3, "Bottom mid: " << bottom_mid << "\n");
+	PRINT_DEBUG(3, "Height of plane's mid point: " << mid << "\n");
 	Point3f normal_plane(planeParameters[0], planeParameters[1], planeParameters[2]);
 	float mag_normal_plane = sqrt(normal_plane.x*normal_plane.x +
 						normal_plane.y*normal_plane.y + normal_plane.z*normal_plane.z);
 	float drone_distance = getPointToPlaneDistance(planeParameters, current_pos_of_drone);
 	float t = drone_distance/mag_normal_plane;
 	height = (double) mid.z + t*normal_plane.z;
-	cout << "Height to adjust: " << height << "\n";
-	cout << "Values x: " << mid.x + t*normal_plane.x << "\n";
-	cout << "Values y: " << mid.y + t*normal_plane.y << "\n";
-	cout << "Values z: " << mid.z + t*normal_plane.z << "\n";
-	cout << "[ DEBUG] [getHeightFromGround] Completed\n";
+	PRINT_DEBUG(3, "Height to adjust: " << height << "\n");
+	PRINT_DEBUG(3, "Values x: " << mid.x + t*normal_plane.x << "\n");
+	PRINT_DEBUG(3, "Values y: " << mid.y + t*normal_plane.y << "\n");
+	PRINT_DEBUG(3, "Values z: " << mid.z + t*normal_plane.z << "\n");
+	PRINT_DEBUG(1, "Completed\n");
 	return height;
 }
 
