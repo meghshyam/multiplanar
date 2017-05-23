@@ -98,6 +98,22 @@ onSameSide(std::vector<int> p1, std::vector<int> p2,
  * @param
  * @return
  */
+inline static float
+distanceBetweenPoints(Point3f point1, Point3f point2)
+{
+	float distance = 0.0;
+	distance = sqrt((point2.x-point1.x)*(point2.x-point1.x) +
+					(point2.y-point1.y)*(point2.y-point1.y) +
+					(point2.z-point1.z)*(point2.z-point1.z));
+	return distance;
+}
+
+/**
+ * @brief 
+ * @details
+ * @param
+ * @return
+ */
 inline static bool
 liesInside(std::vector< std::vector<int> > ccPoints, std::vector<float> p)
 {
