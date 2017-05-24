@@ -739,6 +739,10 @@ ControlUINode::moveQuadcopter(const vector< vector<float> > &planeParameters,
         Point3f yAxis(0, 1, 0);
         desiredYaw = findAngle(projectedNormal, yAxis);
         desiredYaw = desiredYaw*180/M_PI;
+        PRINT_DEBUG(1, "Projected Normal: " << projectedNormal << "\n");
+        PRINT_DEBUG(1, "Y axis: " << yAxis << "\n");
+        PRINT_DEBUG(1, "prevYaw: " << prevYaw << "\n");
+        PRINT_DEBUG(1, "desiredYaw: " << desiredYaw << "\n");
         // Having known the prevPosition and pTargetPoints
         // move the drone from prevPosition to pTargetPoints[0]
         // and completely navigate around the plane as specified by the pTargetPoints
@@ -775,8 +779,10 @@ ControlUINode::moveQuadcopter(const vector< vector<float> > &planeParameters,
             prevPosition[1] = targetPoints.back()[1];
             prevPosition[2] = targetPoints.back()[2];
             prevYaw = targetPoints.back()[3];
-
         }
+        PRINT_DEBUG(1, print1dVector(prevPosition, "prevPosition for moveDrone: ", ""));
+        PRINT_DEBUG(1, "Previous Yaw: " << prevYaw << "\n");
+        PRINT_DEBUG(1, "Desired Yaw: " << desiredYaw << "\n");
         moveDrone(prevPosition, pTargetPoints, prevYaw, desiredYaw);
         int numTargetPoints = pTargetPoints.size();
         // Now the previous position of plane numbered plane_index+1 is the last position where 
@@ -810,7 +816,7 @@ ControlUINode::moveDroneBetweenPlanes(const vector<double> &previousPosition,
     vector< vector<double> > pathPoints;
     clear2dVector(pathPoints);
     vector<double> startPosition(4), endPosition(4);
-    float distance = 2.0;
+    float distance = -1.5;
     if (curr_coord_box_points.size() == 0 && curr_plane_parameters.size() == 0 && plane_index == 0)
     {
         PRINT_LOG(1, "You are currently adjusting for plane " << plane_index+1 << "\n");
@@ -822,9 +828,9 @@ ControlUINode::moveDroneBetweenPlanes(const vector<double> &previousPosition,
         prevPositionPoint.z = (float)previousPosition[2];
         PRINT_DEBUG(1, "Previous position: " << prevPositionPoint << "\n");
         // Plane i normal. Normal of next plane
-        next_plane_normal.x = -next_plane_parameters[0];
-        next_plane_normal.y = -next_plane_parameters[1];
-        next_plane_normal.z = -next_plane_parameters[2];
+        next_plane_normal.x = next_plane_parameters[0];
+        next_plane_normal.y = next_plane_parameters[1];
+        next_plane_normal.z = next_plane_parameters[2];
         PRINT_DEBUG(1, "Current plane parameters: " << next_plane_normal << "\n");
         Point3f next_plane_midpoint(0.0f, 0.0f, 0.0f), next_plane_right_edge_midpoint(0.0f, 0.0f, 0.0f);
         // Get the next plane's mid point
@@ -866,6 +872,12 @@ ControlUINode::moveDroneBetweenPlanes(const vector<double> &previousPosition,
         float distance14 = distanceBetweenPoints(prevPositionPoint, next_plane_right_edge_midpoint_projection);
         PRINT_DEBUG(1, "Distance between last targetPoint and next plane midpoint projection: " << distance13 << "\n");
         PRINT_DEBUG(1, "Distance between last targetPoint and next plane right edge midpoint projection: " << distance14 << "\n");
+        Point3f projectedNormal(next_plane_parameters[0], next_plane_parameters[1], 0);
+        Point3f yAxis(0, 1, 0);
+        double desiredYaw = findAngle(projectedNormal, yAxis);
+        desiredYaw = desiredYaw*180/M_PI;
+        PRINT_DEBUG(1, "prevYaw: " << previousPosition[3] << "\n");
+        PRINT_DEBUG(1, "desiredYaw: " << desiredYaw << "\n");
         startPosition[0] = previousPosition[0];
         startPosition[1] = previousPosition[1];
         startPosition[2] = previousPosition[2];
@@ -875,7 +887,7 @@ ControlUINode::moveDroneBetweenPlanes(const vector<double> &previousPosition,
             endPosition[0] = next_plane_midpoint_projection.x;
             endPosition[1] = next_plane_midpoint_projection.y;
             endPosition[2] = next_plane_midpoint_projection.z;
-            endPosition[3] = previousPosition[3];
+            endPosition[3] = desiredYaw;
             generatePathPoints(startPosition, endPosition, pathPoints, false);
             PRINT_DEBUG(1, "1.1 -> pathPoints size: " << pathPoints.size() << "\n");
         }
@@ -884,7 +896,7 @@ ControlUINode::moveDroneBetweenPlanes(const vector<double> &previousPosition,
             endPosition[0] = next_plane_right_edge_midpoint_projection.x;
             endPosition[1] = next_plane_right_edge_midpoint_projection.y;
             endPosition[2] = next_plane_right_edge_midpoint_projection.z;
-            endPosition[3] = previousPosition[3];
+            endPosition[3] = desiredYaw;
             generatePathPoints(startPosition, endPosition, pathPoints, false);
             PRINT_DEBUG(1, "1.2 -> pathPoints size: " << pathPoints.size() << "\n");
         }
@@ -901,15 +913,14 @@ ControlUINode::moveDroneBetweenPlanes(const vector<double> &previousPosition,
         prevPositionPoint.y = (float)previousPosition[1];
         prevPositionPoint.z = (float)previousPosition[2];
         PRINT_DEBUG(1, "Previous position: " << prevPositionPoint << "\n");
-        float distance = 2.0;
         // Plane i-1 normal. Normal of current plane
-        curr_plane_normal.x = -curr_plane_parameters[0];
-        curr_plane_normal.y = -curr_plane_parameters[1];
-        curr_plane_normal.z = -curr_plane_parameters[2];
+        curr_plane_normal.x = curr_plane_parameters[0];
+        curr_plane_normal.y = curr_plane_parameters[1];
+        curr_plane_normal.z = curr_plane_parameters[2];
         // Plane i normal. Normal of next plane
-        next_plane_normal.x = -next_plane_parameters[0];
-        next_plane_normal.y = -next_plane_parameters[1];
-        next_plane_normal.z = -next_plane_parameters[2];
+        next_plane_normal.x = next_plane_parameters[0];
+        next_plane_normal.y = next_plane_parameters[1];
+        next_plane_normal.z = next_plane_parameters[2];
         PRINT_DEBUG(1, "Current plane parameters: " << curr_plane_normal << "\n");
         PRINT_DEBUG(1, "Next plane parameters: " << next_plane_normal << "\n");
         Point3f curr_plane_midpoint(0.0f, 0.0f, 0.0f), curr_plane_right_edge_midpoint(0.0f, 0.0f, 0.0f);
@@ -962,6 +973,8 @@ ControlUINode::moveDroneBetweenPlanes(const vector<double> &previousPosition,
             endPosition[1] = curr_plane_midpoint_projection.y;
             endPosition[2] = curr_plane_midpoint_projection.z;
             endPosition[3] = previousPosition[3];
+            PRINT_DEBUG(1, print1dVector(startPosition, "2.1 -> Starting position", ""));
+            PRINT_DEBUG(1, print1dVector(endPosition, "2.1 -> Ending position", ""));
             generatePathPoints(startPosition, endPosition, pathPoints, false);
             PRINT_DEBUG(1, "2.1 -> pathPoints size: " << pathPoints.size() << "\n");
             startPosition[0] = curr_plane_midpoint_projection.x;
@@ -972,6 +985,8 @@ ControlUINode::moveDroneBetweenPlanes(const vector<double> &previousPosition,
             endPosition[1] = curr_plane_right_edge_midpoint_projection.y;
             endPosition[2] = curr_plane_right_edge_midpoint_projection.z;
             endPosition[3] = previousPosition[3];
+            PRINT_DEBUG(1, print1dVector(startPosition, "2.2 -> Starting position", ""));
+            PRINT_DEBUG(1, print1dVector(endPosition, "2.2 -> Ending position", ""));
             generatePathPoints(startPosition, endPosition, pathPoints, false);
             PRINT_DEBUG(1, "2.2 -> pathPoints size: " << pathPoints.size() << "\n");
         }
@@ -981,11 +996,14 @@ ControlUINode::moveDroneBetweenPlanes(const vector<double> &previousPosition,
             endPosition[1] = curr_plane_right_edge_midpoint_projection.y;
             endPosition[2] = curr_plane_right_edge_midpoint_projection.z;
             endPosition[3] = previousPosition[3];
+            PRINT_DEBUG(1, print1dVector(startPosition, "2.3 -> Starting position", ""));
+            PRINT_DEBUG(1, print1dVector(endPosition, "2.3 -> Ending position", ""));
             generatePathPoints(startPosition, endPosition, pathPoints, false);
             PRINT_DEBUG(1, "2.3 -> pathPoints size: " << pathPoints.size() << "\n");
         }
         Point3f intersection_point(0.0f, 0.0f, 0.0f), mid_plane_normal(0.0f, 0.0f, 0.0f), path_mid_point(0.0f, 0.0f, 0.0f);
         Point3f next_plane_midpoint(0.0f, 0.0f, 0.0f), next_plane_left_edge_midpoint(0.0f, 0.0f, 0.0f);
+        Point3f next_plane_left_edge_midpoint_projection(0.0f, 0.0f, 0.0f);
         // Get the next plane's mid point
         next_plane_midpoint.x += (next_coord_box_points[0].x+next_coord_box_points[1].x);
         next_plane_midpoint.x += (next_coord_box_points[2].x+next_coord_box_points[3].x);
@@ -996,6 +1014,14 @@ ControlUINode::moveDroneBetweenPlanes(const vector<double> &previousPosition,
         next_plane_midpoint.z += (next_coord_box_points[0].z+next_coord_box_points[1].z);
         next_plane_midpoint.z += (next_coord_box_points[2].z+next_coord_box_points[3].z);
         next_plane_midpoint.z /= (4.0);
+        //
+        // Get the next plane's left dege mid point
+        next_plane_left_edge_midpoint.x += (next_coord_box_points[1].x+next_coord_box_points[2].x);
+        next_plane_left_edge_midpoint.x /= (2.0);
+        next_plane_left_edge_midpoint.y += (next_coord_box_points[1].y+next_coord_box_points[2].y);
+        next_plane_left_edge_midpoint.y /= (2.0);
+        next_plane_left_edge_midpoint.z += (next_coord_box_points[1].z+next_coord_box_points[2].z);
+        next_plane_left_edge_midpoint.z /= (2.0);
         PRINT_DEBUG(1, "Next plane midpoint: " << next_plane_midpoint << "\n");
         float lambda = (next_plane_midpoint.x - curr_plane_midpoint.x)*curr_plane_normal.y - 
                             (next_plane_midpoint.y - curr_plane_midpoint.y)*curr_plane_normal.x;
@@ -1011,12 +1037,18 @@ ControlUINode::moveDroneBetweenPlanes(const vector<double> &previousPosition,
         mid_plane_normal.z = intersection_point.z - curr_plane_right_edge_midpoint.z;
         PRINT_DEBUG(1, "Intersection point: " << intersection_point << "\n");
         PRINT_DEBUG(1, "Mid plane normal: " << mid_plane_normal << "\n");
-        float angle = findAngle(curr_plane_normal, next_plane_normal);
-        angle = angle/2;
-        PRINT_DEBUG(1, "Angle in degrees: " << angle << "\n");
-        angle = angle*M_PI/180.0;
-        PRINT_DEBUG(1, "Angle in radians: " << angle << "\n");
-        float new_distance = distance/cos(angle);
+        Point3f yAxis(0.0f, 1.0f, 0.0f);
+        float angleBetweenPlanes = findAngle(next_plane_normal, yAxis), angle = 0.0f;
+        PRINT_DEBUG(1, "Projected Normal: " << next_plane_normal << "\n");
+        PRINT_DEBUG(1, "Y axis: " << yAxis << "\n");
+        angle = angleBetweenPlanes/2;
+        PRINT_DEBUG(1, "Halfway angle in radians: " << angle << "\n");
+        angle = angle*180.0/M_PI;
+        PRINT_DEBUG(1, "Halfway angle in degrees: " << angle << "\n");
+        PRINT_DEBUG(1, "Angle between planes in radians: " << angleBetweenPlanes << "\n");
+        angleBetweenPlanes = angleBetweenPlanes*180.0/M_PI;
+        PRINT_DEBUG(1, "Angle between planes in degrees: " << angleBetweenPlanes << "\n");
+        float new_distance = -distance/cos(angle);
         path_mid_point.x = curr_plane_right_edge_midpoint.x + new_distance*mid_plane_normal.x;
         path_mid_point.y = curr_plane_right_edge_midpoint.y + new_distance*mid_plane_normal.y;
         path_mid_point.z = curr_plane_right_edge_midpoint.z + new_distance*mid_plane_normal.z;
@@ -1028,13 +1060,28 @@ ControlUINode::moveDroneBetweenPlanes(const vector<double> &previousPosition,
         endPosition[1] = path_mid_point.y;
         endPosition[2] = path_mid_point.z;
         endPosition[3] = previousPosition[3];
-        PRINT_DEBUG(1, print1dVector(startPosition, "New starting position", ""));
-        PRINT_DEBUG(1, print1dVector(endPosition, "New ending position", ""));
+        PRINT_DEBUG(1, print1dVector(startPosition, "2.4 -> Starting position", ""));
+        PRINT_DEBUG(1, print1dVector(endPosition, "2.4 -> Ending position", ""));
         generatePathPoints(startPosition, endPosition, pathPoints, false);
         PRINT_DEBUG(1, "2.4 -> pathPoints size: " << pathPoints.size() << "\n");
+        next_plane_left_edge_midpoint_projection.x = path_mid_point.x + distance*next_plane_normal.x;
+        next_plane_left_edge_midpoint_projection.y = path_mid_point.y + distance*next_plane_normal.y;
+        next_plane_left_edge_midpoint_projection.z = path_mid_point.z + distance*next_plane_normal.z;
+        startPosition[0] = path_mid_point.x;
+        startPosition[1] = path_mid_point.y;
+        startPosition[2] = path_mid_point.z;
+        startPosition[3] = previousPosition[3];
+        endPosition[0] = next_plane_left_edge_midpoint_projection.x;
+        endPosition[1] = next_plane_left_edge_midpoint_projection.y;
+        endPosition[2] = next_plane_left_edge_midpoint_projection.z;
+        endPosition[3] = angleBetweenPlanes;
+        PRINT_DEBUG(1, print1dVector(startPosition, "2.5 -> Starting position", ""));
+        PRINT_DEBUG(1, print1dVector(endPosition, "2.5 -> Ending position", ""));
+        generatePathPoints(startPosition, endPosition, pathPoints, true);
+        PRINT_DEBUG(1, "2.5 -> pathPoints size: " << pathPoints.size() << "\n");
     }
     moveDronePathPoints[plane_index] = (int)pathPoints.size() + 8;
-    PRINT_LOG(1, print2dVector(pathPoints, "Points needed by drone to move from one plane to another:\n", ""));
+    PRINT_LOG(1, print2dVector(pathPoints, "Points needed by drone to move from one plane to another:\n", "matlab"));
     pushCommands(pathPoints);
     clear2dVector(pathPoints);
     PRINT_LOG(1, "Completed.\n");
@@ -1048,6 +1095,8 @@ ControlUINode::generatePathPoints(const vector<double> &startPosition,
                                   bool rotation)
 {
     PRINT_LOG(1, "Started.\n");
+    PRINT_DEBUG(1, print1dVector(startPosition, "Starting position", ""));
+    PRINT_DEBUG(1, print1dVector(endPosition, "Ending position", ""));
     vector<double> interm_point(4);
     interm_point[0] = startPosition[0];
     interm_point[1] = startPosition[1];
@@ -1055,28 +1104,21 @@ ControlUINode::generatePathPoints(const vector<double> &startPosition,
     interm_point[3] = startPosition[3];
     double prevYaw = startPosition[3];
     double desiredYaw = endPosition[3];
-    PRINT_DEBUG(1, "2.1 -> pathPoints size: " << pathPoints.size() << "\n");
+    PRINT_DEBUG(1, "Initial pathPoints size: " << pathPoints.size() << "\n");
     if(rotation)
     {
         PRINT_DEBUG(1, "With rotation\n");
-        double angle_diff = endPosition[3]-startPosition[3];
-        int num_steps = ceil(angle_diff/4.0);
+        double angle_to_rotate = 4.0;
+        double angle_diff = fabs(endPosition[3]-startPosition[3]);
+        int num_steps = ceil(angle_diff/angle_to_rotate);
         for(int i = 0; i < num_steps; i++)
         {
-            int m = i/2 +1;
-            int n = 2 - i/2;
-            if(i%2 == 0)
-            {
-                interm_point[0] = (m*endPosition[0] + n*startPosition[0])/3;
-            }
-            else
-            {
-                interm_point[1] = (m*endPosition[1] + startPosition[1])/3;
-            }
-            interm_point[3] = startPosition[3]+angle_diff;
+            interm_point[0] = ((i+1)*endPosition[0] + (num_steps-i-1)*startPosition[0])/num_steps;
+            interm_point[1] = ((i+1)*endPosition[1] + (num_steps-i-1)*startPosition[1])/num_steps;
+            interm_point[2] = ((i+1)*endPosition[2] + (num_steps-i-1)*startPosition[2])/num_steps;
+            interm_point[3] = ((i+1)*endPosition[3] + (num_steps-i-1)*startPosition[3])/num_steps;
+            PRINT_DEBUG(1, print1dVector(interm_point, "Interim point: ", ""));
             pathPoints.push_back(interm_point);
-            PRINT_DEBUG(1, "pathPoints size: " << pathPoints.size() << "\n");
-            PRINT_DEBUG(1, print2dVector(pathPoints, "From function:\n", ""));
         }
     }
     else
@@ -1095,15 +1137,16 @@ ControlUINode::generatePathPoints(const vector<double> &startPosition,
                 interm_point[1] = (m*endPosition[1] + startPosition[1])/3;
             }
             interm_point[3] = prevYaw*(5-i)/5 + desiredYaw*i/5;
+            PRINT_DEBUG(1, print1dVector(interm_point, "Interim point: ", ""));
             pathPoints.push_back(interm_point);
         }
         interm_point[2] = (startPosition[2] + endPosition[2])/2.0;
         pathPoints.push_back(interm_point);
         interm_point[2] = endPosition[2];
         pathPoints.push_back(interm_point);
-        PRINT_DEBUG(1, "pathPoints size: " << pathPoints.size() << "\n");
-        PRINT_DEBUG(1, print2dVector(pathPoints, "From function:\n", ""));
     }
+    PRINT_DEBUG(1, "Final pathPoints size: " << pathPoints.size() << "\n");
+    PRINT_DEBUG(1, print2dVector(pathPoints, "From function:\n", "matlab"));
     PRINT_LOG(1, "Completed.\n");
     return ;
 }
@@ -1635,6 +1678,8 @@ ControlUINode::getInitialPath(const vector<double> &prevPosition, const vector<d
                               double prevYaw, double desiredYaw, vector<vector<double> > &xyz_yaw)
 {
     PRINT_LOG(1, "Started\n");
+    PRINT_DEBUG(1, "prevYaw: " << prevYaw << "\n");
+    PRINT_DEBUG(1, "desiredYaw: " << desiredYaw << "\n");
     vector<double> interm_point(4);
     interm_point[0] = prevPosition[0];
     interm_point[1] = prevPosition[1];
@@ -1687,6 +1732,7 @@ ControlUINode::newPoseCb (const tum_ardrone::filter_stateConstPtr statePtr)
     cout << "[ DEBUG] [poseCb] Number of commands left: " << just_navigation_commands.size() << "\n";
     cout << "[ DEBUG] [poseCb] justNavigation: " << justNavigation << "\n";
     cout << "[ DEBUG] [poseCb] traverseComplete: " << traverseComplete << "\n";*/
+    // PRINT_DEBUG(1, commands.size() << ", " << currentCommand << ", " << recordNow << "\n");
     if(just_navigation_commands.size() == 0 && changeyawLockReleased==-1)
     {
         pthread_mutex_unlock(&changeyaw_CS);
@@ -1780,6 +1826,9 @@ ControlUINode::newPoseCb (const tum_ardrone::filter_stateConstPtr statePtr)
         static int planeIndexCurrent = 0;
         // Change the plane number if total number of commands executed is greater than 
         // ?
+        PRINT_DEBUG(5, "numCommands: " << numCommands << "\n");
+        PRINT_DEBUG(5, "startTargetPtIndex[" << planeIndexCurrent << "]: " << startTargetPtIndex[planeIndexCurrent] << "\n");
+        PRINT_DEBUG(5, "moveDronePathPoints[" << planeIndexCurrent << "]: " << moveDronePathPoints[planeIndexCurrent] << "\n");
         if( planeIndexCurrent < (numberOfPlanes-1) &&
             numCommands > startTargetPtIndex[planeIndexCurrent+1])
         {
@@ -1804,7 +1853,7 @@ ControlUINode::newPoseCb (const tum_ardrone::filter_stateConstPtr statePtr)
         pthread_mutex_unlock(&pose_CS);
         if(ea < error_threshold)
         {
-            PRINT_DEBUG(4, "Reached targetPoint: (" << x << ", " << y << ", " << z  << ", " << ya << ")\n");
+            PRINT_DEBUG(3, "Reached targetPoint: (" << x << ", " << y << ", " << z  << ", " << ya << ")\n");
             recordNow = true;
             ros::Duration(3).sleep();
             last= ros::Time::now();
@@ -2479,7 +2528,7 @@ ControlUINode::checkVisibility(const vector<float> &plane_parameters,
         Line2f tb_edge(top_mid, bottom_mid);
         PRINT_DEBUG(5, "Top to Bottom edge: " << tb_edge << "\n");
         // @todo-me Fix this heuristic
-        if( //(tb_edge.start.x >= 256.0 && tb_edge.start.x <= 384.0) &&
+        if( //(tb_edge.start.x >= 256.0                                  && tb_edge.start.x <= 384.0) &&
             (tb_edge.start.y >= 72.0 && tb_edge.start.y <= 144.0) ||
             //(tb_edge.end.x >= 256.0 && tb_edge.end.x <= 384.0) &&
             (tb_edge.end.y >= 216.0 && tb_edge.end.y <= 288.0)  )
@@ -3672,7 +3721,6 @@ ControlUINode::alignQuadcopterToNextPlaneAdvanced()
         moveBackward(0.4);
         PRINT_DEBUG(3, "Moving forwards by 0.4\n");
         moveForward(0.4);
-        cout << "[ DEBUG] [alignQuadcopterToNextPlaneAdvanced] Aligning the quadcoper to the new plane\n";
         PRINT_DEBUG(3, "Aligning the quadcoper to the new plane\n");
         alignQuadcopterToCurrentPlane();
         adjustLeftEdge();
