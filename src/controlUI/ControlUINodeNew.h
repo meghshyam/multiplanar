@@ -1054,9 +1054,6 @@ class ControlUINode
         alignQuadcopterToNextPlane();
 
         void
-        alignQuadcopterToNextPlaneAdvanced();
-
-        void
         adjustTopBottomEdges();
 
         void
