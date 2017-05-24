@@ -345,7 +345,7 @@ ImageView::renderFrame()
 			glVertex2i(p[0], p[1]);
 		}
 		glEnd();
-		renderSignificantPlane = false;
+		// renderSignificantPlane = false;
 	}
 	if(renderVisitedPlanes)
 	{
@@ -369,7 +369,7 @@ ImageView::renderFrame()
 			}
 			glEnd();
 		}
-		renderVisitedPlanes = false;
+		// renderVisitedPlanes = false;
 	}
 	glDisable(GL_BLEND);
 	myGLWindow->swap_buffers();
@@ -816,11 +816,17 @@ ImageView::on_key_down(int key)
 			cout << "\n";
 		}
 		// Path planning: Cover multiple planes
+		cout << "Set Render1\n";
 		if(renderRect)
 		{
 			renderRect = false;  // While moving the quadcopter we don't want bounding box to appear
 			renderSignificantPlane = false;
 		}
+		cout << "Set Render2\n";
+		setRender(false, false, false, true);
+		cout << "Set Render3\n";
+		setVisitedBoundingBoxPoints(continuousBoundingBoxPoints);
+		renderFrame();
 		cout << "[ DEBUG] Calling moveQuadcopter()\n";
 		node->moveQuadcopter(sortedPlaneParameters, continuousBoundingBoxPoints);
 	}
