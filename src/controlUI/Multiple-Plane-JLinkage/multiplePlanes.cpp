@@ -73,15 +73,17 @@ void callJLinkage(const vector<Point3f> &locations, vector<int> &labels) {
 int findMultiplePlanes(
 		const vector<Point3f> &points,
 		vector< vector<float> > &sortedPlaneParameters,
-		vector< vector<Point3f> > &continuousBoundingBoxPoints ){
+		vector< vector<Point3f> > &continuousBoundingBoxPoints )
+{
 
+	PRINT_DEBUG(1, "Started\n");
 	// Step 1: Performing JLinkage to find multiple models
 	// This vector describes to which plane does point i belong to
 	// This is an output from JLinkage
 	vector<int> oldPlaneIndices;
-	cout << "[ DEBUG ] Step 1: Calling callJLinkage!!!\n";
+	PRINT_DEBUG(5, "Step 1: Calling callJLinkage!!!\n");
 	callJLinkage(points, oldPlaneIndices);
-	cout << "[ DEBUG ] Step 1: callJLinkage Success!!!\n";
+	PRINT_DEBUG(5, "Step 1: callJLinkage Success!!!\n");
 
 	// Step 2: Remove points which contain less than 'minimumNumberOfPoints'
 	// We have taken 'minimumNumberOfPoints' to be 30
@@ -89,7 +91,7 @@ int findMultiplePlanes(
 	int minPointsPerPlane = 30;
 	// Number of points in 'points' during initial stage
 	int numberOfPointsInData = points.size();
-	cout << "[ DEBUG ] We have " << numberOfPointsInData << " in our data.\n";
+	PRINT_DEBUG(5, "We have " << numberOfPointsInData << " in our data.\n");
 	// Mapping planeIndex -> number of points in that plane
 	map<int, int> numberOfPointsPerPlane;
 	// Plane Indices after removing unnecessary planes
@@ -99,17 +101,19 @@ int findMultiplePlanes(
 	int numberOfPlanes;
 	removeUnnecessaryPlanes( points, oldPlaneIndices, minPointsPerPlane,
 			numberOfPointsPerPlane, newPoints, newPlaneIndices, numberOfPlanes);
-	cout << "[ DEBUG ] Number of planes detected at the end of Step 2: " << numberOfPlanes << "\n";
-	cout << "[ DEBUG ] Step 2: removeUnnecessaryPlanes Success!!!\n";
+	PRINT_DEBUG(5, "Number of planes detected at the end of Step 2: " << numberOfPlanes << "\n");
+	PRINT_DEBUG(5, "Step 2: removeUnnecessaryPlanes Success!!!\n");
 
 	// Try to find for multiple planes only if there are more than 1 plane.
-	if( numberOfPlanes > 1 ) {
+	if( numberOfPlanes > 1 )
+	{
 
 		// Step 3: Perform K-means for the new set of planes obtained
 		Mat pointsMatrix = Mat(newPoints.size(), 3, CV_32F);
 		unsigned int i;
 		// Create a pointsMatrix from vector<Point3f> data
-		for(i=0; i<newPoints.size(); i++) {
+		for(i=0; i<newPoints.size(); i++)
+		{
 			float * ptr = (float*)(&pointsMatrix.at<float>(i,0));
 			ptr[0] = newPoints[i].x;
 			ptr[1] = newPoints[i].y;
@@ -119,28 +123,28 @@ int findMultiplePlanes(
 		Mat clusterCentroids;
 		/* Number of rounds for k-means */
 		int numberOfRounds = 10;
-		cout << "[ DEBUG ] " << pointsMatrix.rows << " " << pointsMatrix.cols << endl;
-		cout << "[ DEBUG ] Old number of points: " << points.size() << endl;
-		cout << "[ DEBUG ] New number of points: " << newPoints.size() << endl;
+		PRINT_DEBUG(5, pointsMatrix.rows << " " << pointsMatrix.cols << "\n");
+		PRINT_DEBUG(5, "Old number of points: " << points.size() << "\n");
+		PRINT_DEBUG(5, "New number of points: " << newPoints.size() << "\n");
 
 		// Perform k-means
 		// Reference: http://docs.opencv.org/2.4/modules/core/doc/clustering.html
 		// float kmeans(const cv::_InputArray &,
 		// 	int, const cv::_OutputArray &,
 		// 	cv::TermCriteria, int, int, const cv::_OutputArray &);
-		cout << "[ DEBUG ] We've " << numberOfPlanes << " planes for k-means clustering.\n";
+		PRINT_DEBUG(5, "We've " << numberOfPlanes << " planes for k-means clustering.\n");
 		//cout << "[ DEBUG ] newPoints( " << newPoints.size() << "): " << newPoints << endl;
-		cout << "[ DEBUG ] newPlaneIndices( " << newPlaneIndices.size() << "): \n";
+		PRINT_DEBUG(5, "newPlaneIndices( " << newPlaneIndices.size() << "): \n");
 		//printVector(newPlaneIndices); cout.flush();
 		// Performing kmeans using initial labels we've obtained in step 1
 		kmeans(pointsMatrix, numberOfPlanes, newPlaneIndices,
 				TermCriteria( CV_TERMCRIT_ITER, 10, 2.0), numberOfRounds,
 				KMEANS_USE_INITIAL_LABELS, clusterCentroids);
-		cout << "[ DEBUG ] newPlaneIndices after k-means ( " << newPlaneIndices.size() << "): \n";
+		PRINT_DEBUG(5, "newPlaneIndices after k-means ( " << newPlaneIndices.size() << "): \n");
 		//printVector(newPlaneIndices); cout.flush();
-		cout << "[ DEBUG ] Cluster centroids for kmeans\n";
-		cout << clusterCentroids << "\n"; cout.flush();
-		cout << "[ DEBUG ] Step 3: kmeans Success!!!\n"; cout.flush();
+		PRINT_DEBUG(5, "Cluster centroids for kmeans\n");
+		PRINT_DEBUG(5, clusterCentroids << "\n"); // cout.flush();
+		PRINT_DEBUG(5, "Step 3: kmeans Success!!!\n"); // cout.flush();
 
 		// Plane Parameters (a, b, c, d) for plane i
 		vector< vector<float> > planeParameters;
@@ -148,7 +152,7 @@ int findMultiplePlanes(
 		// Arrange plane points belonging to a particular plane i
 		vector< vector<Point3f> > planeOrderedPoints;
 		getPlaneParameters(newPoints, newPlaneIndices, planeParameters, planeOrderedPoints);
-		cout << "[ DEBUG ] Step 3: getPlaneParameters Success!!!\n"; cout.flush();
+		PRINT_DEBUG(5, "Step 3: getPlaneParameters Success!!!\n"); // cout.flush();
 
 		// Step 4: Remove points which far from the estimated plane after performing k-means
 		// Get 3D Projection of points onto the plane
@@ -161,15 +165,16 @@ int findMultiplePlanes(
 		// Calculate the distances of the points from their respective planes
 		calculateDistanceFromPlane( newPoints, planeParameters, newPlaneIndices,
 				distanceMatrix, planePointsIndexMapping);
-		cout << "[ DEBUG ] Step 4: calculateDistanceFromPlane Success!!!\n";
-		cout.flush();
-		removePointsFarFromPlane( newPoints, planeParameters, distanceMatrix, planePointsIndexMapping, newSortedPoints, newPlaneParameters, planeIndexBounds);
-		cout << "[ DEBUG ] Step 4: removePointsFarFromPlane Success!!!\n";
-		cout.flush();
+		PRINT_DEBUG(5, "Step 4: calculateDistanceFromPlane Success!!!\n");
+		// cout.flush();
+		removePointsFarFromPlane( newPoints, planeParameters, distanceMatrix, planePointsIndexMapping, 
+									newSortedPoints, newPlaneParameters, planeIndexBounds);
+		PRINT_DEBUG(5, "Step 4: removePointsFarFromPlane Success!!!\n");
+		// cout.flush();
 		get3DPlaneProjectionsOfPoints ( newSortedPoints, newPlaneParameters, planeIndexBounds,
 							projectionsOf3DPoints	);
-		cout << "[ DEBUG ] Step 4: get3DPlaneProjectionsOfPoints Success!!!\n";
-		cout.flush();
+		PRINT_DEBUG(5, "Step 4: get3DPlaneProjectionsOfPoints Success!!!\n");
+		// cout.flush();
 
 		// Step 5
 		// Get continuous bounding box containing points in the plane
@@ -177,21 +182,22 @@ int findMultiplePlanes(
 		map<int, pair<int, int> > sortedPlaneIndexBounds;
 		vector< vector<Point3f> > boundingBoxPoints;
 		orderPlanePointsByCentroids( projectionsOf3DPoints, newPlaneParameters, planeIndexBounds,
-				sortedProjectionsOf3DPoints, sortedPlaneParameters, sortedPlaneIndexBounds);
-		cout << "[ DEBUG ] Step 5: orderPlanePointsByCentroids Success!!!\n";
-		cout.flush();
+									sortedProjectionsOf3DPoints, sortedPlaneParameters, sortedPlaneIndexBounds);
+		PRINT_DEBUG(5, "Step 5: orderPlanePointsByCentroids Success!!!\n");
+		// cout.flush();
 		getBoundingBoxCoordinates ( sortedProjectionsOf3DPoints, sortedPlaneParameters,
 				sortedPlaneIndexBounds, boundingBoxPoints );
-		cout << "[ DEBUG ] Step 5: getBoundingBoxCoordinates Success!!!\n";
-		cout.flush();
+		PRINT_DEBUG(5, "Step 5: getBoundingBoxCoordinates Success!!!\n");
+		// cout.flush();
 		getContinuousBoundingBox ( boundingBoxPoints, sortedPlaneParameters,
 								continuousBoundingBoxPoints);
-		cout << "[ DEBUG ] Step 5: getContinuousBoundingBox Success!!!\n";
-		cout.flush();
+		PRINT_DEBUG(5, "Step 5: getContinuousBoundingBox Success!!!\n");
+		// cout.flush();
 
 	}
-	else {
-		cout << "[ DEBUG ] Number of planes is less than or equal to 1.\n";
+	else
+	{
+		PRINT_DEBUG(5, "Number of planes is less than or equal to 1.\n");
 		vector<float> planeParameters;
 		vector<Point3f> projectionsOf3DPoints;
 		fitPlane3D(newPoints, planeParameters);
@@ -199,7 +205,8 @@ int findMultiplePlanes(
 		float b = planeParameters[1];
 		float c = planeParameters[2];
 		float d = planeParameters[3];
-		for (unsigned int j = 0; j < newPoints.size(); ++j) {
+		for (unsigned int j = 0; j < newPoints.size(); ++j)
+		{
 			float x0 = newPoints[j].x;
 			float y0 = newPoints[j].y;
 			float z0 = newPoints[j].z;
@@ -214,6 +221,7 @@ int findMultiplePlanes(
 		sortedPlaneParameters.push_back(planeParameters);
 		continuousBoundingBoxPoints.push_back(boundingBoxPoints);
 	}
+	PRINT_DEBUG(1, "Completed\n");
 	return 0;
 
 }
@@ -226,21 +234,21 @@ void findPercBoundEachPlane(
 		vector< vector<Point3f> > &sorted_3d_points,
 		vector<float> &percentageOfEachPlane)
 {
-	cout << "[ DEBUG] [findPercBoundEachPlane] Started\n";
+	PRINT_DEBUG(5, "Started\n");
 	// Step 1: Performing JLinkage to find multiple models
 	// This vector describes to which plane does point i belong to
 	// This is an output from JLinkage
 	vector<int> oldPlaneIndices;
-	cout << "[ DEBUG] [findPercBoundEachPlane] Calling JLinkage from findPercBoundEachPlane!!!\n";
+	PRINT_DEBUG(5, "Calling JLinkage from findPercBoundEachPlane!!!\n");
 	callJLinkage(points, oldPlaneIndices);
-	// cout << "[ DEBUG ] Step 1: callJLinkage Success!!!\n";
+	PRINT_DEBUG(5, "Step 1: callJLinkage Success!!!\n");
 	// Step 2: Remove points which contain less than 'minimumNumberOfPoints'
 	// We have taken 'minimumNumberOfPoints' to be 30
 	// Minimum number of points required to be qualified to be in data
 	int minPointsPerPlane = 30;
 	// Number of points in 'points' during initial stage
 	int numberOfPointsInData = points.size();
-	// cout << "[ DEBUG ] We have " << numberOfPointsInData << " in our data.\n";
+	PRINT_DEBUG(5, "We have " << numberOfPointsInData << " in our data.\n");
 	// Mapping planeIndex -> number of points in that plane
 	map<int, int> numberOfPointsPerPlane;
 	// Plane Indices after removing unnecessary planes
@@ -248,20 +256,22 @@ void findPercBoundEachPlane(
 	vector<Point3f> newPoints;
 	// Number of planes after removing unnecessary planes
 	int numberOfPlanes;
-	cout << "[ DEBUG] [findPercBoundEachPlane] Calling removeUnnecessaryPlanes!!!\n";
+	PRINT_DEBUG(5, "Calling removeUnnecessaryPlanes!!!\n");
 	removeUnnecessaryPlanes( points, oldPlaneIndices, minPointsPerPlane,
 			numberOfPointsPerPlane, newPoints, newPlaneIndices, numberOfPlanes);
 	// cout << "[ DEBUG ] Number of planes detected at the end of Step 2: " << numberOfPlanes << "\n";
 	// cout << "[ DEBUG ] Step 2: removeUnnecessaryPlanes Success!!!\n";
 
 	// Try to find for multiple planes only if there are more than 1 plane.
-	if( numberOfPlanes > 1 ) {
+	if( numberOfPlanes > 1 )
+	{
 
 		// Step 3: Perform K-means for the new set of planes obtained
 		Mat pointsMatrix = Mat(newPoints.size(), 3, CV_32F);
 		unsigned int i;
 		// Create a pointsMatrix from vector<Point3f> data
-		for(i=0; i<newPoints.size(); i++) {
+		for(i=0; i<newPoints.size(); i++)
+		{
 			float * ptr = (float*)(&pointsMatrix.at<float>(i,0));
 			ptr[0] = newPoints[i].x;
 			ptr[1] = newPoints[i].y;
@@ -271,38 +281,38 @@ void findPercBoundEachPlane(
 		Mat clusterCentroids;
 		/* Number of rounds for k-means */
 		int numberOfRounds = 10;
-		// cout << "[ DEBUG ] " << pointsMatrix.rows << " " << pointsMatrix.cols << endl;
-		// cout << "[ DEBUG ] Old number of points: " << points.size() << endl;
-		// cout << "[ DEBUG ] New number of points: " << newPoints.size() << endl;
+		PRINT_DEBUG(5, pointsMatrix.rows << " " << pointsMatrix.cols << "\n");
+		PRINT_DEBUG(5, "Old number of points: " << points.size() << "\n");
+		PRINT_DEBUG(5, "New number of points: " << newPoints.size() << "\n");
 
 		// Perform k-means
 		// Reference: http://docs.opencv.org/2.4/modules/core/doc/clustering.html
 		// float kmeans(const cv::_InputArray &,
 		// 	int, const cv::_OutputArray &,
 		// 	cv::TermCriteria, int, int, const cv::_OutputArray &);
-		// cout << "[ DEBUG ] We've " << numberOfPlanes << " planes for k-means clustering.\n";
-		//cout << "[ DEBUG ] newPoints( " << newPoints.size() << "): " << newPoints << endl;
-		// cout << "[ DEBUG ] newPlaneIndices( " << newPlaneIndices.size() << "): \n";
-		//printVector(newPlaneIndices); cout.flush();
+		PRINT_DEBUG(5, "We've " << numberOfPlanes << " planes for k-means clustering.\n");
+		PRINT_DEBUG(5, "newPoints( " << newPoints.size() << "): " << newPoints << "\n");
+		// PRINT_DEBUG(5, "newPlaneIndices( " << newPlaneIndices.size() << "): \n");
+		// printVector(newPlaneIndices); cout.flush();
 		// Performing kmeans using initial labels we've obtained in step 1
-		cout << "[ DEBUG] [findPercBoundEachPlane] Calling Kmeans\n";
+		PRINT_DEBUG(5, "Calling Kmeans\n");
 		kmeans(pointsMatrix, numberOfPlanes, newPlaneIndices,
 				TermCriteria( CV_TERMCRIT_ITER, 10, 2.0), numberOfRounds,
 				KMEANS_USE_INITIAL_LABELS, clusterCentroids);
-		// cout << "[ DEBUG ] newPlaneIndices after k-means ( " << newPlaneIndices.size() << "): \n";
-		//printVector(newPlaneIndices); cout.flush();
-		// cout << "[ DEBUG ] Cluster centroids for kmeans\n";
-		// cout << clusterCentroids << "\n"; cout.flush();
-		// cout << "[ DEBUG ] Step 3: kmeans Success!!!\n"; cout.flush();
+		// PRINT_DEBUG(5, "newPlaneIndices after k-means ( " << newPlaneIndices.size() << "): \n");
+		// printVector(newPlaneIndices); cout.flush();
+		PRINT_DEBUG(5, "Cluster centroids for kmeans\n");
+		PRINT_DEBUG(5, clusterCentroids << "\n"); // cout.flush();
+		PRINT_DEBUG(5, "Step 3: kmeans Success!!!\n"); // cout.flush();
 
 		// Plane Parameters (a, b, c, d) for plane i
 		vector< vector<float> > planeParameters;
 		// Obtain the plane parameters for the set of points obtained after Step 2
 		// Arrange plane points belonging to a particular plane i
 		vector< vector<Point3f> > planeOrderedPoints;
-		cout << "[ DEBUG] [findPercBoundEachPlane] Calling getPlaneParameters\n";
+		PRINT_DEBUG(5, "Calling getPlaneParameters\n");
 		getPlaneParameters(newPoints, newPlaneIndices, planeParameters, planeOrderedPoints);
-		// cout << "[ DEBUG ] Step 3: getPlaneParameters Success!!!\n"; cout.flush();
+		PRINT_DEBUG(5, "Step 3: getPlaneParameters Success!!!\n"); // cout.flush();
 
 		// Step 4: Remove points which far from the estimated plane after performing k-means
 		// Get 3D Projection of points onto the plane
@@ -313,20 +323,20 @@ void findPercBoundEachPlane(
 		map<int, pair<int, int> > planeIndexBounds;
 		vector<Point3f> projectionsOf3DPoints;
 		// Calculate the distances of the points from their respective planes
-		cout << "[ DEBUG] [findPercBoundEachPlane] Calling calculateDistanceFromPlane\n";
+		PRINT_DEBUG(5, "Calling calculateDistanceFromPlane\n");
 		calculateDistanceFromPlane( newPoints, planeParameters, newPlaneIndices,
-				distanceMatrix, planePointsIndexMapping);
-		// cout << "[ DEBUG ] Step 4: calculateDistanceFromPlane Success!!!\n";
+									distanceMatrix, planePointsIndexMapping);
+		PRINT_DEBUG(5, "Step 4: calculateDistanceFromPlane Success!!!\n");
 		// cout.flush();
-		cout << "[ DEBUG] [findPercBoundEachPlane] Calling removePointsFarFromPlane\n";
+		PRINT_DEBUG(5, "Calling removePointsFarFromPlane\n");
 		removePointsFarFromPlane( newPoints, planeParameters, distanceMatrix, planePointsIndexMapping, 
-			newSortedPoints, newPlaneParameters, planeIndexBounds);
-		// cout << "[ DEBUG ] Step 4: removePointsFarFromPlane Success!!!\n";
+									newSortedPoints, newPlaneParameters, planeIndexBounds);
+		PRINT_DEBUG(5, "Step 4: removePointsFarFromPlane Success!!!\n");
 		// cout.flush();
-		cout << "[ DEBUG] [findPercBoundEachPlane] Calling get3DPlaneProjectionsOfPoints\n";
+		PRINT_DEBUG(5, "Calling get3DPlaneProjectionsOfPoints\n");
 		get3DPlaneProjectionsOfPoints ( newSortedPoints, newPlaneParameters, planeIndexBounds,
-							projectionsOf3DPoints);
-		// cout << "[ DEBUG ] Step 4: get3DPlaneProjectionsOfPoints Success!!!\n";
+										projectionsOf3DPoints);
+		PRINT_DEBUG(5, "Step 4: get3DPlaneProjectionsOfPoints Success!!!\n");
 		// cout.flush();
 
 		// Step 5
@@ -334,27 +344,28 @@ void findPercBoundEachPlane(
 		vector<Point3f> sortedProjectionsOf3DPoints;
 		map<int, pair<int, int> > sortedPlaneIndexBounds;
 		vector< vector<Point3f> > boundingBoxPoints;
-		cout << "[ DEBUG] [findPercBoundEachPlane] Calling orderPlanePointsByCentroids\n";
+		PRINT_DEBUG(5, "Calling orderPlanePointsByCentroids\n");
 		orderPlanePointsByCentroids( projectionsOf3DPoints, newPlaneParameters, planeIndexBounds,
-				sortedProjectionsOf3DPoints, sortedPlaneParameters, sortedPlaneIndexBounds);
-		// cout << "[ DEBUG ] Step 5: orderPlanePointsByCentroids Success!!!\n";
+									sortedProjectionsOf3DPoints, sortedPlaneParameters, sortedPlaneIndexBounds);
+		PRINT_DEBUG(5, "Step 5: orderPlanePointsByCentroids Success!!!\n");
 		// cout.flush();
-		cout << "[ DEBUG] [findPercBoundEachPlane] Calling getBoundingBoxCoordinates\n";
+		PRINT_DEBUG(5, "Calling getBoundingBoxCoordinates\n");
 		getBoundingBoxCoordinates ( sortedProjectionsOf3DPoints, sortedPlaneParameters,
-				sortedPlaneIndexBounds, boundingBoxPoints );
-		// cout << "[ DEBUG ] Step 5: getBoundingBoxCoordinates Success!!!\n";
+									sortedPlaneIndexBounds, boundingBoxPoints );
+		PRINT_DEBUG(5, "Step 5: getBoundingBoxCoordinates Success!!!\n");
 		// cout.flush();
-		cout << "[ DEBUG] [findPercBoundEachPlane] Calling getPercentageOfEachPlane\n";
+		PRINT_DEBUG(5, "Calling getPercentageOfEachPlane\n");
 		getPercentageOfEachPlane ( sortedProjectionsOf3DPoints, sortedPlaneIndexBounds, sorted_3d_points, percentageOfEachPlane );
-		cout << "[ DEBUG] [findPercBoundEachPlane] Calling getContinuousBoundingBox\n";
+		PRINT_DEBUG(5, "Calling getContinuousBoundingBox\n");
 		getContinuousBoundingBox ( boundingBoxPoints, sortedPlaneParameters, continuousBoundingBoxPoints);
-		cout << "[ DEBUG] [findPercBoundEachPlane] Completed\n";
-		// cout << "[ DEBUG ] Step 5: getContinuousBoundingBox Success!!!\n";
+		PRINT_DEBUG(5, "Completed\n");
+		PRINT_DEBUG(5, "Step 5: getContinuousBoundingBox Success!!!\n");
 		// cout.flush();
 
 	}
-	else {
-		// cout << "[ DEBUG ] Number of planes is less than or equal to 1.\n";
+	else
+	{
+		PRINT_DEBUG(5, "Number of planes is less than or equal to 1.\n");
 		vector<float> planeParameters;
 		vector<Point3f> projectionsOf3DPoints;
 		fitPlane3D(newPoints, planeParameters);
@@ -362,7 +373,8 @@ void findPercBoundEachPlane(
 		float b = planeParameters[1];
 		float c = planeParameters[2];
 		float d = planeParameters[3];
-		for (unsigned int j = 0; j < newPoints.size(); ++j) {
+		for (unsigned int j = 0; j < newPoints.size(); ++j)
+		{
 			float x0 = newPoints[j].x;
 			float y0 = newPoints[j].y;
 			float z0 = newPoints[j].z;
@@ -385,8 +397,8 @@ void findPercBoundEachPlane(
 		percentageOfEachPlane.push_back(1.0);
 		sortedPlaneParameters.push_back(planeParameters);
 		continuousBoundingBoxPoints.push_back(boundingBoxPoints);
-		cout << "[ DEBUG] [findPercBoundEachPlane] Completed\n";
 	}
+	PRINT_DEBUG(1, "Completed\n");
 	return ;
 
 }

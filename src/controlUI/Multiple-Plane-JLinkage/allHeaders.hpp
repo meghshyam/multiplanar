@@ -27,6 +27,9 @@
 #include <set>
 #include <list>
 
+#include "../DebugUtility/DebugUtility.hpp"
+#include "../LogUtility/LogUtility.hpp"
+
 using namespace cv;
 using namespace std;
 
