@@ -1280,6 +1280,10 @@ ControlUINode::getPTargetPoints(const pGrid &g, const vector<float> & plane,
                                 vector< vector<double> > &sortedTPoints)
 {
     PRINT_LOG(1, "Started.\n");
+    PRINT_DEBUG(3, "Inputs\n");
+    PRINT_DEBUG(3, print1dVector(plane, "Plane: ", ""));
+    PRINT_DEBUG(3, print1dVector(uvAxes, "UV Axes:\n", ""));
+    PRINT_DEBUG(3, "Camera calibration: " << calibrated << "\n");
     if(!calibrated)
         calibrate();
     vector< vector<double> > tPoints;
@@ -1300,6 +1304,7 @@ ControlUINode::getPTargetPoints(const pGrid &g, const vector<float> & plane,
     Mat imgPoints_mat(9, 1, CV_64FC2);
     for(int i = 0; i < 9; i++)
         imgPoints_mat.at<Point2d>(i,0) = imgPoints[i];
+    PRINT_DEBUG(3, "Image Points: " << imgPoints_mat << "\n");
     // Camera Matrix
     Mat cameraMatrix(3, 3, DataType<double>::type);
     // Setting camera matrix for vga quality
@@ -1326,18 +1331,19 @@ ControlUINode::getPTargetPoints(const pGrid &g, const vector<float> & plane,
     Mat rvec(3, 1, DataType<double>::type);
     Mat tvec(3, 1, DataType<double>::type);
     PRINT_DEBUG(3, "Camera Matrix: " << cameraMatrix << "\n");
-    PRINT_DEBUG(3, "Distortion co-efficients: " << cameraMatrix << "\n");
+    PRINT_DEBUG(3, "Distortion co-efficients: " << distCoeffs << "\n");
     //
     vector<Point3d> objPoints;
     // Whether the drone is moving forward or backward (left to right or right to left)
     bool forward = true; // Need to iterate forward or backward
-    cout << "\nXYZ corners:\n";
     for(unsigned int i = 0; i < g.rowSquares.size()-1; i++)
     {
         if(forward)
         {
+            PRINT_DEBUG(3, "Forward\n");
             for(unsigned int j=0; j < g.rowSquares[i].size(); j++)
             {
+                PRINT_DEBUG(3, "i: " << i << ", j: " << j << "\n");
                 objPoints.clear();
                 pGridSquare gs = g.rowSquares[i][j];
                 vector<Point2f> uvCorners;
@@ -1345,7 +1351,7 @@ ControlUINode::getPTargetPoints(const pGrid &g, const vector<float> & plane,
                 getGridSquareUVCorners(gs, uvCorners);
                 AllUVToXYZCoordinates(uvCorners, uvAxes, plane[3], xyzCorners);
                 sortXYZCorners(xyzCorners, sortedXYZCorners);
-                cout << sortedXYZCorners << "\n";
+                PRINT_DEBUG(3, print1dVector(sortedXYZCorners, "Sorted XYZ Corners:\n", ""));
                 Point3d corner1 = Point3d(sortedXYZCorners[0].x, -sortedXYZCorners[0].z, sortedXYZCorners[0].y);
                 Point3d corner2 = Point3d(sortedXYZCorners[1].x, -sortedXYZCorners[1].z, sortedXYZCorners[1].y);
                 Point3d corner3 = Point3d(sortedXYZCorners[2].x, -sortedXYZCorners[2].z, sortedXYZCorners[2].y);
@@ -1374,6 +1380,7 @@ ControlUINode::getPTargetPoints(const pGrid &g, const vector<float> & plane,
                 Mat objPoints_mat(9, 1, CV_64FC3);
                 for(int i = 0; i < 9; i++)
                     objPoints_mat.at<Point3d>(i,0) = objPoints[i];
+                PRINT_DEBUG(3, "Object Points: " << objPoints << "\n");
                 // [MGP]Dont know but we have to call undistortPoints as a dummy call
                 // Something to do with older version of opencv which gets linked by mrpt
                 Mat dummy;
@@ -1382,35 +1389,44 @@ ControlUINode::getPTargetPoints(const pGrid &g, const vector<float> & plane,
                 Rodrigues(rot_guess, rvec);
                 tvec.at<double>(0)  = -(center.x-0.6*plane[0]);
                 tvec.at<double>(1)  = -(center.y+0.6*plane[2]);
-                tvec.at<double>(2)  = -(center.z - 0.6*plane[1]);
+                tvec.at<double>(2)  = -(center.z-0.6*plane[1]);
+                PRINT_DEBUG(3, "Translation: " << tvec << "\n");
                 // 
                 solvePnP(objPoints_mat, imgPoints_mat, cameraMatrix, distCoeffs, rvec, tvec, true, CV_ITERATIVE);
                 // 
                 Mat rot(3, 3, DataType<double>::type);
                 Rodrigues(rvec, rot);
+                PRINT_DEBUG(3, "Rotation: " << rot << "\n");
+                PRINT_DEBUG(3, "Rotation Vector: " << rvec << "\n");
                 // 
                 Mat rotinv;
                 transpose(rot, rotinv);
+                PRINT_DEBUG(3, "Rotation Inverse: " << rotinv << "\n");
                 // 
                 tvec = -rotinv * tvec;
+                PRINT_DEBUG(3, "Translation: " << tvec << "\n");
                 // 
                 vector<double> pt;
                 pt.push_back(tvec.at<double>(0));
                 pt.push_back(tvec.at<double>(2));
                 pt.push_back(-tvec.at<double>(1));
+                PRINT_DEBUG(3, print1dVector(pt, "Pt one: ", ""));
                 tPoints.push_back(pt);
                 // 
                 pt.clear();
                 pt.push_back(gs.u + (gs.width/2));
                 pt.push_back(tvec.at<double>(2));
                 pt.push_back(gs.v - (gs.height/2));
+                PRINT_DEBUG(3, print1dVector(pt, "Pt two: ", ""));
                 tPoints_z.push_back(pt);
             }
         }
         else
         {
+            PRINT_DEBUG(3, "Backward\n");
             for(int j = g.rowSquares[i].size()-1; j >= 0 ; j--)
             {
+                PRINT_DEBUG(3, "i: " << i << ", j: " << j << "\n");
                 //ROS_INFO("Accessing %dth square of %dth row", j, i);
                 objPoints.clear();
                 pGridSquare gs = g.rowSquares[i][j];
@@ -1449,6 +1465,7 @@ ControlUINode::getPTargetPoints(const pGrid &g, const vector<float> & plane,
                 Mat objPoints_mat(9,1, CV_64FC3);
                 for(int i=0; i<9; i++)
                     objPoints_mat.at<Point3d>(i,0) = objPoints[i];
+                PRINT_DEBUG(3, "Object Points: " << objPoints << "\n");
                 // [MGP]Dont know but we have to call undistortPoints as a dummy call
                 // Something to do with older version of opencv which gets linked by mrpt
                 Mat dummy;
@@ -1457,29 +1474,35 @@ ControlUINode::getPTargetPoints(const pGrid &g, const vector<float> & plane,
                 Rodrigues(rot_guess, rvec);
                 tvec.at<double>(0)  = -(center.x-0.6*plane[0]);
                 tvec.at<double>(1)  = -(center.y+0.6*plane[2]);
-                tvec.at<double>(2)  = -(center.z - 0.6*plane[1]);
+                tvec.at<double>(2)  = -(center.z-0.6*plane[1]);
+                PRINT_DEBUG(3, "Translation: " << tvec << "\n");
                 // 
                 solvePnP(objPoints_mat, imgPoints_mat, cameraMatrix, distCoeffs, rvec, tvec, true, CV_ITERATIVE);
                 // 
                 Mat rot(3,3, DataType<double>::type);
                 Rodrigues(rvec, rot);
+                PRINT_DEBUG(3, "Rotation: " << rot << "\n");
+                PRINT_DEBUG(3, "Rotation Vector: " << rvec << "\n");
                 // 
                 Mat rotinv;
                 transpose(rot, rotinv);
+                PRINT_DEBUG(3, "Rotation Inverse: " << rotinv << "\n");
                 // 
                 tvec = -rotinv * tvec;
+                PRINT_DEBUG(3, "Translation: " << tvec << "\n");
                 // 
-                cout << "rotated tvec : " << tvec << endl;
                 vector<double> pt;
                 pt.push_back(tvec.at<double>(0));
                 pt.push_back(tvec.at<double>(2));
                 pt.push_back(-tvec.at<double>(1));
+                PRINT_DEBUG(3, print1dVector(pt, "Pt one: ", ""));
                 tPoints.push_back(pt);
                 // 
                 pt.clear();
                 pt.push_back(gs.u + (gs.width/2));
                 pt.push_back(tvec.at<double>(2));
                 pt.push_back(gs.v - (gs.height/2));
+                PRINT_DEBUG(3, print1dVector(pt, "Pt two: ", ""));
                 tPoints_z.push_back(pt);
             }
         }
@@ -1493,6 +1516,8 @@ ControlUINode::getPTargetPoints(const pGrid &g, const vector<float> & plane,
         numColsPerRow.push_back(n);
     }
     PRINT_LOG(1, print2dVector(tPoints, "LOG Target points:\n", ""));
+    PRINT_DEBUG(3, "Numrows: " << numRows << "\n");
+    PRINT_DEBUG(3, print1dVector(numColsPerRow, "Number of cols per row:\n", ""));
     sortTargetPoints(numRows, numColsPerRow, tPoints, sortedTPoints);
     // PRINT_LOG(1, "Target Points\n\n");
     // print3dPoints(sortedTPoints);
