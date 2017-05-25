@@ -402,7 +402,7 @@ ImageView::renderFrame()
 void
 ImageView::on_key_down(int key)
 {
-	cout << "[ DEBUG] [on_key_down] Key pressed: " << key << ", " << (char)key << "\n";
+	PRINT_LOG(1, "Key pressed: " << key << ", " << (char)key << "\n");
 	// Key b - Extracts bounding rect
 	if(key == 'b')
 	{
@@ -446,8 +446,7 @@ ImageView::on_key_down(int key)
 		renderRect = true;
 		unsigned int size = continuousBoundingBoxPoints.size();
 		assert(size == planeParameters.size());
-		unsigned int i,j;
-		for (i = 0; i < size; ++i)
+		for (unsigned int i = 0; i < size; ++i)
 		{
 			continuousBoundingBoxPoints[i].clear();
 			planeParameters[i].clear();
@@ -456,16 +455,7 @@ ImageView::on_key_down(int key)
 		planeParameters.clear();
 		// Calls JLinkage
 		node->fitMultiplePlanes3d(ccPoints, pointsClicked, planeParameters, continuousBoundingBoxPoints);
-		cout << "[ DEBUG ] continuousBoundingBoxPoints from ImageView\n";
-		size = continuousBoundingBoxPoints.size();
-		for (i = 0; i < size; ++i)
-		{
-			for (j = 0; j < 5; ++j)
-			{
-				cout << continuousBoundingBoxPoints[i][j] << " ";
-			}
-			cout << "\n";
-		}
+		PRINT_DEBUG(3, print2dVector(continuousBoundingBoxPoints, "continuousBoundingBoxPoints from ImageView\n", ""));
 		//vector<float> translatedPlane = node->translatePlane (translateDistance);
 	}
 	// Key g - Navigating the planes using the planned path and collecting the video footage
@@ -490,6 +480,7 @@ ImageView::on_key_down(int key)
 		renderPoly = false;
 		renderRect= false;
 		renderSignificantPlane = false;
+		renderVisitedPlanes = false;
 	}
 	// Key s - Saves the keypoint information '_3d_points' to file named by 'numFile'
 	else if(key == 's')
@@ -512,8 +503,6 @@ ImageView::on_key_down(int key)
 		// node->publishCommand("i run");
 		// Send control commands to drone. TODO need to implement
 	}
-	/* Below are the keys to be implemented properly fro mtp stage 01 */
-	/** PRANEETH's CODE **/
 	// Key a - Just for testing
 	else if(key == 'a')
 	{
@@ -546,7 +535,7 @@ ImageView::on_key_down(int key)
 		// Calls JLinkage
 		node->fitMultiplePlanes3d(ccPoints, pointsClicked, planeParameters, continuousBoundingBoxPoints);
 		string filename = "Plane_Info.txt";
-		cout << "[ DEBUG] Writing info of plane " << plane_num_test << " to file " << filename << "\n";
+		PRINT_LOG(1, "Writing info of plane " << plane_num_test << " to file " << filename << "\n");
 		plane_num_test++;
 		vector<Point3f> bounding_box_points;
 		vector<float> plane_parameters;
@@ -574,7 +563,7 @@ ImageView::on_key_down(int key)
 		TopView *top = new TopView();
 		top->startSystem();
 		/* GUI has been closed here */
-		cout << "[Key 'c'] Calling the GUI for drawing top view sketch of the surface\n";
+		PRINT_LOG(1, "[Key 'c'] Calling the GUI for drawing top view sketch of the surface\n");
 		while(!(top->getExitStatus()))
 		{}
 		/* Get the directions, angles and number of planes */
@@ -587,47 +576,42 @@ ImageView::on_key_down(int key)
 		int view_dir = top->getViewingDirection();
 		if(number_of_planes == 0)
 		{
-			cout << "[ ERROR] [Key 'c'] No diagram drawn\n";
-			cout << "[ ERROR] [Key 'c'] So, landing the quadcopter\n";
+			PRINT_LOG(1, "[ ERROR] [Key 'c'] No diagram drawn\n");
+			PRINT_LOG(1, "[ ERROR] [Key 'c'] So, landing the quadcopter\n");
 			node->sendLand();
-			cout << "[ INFO] [Key 'c'] Quadcopter has landed.\n";
+			PRINT_LOG(1, "[Key 'c'] Quadcopter has landed.\n");
 		}
 		else
 		{
-			cout << "[Key 'c'] Number of planes: " << number_of_planes << "\n";
-			cout << "[Key 'c'] Max Height of the plane (as estimated by the user): " << max_height_of_plane << "\n";
+			PRINT_LOG(1, "[Key 'c'] Number of planes: " << number_of_planes << "\n");
+			PRINT_LOG(1, "[Key 'c'] Max Height of the plane (as estimated by the user): " << max_height_of_plane << "\n");
 			if(type_of_surface == 0)
 			{
-				cout << "[Key 'c'] Surface Drawn: " << "Open Surface" << "\n";
+				PRINT_LOG(1, "[Key 'c'] Surface Drawn: " << "Open Surface" << "\n");
 				if(view_dir == 0)
 				{
-					cout << "[Key 'c'] Viewing the surface from front\n";
+					PRINT_LOG(1, "[Key 'c'] Viewing the surface from front\n");
 				}
 				if(view_dir == 1)
 				{
-					cout << "[Key 'c'] Viewing the surface from back\n";
+					PRINT_LOG(1, "[Key 'c'] Viewing the surface from back\n");
 				}
 			}
 			if(top->getTypeOfSurface() == 1)
 			{
-				cout << "[Key 'c'] Surface Drawn: " << "Closed Surface" << "\n";
+				PRINT_LOG(1, "[Key 'c'] Surface Drawn: " << "Closed Surface" << "\n");
 				if(view_dir == 2)
 				{
-					cout << "[Key 'c'] Viewing the surface from outside the structure\n";
+					PRINT_LOG(1, "[Key 'c'] Viewing the surface from outside the structure\n");
 				}
 				if(view_dir == 3)
 				{
-					cout << "[Key 'c'] Viewing the surface from inside the structure\n";
+					PRINT_LOG(1, "[Key 'c'] Viewing the surface from inside the structure\n");
 				}
 			}
 			top->destroy();
-			cout << "[Key 'c'] Angles: ";
-			for (unsigned int i = 0; i < main_angles.size(); ++i)
-			{
-				cout << main_angles[i] << " ";
-			}
-			cout << "\n";
-			cout << "[Key 'c'] Directions: ";
+			PRINT_LOG(1, print1dVector(main_angles, "[Key 'c'] Angles: ", ""));
+			PRINT_LOG(1, "[Key 'c'] Directions: ");
 			for (unsigned int i = 0; i < main_directions.size(); ++i)
 			{
 				if(main_directions[i] == 0)
@@ -637,10 +621,9 @@ ImageView::on_key_down(int key)
 			}
 			cout << "\n";
 			int min_height_of_plane = 2.0;
-			
 			float min_distance = getDistanceToSeePlane(min_height_of_plane);
 			float max_distance = getDistanceToSeePlane(max_height_of_plane);
-			cout << "[Key 'c'] Min. Distance: " << min_distance << ", Max. Distance: " << max_distance << "\n";
+			PRINT_LOG(1, "[Key 'c'] Min. Distance: " << min_distance << ", Max. Distance: " << max_distance << "\n");
 			node->setValues(number_of_planes, min_height_of_plane, min_distance, max_height_of_plane, max_distance);
 			node->setMainAngles(main_angles);
 			node->setMainDirections(main_directions);
@@ -651,28 +634,9 @@ ImageView::on_key_down(int key)
 	// Key 0-9 - For testing
 	else if(key >= '0' && key <= '9')
 	{
-		cout << "Pressed Key 1\n";
+		PRINT_LOG(1, "Pressed Numeric Key\n");
 		int num = key-'0';
 		node->testUtility(num);
-	}
-	else if(key == 'Z')
-	{
-		int min_height_of_plane = 2;
-		int max_height_of_plane = 4;
-		float min_distance = getDistanceToSeePlane(min_height_of_plane);
-		float max_distance = getDistanceToSeePlane(max_height_of_plane);
-		int number_of_planes = 1;
-		/* Angle with which	quadcopter has to rotate to orient itself to the new plane */
-		std::vector< double > main_angles;
-		/* Direction in which quadcopter should rotate to orient its yaw with normal of new plane */
-		std::vector< RotateDirection > main_directions;
-		main_angles.clear();
-		main_directions.clear();
-		cout << "[ DEBUG] [on_key_down] Setting the values\n";
-		node->setValues(number_of_planes, min_height_of_plane, min_distance, max_height_of_plane, max_distance);
-		node->setMainAngles(main_angles);
-		node->setMainDirections(main_directions);
-		node->alignQuadcopterToCurrentPlane();
 	}
 	// X
 	else if(key == 'X')
@@ -684,13 +648,8 @@ ImageView::on_key_down(int key)
 			float min_distance = getDistanceToSeePlane(min_height_of_plane);
 			float max_distance = getDistanceToSeePlane(max_height_of_plane);
 			node->setValues(1, min_height_of_plane, min_distance, max_height_of_plane, max_distance);*/
-			cout << "[ DEBUG] [on_key_down] pointsClicked are:\n";
-			for(unsigned int i = 0; i < pointsClicked.size(); i++)
-			{
-				cout << "[" << pointsClicked[i][0] << ", " << pointsClicked[i][1] << "]\n";
-			}
-			cout << "\n";
-			cout << "[ DEBUG] [on_key_down] Capturing the current plane\n";
+			PRINT_LOG(1, print2dVector(pointsClicked, "pointsClicked are:\n", ""));
+			PRINT_LOG(1, "Capturing the current plane\n");
 			node->captureTheCurrentPlane();
 			// node->capture_plane->startSystem();
 			// Clear all Vectors
@@ -699,18 +658,22 @@ ImageView::on_key_down(int key)
 		}
 		else
 		{
-			cout << "[ DEBUG] [on_key_down] Please click 4 points on the screen and press press key 'p' again\n";
+			PRINT_LOG(1, "Please click 4 points on the screen and press press key 'X' again\n");
 		}
 	}
 	else if(key == 'Q')
 	{
 		int min_height_of_plane = 3;
 		int max_height_of_plane = 5;
+		/*int min_height_of_plane = 1;
+		int max_height_of_plane = 2;*/
 		float min_distance = getDistanceToSeePlane(min_height_of_plane);
 		float max_distance = getDistanceToSeePlane(max_height_of_plane);
 		int number_of_planes = 2;
 		RotateDirection dir = COUNTERCLOCKWISE;
 		double angle = 30.0;
+		/*RotateDirection dir = CLOCKWISE;
+		double angle = 15.0;*/
 		/* Angle with which	quadcopter has to rotate to orient itself to the new plane */
 		std::vector< double > main_angles;
 		/* Direction in which quadcopter should rotate to orient its yaw with normal of new plane */
@@ -719,57 +682,7 @@ ImageView::on_key_down(int key)
 		main_directions.clear();
 		main_angles.push_back(angle);
 		main_directions.push_back(dir);
-		cout << "[ DEBUG] [on_key_down] Setting the values\n";
-		node->setValues(number_of_planes, min_height_of_plane, min_distance, max_height_of_plane, max_distance);
-		node->setMainAngles(main_angles);
-		node->setMainDirections(main_directions);
-		node->alignQuadcopterToCurrentPlane();
-	}
-	// W
-	else if(key == 'W')
-	{
-		if(numPointsClicked == 4)
-		{
-			/*int min_height_of_plane = 2;
-			int max_height_of_plane = 4;
-			float min_distance = getDistanceToSeePlane(min_height_of_plane);
-			float max_distance = getDistanceToSeePlane(max_height_of_plane);
-			node->setValues(1, min_height_of_plane, min_distance, max_height_of_plane, max_distance);*/
-			cout << "[ DEBUG] [on_key_down] pointsClicked are:\n";
-			for(unsigned int i = 0; i < pointsClicked.size(); i++)
-			{
-				cout << "[" << pointsClicked[i][0] << ", " << pointsClicked[i][1] << "]\n";
-			}
-			cout << "\n";
-			cout << "[ DEBUG] [on_key_down] Capturing the current plane\n";
-			node->captureTheCurrentPlane();
-			// Clear all Vectors
-			clearInputVectors();
-			numPointsClicked = 0;
-		}
-		else
-		{
-			cout << "[ DEBUG] [on_key_down] Please click 4 points on the screen and press press key 'p' again\n";
-		}
-	}
-	else if(key == 'E')
-	{
-		int min_height_of_plane = 1;
-		int max_height_of_plane = 2;
-		float min_distance = getDistanceToSeePlane(min_height_of_plane);
-		float max_distance = getDistanceToSeePlane(max_height_of_plane);
-		int number_of_planes = 2;
-		RotateDirection dir = CLOCKWISE;
-		double angle = 15.0;
-		/* Angle with which	quadcopter has to rotate to orient itself to the new plane */
-		std::vector< double > main_angles;
-		/* Direction in which quadcopter should rotate to orient its yaw with normal of new plane */
-		std::vector< RotateDirection > main_directions;
-		main_angles.clear();
-		main_directions.clear();
-		main_angles.push_back(angle);
-		main_directions.push_back(dir);
-		cout << "[ DEBUG] [on_key_down] Setting the values\n";
+		PRINT_DEBUG(3, "Setting the values\n");
 		node->setValues(number_of_planes, min_height_of_plane, min_distance, max_height_of_plane, max_distance);
 		node->setMainAngles(main_angles);
 		node->setMainDirections(main_directions);
@@ -783,51 +696,23 @@ ImageView::on_key_down(int key)
 		vector< vector<float> > sortedPlaneParameters;
 		vector< vector<Point3f> > boundingBoxPoints;
 		readInfo(filename, sortedPlaneParameters, boundingBoxPoints);
-		cout << "Plane Parameters\n";
-		for (unsigned int i = 0; i < sortedPlaneParameters.size(); ++i)
-		{
-			unsigned int param = sortedPlaneParameters[i].size();
-			for (unsigned int j = 0; j < param; ++j)
-			{
-				cout << sortedPlaneParameters[i][j] << " ";
-			}
-			cout << "\n";
-		}
-		cout << "Bounding Box Points\n";
-		for (unsigned int i = 0; i < boundingBoxPoints.size(); ++i)
-		{
-			unsigned int param = boundingBoxPoints[i].size();
-			for (unsigned int j = 0; j < param; ++j)
-			{
-				cout << boundingBoxPoints[i][j] << "\n";
-			}
-			cout << "\n";
-		}
-		// Get the bounding box points
-		getContinuousBoundingBox ( boundingBoxPoints, sortedPlaneParameters, continuousBoundingBoxPoints);
-		cout << "Continuous Bounding Box Points\n";
-		for (unsigned int i = 0; i < continuousBoundingBoxPoints.size(); ++i)
-		{
-			unsigned int param = continuousBoundingBoxPoints[i].size();
-			for (unsigned int j = 0; j < param; ++j)
-			{
-				cout << continuousBoundingBoxPoints[i][j] << "\n";
-			}
-			cout << "\n";
-		}
+		PRINT_LOG(1, print2dVector(sortedPlaneParameters, "Plane Parameters:\n", ""));
+		PRINT_LOG(1, print2dVector(boundingBoxPoints, "Bounding Box points:\n", ""));
+		// Get the continuoous bounding box points
+		getContinuousBoundingBox (boundingBoxPoints, sortedPlaneParameters, continuousBoundingBoxPoints);
+		PRINT_LOG(1, print2dVector(continuousBoundingBoxPoints, "Continuous Bounding Box points:\n", ""));
 		// Path planning: Cover multiple planes
-		cout << "Set Render1\n";
 		if(renderRect)
 		{
 			renderRect = false;  // While moving the quadcopter we don't want bounding box to appear
 			renderSignificantPlane = false;
+			renderVisitedPlanes = false;
 		}
-		cout << "Set Render2\n";
+		PRINT_LOG(1, "Rendering Visited Planes\n");
 		setRender(false, false, false, true);
-		cout << "Set Render3\n";
 		setVisitedBoundingBoxPoints(continuousBoundingBoxPoints);
 		renderFrame();
-		cout << "[ DEBUG] Calling moveQuadcopter()\n";
+		PRINT_LOG(1, "Calling moveQuadcopter()\n");
 		node->moveQuadcopter(sortedPlaneParameters, continuousBoundingBoxPoints);
 	}
 	/* Movement letter keys */
@@ -863,6 +748,25 @@ ImageView::on_key_down(int key)
 	{
 		node->rotateCounterClockwise();
 	}
+	// Testcases which can be used for any other purpose
+	// W
+	else if(key == 'W')
+	{
+		
+	}
+	// E
+	else if(key == 'E')
+	{
+		
+	}
+	else if(key == 'Z')
+	{
+		
+	}
+	else
+	{
+
+	}
 }
 
 void
@@ -892,7 +796,7 @@ ImageView::on_mouse_down(CVD::ImageRef where, int state, int button)
 		y = (int)((360.0*where.y)/(this->myGLWindow->size().y));
 	}
 
-	printf("X and Y of point clicked : (%d, %d)\n", x, y);
+	PRINT_LOG(1, "X and Y of point clicked: (" << x << ", " << y << ")\n");
 
 	numPointsClicked++;
 	vector<int> v;
@@ -926,7 +830,7 @@ ImageView::search(vector<int> pt)
 
 	keyPointsNearest.push_back(kp);
 	numKeyPointsDetected++;
-	printf("X, Y and Z of nearest keypoint : (%f, %f, %f)\n", kp[0], kp[1], kp[2]);
+	PRINT_LOG(1, "X, Y and Z of nearest keypoint: (" << kp[0] << ", " << kp[1] << ", " << kp[2] << ")\n");
 }
 
 void
@@ -1227,7 +1131,7 @@ ImageView::setContinuousBoundingBoxPoints(const vector< vector<Point3f> > &conti
 void
 ImageView::setVisitedBoundingBoxPoints(const vector< vector<Point3f> > &visit_bound_box_points)
 {
-	cout << "set visit cbb\n";
+	PRINT_LOG(1, "Setting Visited Bounding Box Points\n");
 	unsigned int size = visitedBoundingBoxPoints.size();
 	for (unsigned int i = 0; i < size; ++i)
 	{
@@ -1277,7 +1181,7 @@ ImageView::getPointsClicked(vector< vector<int> > &points_clicked)
 	}
 	points_clicked.clear();
 	vector<int> dummy_points;
-	cout << "[ DEBUG] [getPointsClicked] Adding " << pointsClicked.size() << " points\n";
+	PRINT_DEBUG(3, "Adding " << pointsClicked.size() << " points\n");
 	for (unsigned int i = 0; i < pointsClicked.size(); ++i)
 	{
 		dummy_points.clear();
@@ -1287,7 +1191,7 @@ ImageView::getPointsClicked(vector< vector<int> > &points_clicked)
 		}
 		points_clicked.push_back(dummy_points);
 	}
-	cout << "[ DEBUG] [getPointsClicked] Added " << points_clicked.size() << " points\n";
+	PRINT_DEBUG(3, "Copied " << points_clicked.size() << " points\n");
 }
 
 void
