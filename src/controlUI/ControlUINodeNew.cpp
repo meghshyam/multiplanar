@@ -1378,7 +1378,12 @@ ControlUINode::getPTargetPoints(const pGrid &g, const vector<float> & plane,
                 // Something to do with older version of opencv which gets linked by mrpt
                 Mat dummy;
                 undistortPoints(imgPoints_mat, dummy, cameraMatrix, distCoeffs);
+		double yaw = 0.0;   //use appropriate yaw
                 Mat rot_guess = Mat::eye(3,3, CV_64F);
+		rot_guess.at<double>(0,0) = cos(yaw);
+		rot_guess.at<double>(0,2) = sin(yaw);
+		rot_guess.at<double>(2,0) = -sin(yaw);
+		rot_guess.at<double>(2,2) = cos(yaw);
                 Rodrigues(rot_guess, rvec);
                 tvec.at<double>(0)  = -(center.x-0.6*plane[0]);
                 tvec.at<double>(1)  = -(center.y+0.6*plane[2]);
@@ -1453,8 +1458,13 @@ ControlUINode::getPTargetPoints(const pGrid &g, const vector<float> & plane,
                 // Something to do with older version of opencv which gets linked by mrpt
                 Mat dummy;
                 undistortPoints(imgPoints_mat, dummy, cameraMatrix, distCoeffs);
+		double yaw = 0.0;   //use appropriate yaw
                 Mat rot_guess = Mat::eye(3,3, CV_64F);
-                Rodrigues(rot_guess, rvec);
+		rot_guess.at<double>(0,0) = cos(yaw);
+		rot_guess.at<double>(0,2) = sin(yaw);
+		rot_guess.at<double>(2,0) = -sin(yaw);
+		rot_guess.at<double>(2,2) = cos(yaw);                
+		Rodrigues(rot_guess, rvec);
                 tvec.at<double>(0)  = -(center.x-0.6*plane[0]);
                 tvec.at<double>(1)  = -(center.y+0.6*plane[2]);
                 tvec.at<double>(2)  = -(center.z - 0.6*plane[1]);
