@@ -732,10 +732,6 @@ ControlUINode::moveQuadcopter(const vector< vector<float> > &planeParameters,
         // printGrid(grid, uvAxes, planeParameters[i]);
         // Vector containing target points from where the video recording is supposed to be done
         vector< vector<double> > pTargetPoints;
-        // Call to function for generating the pTargetPoints
-        PRINT_LOG(1, "Generating target points for capturing videos of the plane: " << plane_index+1 << ".\n");
-        getPTargetPoints(grid, planeParameters[plane_index], plane_index, uvAxes, pTargetPoints);
-        PRINT_DEBUG(3, print2dVector(pTargetPoints, "pTargetPoints:\n", "matlab"));
         // Calculate the angle to rotate to align the drone'e yaw to the plane's normal
         double desiredYaw = 0;
         Point3f projectedNormal(planeParameters[plane_index][0], planeParameters[plane_index][1], 0);
@@ -746,6 +742,10 @@ ControlUINode::moveQuadcopter(const vector< vector<float> > &planeParameters,
         PRINT_DEBUG(1, "Y axis: " << yAxis << "\n");
         PRINT_DEBUG(1, "prevYaw: " << prevYaw << "\n");
         PRINT_DEBUG(1, "desiredYaw: " << desiredYaw << "\n");
+        // Call to function for generating the pTargetPoints
+        PRINT_LOG(1, "Generating target points for capturing videos of the plane: " << plane_index+1 << ".\n");
+        getPTargetPoints(grid, planeParameters[plane_index], plane_index, uvAxes, pTargetPoints);
+        PRINT_DEBUG(3, print2dVector(pTargetPoints, "pTargetPoints:\n", "matlab"));
         // Having known the prevPosition and pTargetPoints
         // move the drone from prevPosition to pTargetPoints[0]
         // and completely navigate around the plane as specified by the pTargetPoints
@@ -1385,12 +1385,15 @@ ControlUINode::getPTargetPoints(const pGrid &g, const vector<float> & plane,
                 // Something to do with older version of opencv which gets linked by mrpt
                 Mat dummy;
                 undistortPoints(imgPoints_mat, dummy, cameraMatrix, distCoeffs);
-		double yaw = 0.0;   //use appropriate yaw
+                Point3f projectedNormal(plane[0], plane[1], 0);
+                Point3f yAxis(0, 1, 0);
+                yaw = findAngle(projectedNormal, yAxis);
+                yaw = yaw*180/M_PI;
                 Mat rot_guess = Mat::eye(3,3, CV_64F);
-		rot_guess.at<double>(0,0) = cos(yaw);
-		rot_guess.at<double>(0,2) = sin(yaw);
-		rot_guess.at<double>(2,0) = -sin(yaw);
-		rot_guess.at<double>(2,2) = cos(yaw);
+                rot_guess.at<double>(0,0) = cos(yaw);
+                rot_guess.at<double>(0,2) = sin(yaw);
+                rot_guess.at<double>(2,0) = -sin(yaw);
+                rot_guess.at<double>(2,2) = cos(yaw);
                 Rodrigues(rot_guess, rvec);
                 tvec.at<double>(0)  = -(center.x-0.6*plane[0]);
                 tvec.at<double>(1)  = -(center.y+0.6*plane[2]);
