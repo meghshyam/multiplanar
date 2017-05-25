@@ -2360,6 +2360,9 @@ ControlUINode::designPathToChangeYaw(const vector<double> &curr_point,
 void
 ControlUINode::copyNecessaryInfo()
 {
+    clock_t beginTime, endTime;
+    double elapsedTime;
+    beginTime = clock();
     PRINT_LOG(1, "Started\n");
     // If the plane was covered in one snap, ie, the plane is smaller in dimension
     if(!_is_big_plane)
@@ -2418,12 +2421,18 @@ ControlUINode::copyNecessaryInfo()
     _plane_d = 0.0;
     _plane_d_num = 0;
     PRINT_LOG(1, "Completed\n");
+    endTime = clock();
+    elapsedTime = double(endTime - beginTime) / (CLOCKS_PER_SEC/1000);
+    PRINT_DEBUG(1, "Time taken for function is " << elapsedTime << " ms.\n");
     return ;
 }
 
 void
 ControlUINode::augmentInfo()
 {
+    clock_t beginTime, endTime;
+    double elapsedTime;
+    beginTime = clock();
     PRINT_LOG(1, "Started\n");
     PRINT_LOG(1, "Adding the 3d points to be used later for best fit\n");
     int index = _actual_plane_index;
@@ -2460,6 +2469,9 @@ ControlUINode::augmentInfo()
     }
     PRINT_DEBUG(3, print1dVector(aug_plane_bounding_box_points, "Aug. Plane BB:\n"));
     PRINT_LOG(1, "Completed\n");
+    endTime = clock();
+    elapsedTime = double(endTime - beginTime) / (CLOCKS_PER_SEC/1000);
+    PRINT_DEBUG(1, "Time taken for function is " << elapsedTime << " ms.\n");
     return ;
 }
 
@@ -2474,6 +2486,9 @@ ControlUINode::getMultiplePlanes3d (const vector<int> &ccPoints, const vector< v
                                     vector< vector<Point3f> > &sorted_3d_points,
                                     vector<float> &percentageOfEachPlane)
 {
+    clock_t beginTime, endTime;
+    double elapsedTime;
+    beginTime = clock();
     PRINT_DEBUG(1, "Started\n");
     vector<Point3f> _in_points;
     vector< vector<int> > points;
@@ -2510,7 +2525,11 @@ ControlUINode::getMultiplePlanes3d (const vector<int> &ccPoints, const vector< v
     clear2dVector(in_pp);
     clear2dVector(in_cbb);
     in_p.clear();
+
     PRINT_DEBUG(1, "Completed\n");
+    endTime = clock();
+    elapsedTime = double(endTime - beginTime) / (CLOCKS_PER_SEC/1000);
+    PRINT_DEBUG(1, "Time taken for function is " << elapsedTime << " ms.\n");
     return ;
 }
 
@@ -2560,6 +2579,9 @@ ControlUINode::getMultiplePlanes3d (vector< vector<float> > &planeParameters,
     clear2dVector(in_cbb);
     in_p.clear();
     PRINT_DEBUG(1, "Completed\n");
+    endTime = clock();
+    elapsedTime = double(endTime - beginTime) / (CLOCKS_PER_SEC/1000);
+    PRINT_DEBUG(1, "Time taken for function is " << elapsedTime << " ms.\n");
     return ;
 }
 
@@ -2567,6 +2589,9 @@ int
 ControlUINode::checkVisibility(const vector<float> &plane_parameters, 
                                const vector<Point3f> &continuous_bounding_box_points, int which_side)
 {
+    clock_t beginTime, endTime;
+    double elapsedTime;
+    beginTime = clock();
     PRINT_DEBUG(5, "Started\n");
     int move = 0;
     vector<Point2f> image_bounding_box_points;
@@ -2702,12 +2727,16 @@ ControlUINode::checkVisibility(const vector<float> &plane_parameters,
         PRINT_DEBUG(5, "Currently not dealing with it\n");
     }
     PRINT_DEBUG(5, "Completed\n");
+    endTime = clock();
+    elapsedTime = double(endTime - beginTime) / (CLOCKS_PER_SEC/1000);
+    PRINT_DEBUG(1, "Time taken for function is " << elapsedTime << " ms.\n");
     return move;
 }
 
 void
 ControlUINode::doJLinkage()
 {
+
     clock_t beginTime, endTime;
     double elapsedTime;
     beginTime = clock();
@@ -2744,6 +2773,9 @@ ControlUINode::doJLinkage()
 void
 ControlUINode::doJLinkage(const vector<int> &ccPoints, const vector< vector<int> > &pointsClicked)
 {
+    clock_t beginTime, endTime;
+    double elapsedTime;
+    beginTime = clock();
     PRINT_DEBUG(5, "Started\n");
     clear2dVector(jlink_all_plane_parameters);
     clear2dVector(jlink_all_continuous_bounding_box_points);
@@ -2772,6 +2804,9 @@ ControlUINode::doJLinkage(const vector<int> &ccPoints, const vector< vector<int>
     PRINT_DEBUG(5, print1dVector(this_plane_parameters, "Sig PP: ", ""));
     PRINT_DEBUG(5, print1dVector(this_continuous_bounding_box_points, "Sig CBB:\n", ""));
     PRINT_DEBUG(5, "Completed\n");
+    endTime = clock();
+    elapsedTime = double(endTime - beginTime) / (CLOCKS_PER_SEC/1000);
+    PRINT_DEBUG(1, "Time taken for function is " << elapsedTime << " ms.\n");
     return ;
 }
 
@@ -2786,6 +2821,9 @@ ControlUINode::getCompleteCurrentPlaneInfo(const vector< vector<float> > &plane_
                                            vector<Point3f> &out_cbb,
                                            vector<Point3f> &out_3d_points)
 {
+    clock_t beginTime, endTime;
+    double elapsedTime;
+    beginTime = clock();
     PRINT_LOG(5, "Started\n");
     if(currPlaneIndex < 0 && currPlaneIndex != -1)
     {
@@ -2899,6 +2937,9 @@ ControlUINode::getCompleteCurrentPlaneInfo(const vector< vector<float> > &plane_
         PRINT_LOG(5, print1dVector(out_cbb, "Current visible cbb:\n", ""));
     }
     PRINT_LOG(5, "Completed\n");
+    endTime = clock();
+    elapsedTime = double(endTime - beginTime) / (CLOCKS_PER_SEC/1000);
+    PRINT_DEBUG(1, "Time taken for function is " << elapsedTime << " ms.\n");
     return ;
 }
 
@@ -2907,6 +2948,9 @@ ControlUINode::checkPlaneParametersSign(const vector<double> &position,
                                         const vector<Point3f> &points,
                                         vector<float> &plane_parameters)
 {
+    clock_t beginTime, endTime;
+    double elapsedTime;
+    beginTime = clock();
     assert(points.size() >= 3);
     PRINT_LOG(5, "Started\n");
     // Create a matrix out of the vector of points: Dimension: numberOfPoints*3
@@ -2947,6 +2991,9 @@ ControlUINode::checkPlaneParametersSign(const vector<double> &position,
     }
     PRINT_DEBUG(5, print1dVector(plane_parameters, "New Plane Parameters: ", ""));
     PRINT_LOG(5, "Completed\n");
+    endTime = clock();
+    elapsedTime = double(endTime - beginTime) / (CLOCKS_PER_SEC/1000);
+    PRINT_DEBUG(1, "Time taken for function is " << elapsedTime << " ms.\n");
     return ;
 }
 
@@ -2957,6 +3004,9 @@ ControlUINode::checkPlaneParametersSign(const vector<double> &position,
 void
 ControlUINode::alignQuadcopterToCurrentPlane()
 {
+    clock_t beginTime, endTime;
+    double elapsedTime;
+    beginTime = clock();
     PRINT_LOG(5, "Started\n");
     if(_node_number_of_planes == 1)
     {
@@ -2984,12 +3034,18 @@ ControlUINode::alignQuadcopterToCurrentPlane()
     }
     PRINT_LOG(1, "Completed\n");
     PRINT_LOG(1, "Please click 4 points on the DRONE CAMERA FEED Screen\n");
+    endTime = clock();
+    elapsedTime = double(endTime - beginTime) / (CLOCKS_PER_SEC/1000);
+    PRINT_DEBUG(1, "Time taken for function is " << elapsedTime << " ms.\n");
     return ;
 }
 
 void
 ControlUINode::adjustYawToCurrentPlane()
 {
+    clock_t beginTime, endTime;
+    double elapsedTime;
+    beginTime = clock();
     PRINT_LOG(1, "Started\n");
     getCurrentPositionOfDrone();
     PRINT_LOG(5, print1dVector(_node_current_pos_of_drone, "Current position of drone"));
@@ -3018,6 +3074,9 @@ ControlUINode::adjustYawToCurrentPlane()
     designPathToChangeYaw(_node_current_pos_of_drone, _node_current_pos_of_drone[3]+angle);
     moveDroneViaSetOfPoints(_interm_path);
     PRINT_LOG(1, "Completed\n");
+    endTime = clock();
+    elapsedTime = double(endTime - beginTime) / (CLOCKS_PER_SEC/1000);
+    PRINT_DEBUG(1, "Time taken for function is " << elapsedTime << " ms.\n");
 }
 
 /**
@@ -3027,6 +3086,9 @@ ControlUINode::adjustYawToCurrentPlane()
 void
 ControlUINode::adjustTopBottomEdges()
 {
+    clock_t beginTime, endTime;
+    double elapsedTime;
+    beginTime = clock();
     PRINT_LOG(1, "Started\n");
     float step_distance;
     float point_distance, height;
@@ -3076,6 +3138,9 @@ ControlUINode::adjustTopBottomEdges()
         moveDroneByMeasure(step_distance, MOVE_DIRECTIONS::UP);
     }
     PRINT_DEBUG(3, "Adjusting top and bottom done.\n");
+    endTime = clock();
+    elapsedTime = double(endTime - beginTime) / (CLOCKS_PER_SEC/1000);
+    PRINT_DEBUG(1, "Time taken for function is " << elapsedTime << " ms.\n");
     return ;
 }
 
@@ -3086,6 +3151,9 @@ ControlUINode::adjustTopBottomEdges()
 void
 ControlUINode::adjustLeftEdge()
 {
+    clock_t beginTime, endTime;
+    double elapsedTime;
+    beginTime = clock();
     PRINT_DEBUG(1, "Started\n");
     PRINT_DEBUG(3, "Call Jlinkage\n");
     doJLinkage();
@@ -3120,6 +3188,9 @@ ControlUINode::adjustLeftEdge()
         else {planeLeftVisible = false;}
     }
     PRINT_LOG(1, "Completed\n");
+    endTime = clock();
+    elapsedTime = double(endTime - beginTime) / (CLOCKS_PER_SEC/1000);
+    PRINT_DEBUG(1, "Time taken for function is " << elapsedTime << " ms.\n");
 }
 
 /**
@@ -3129,6 +3200,9 @@ ControlUINode::adjustLeftEdge()
 void
 ControlUINode::captureTheCurrentPlane()
 {
+    clock_t beginTime, endTime;
+    double elapsedTime;
+    beginTime = clock();
     PRINT_LOG(1, "Started\n");
     PRINT_LOG(3, "Total Number of planes: " << _node_number_of_planes 
             << ", Number of planes covered: " << _node_completed_number_of_planes << "\n");
@@ -3283,6 +3357,9 @@ ControlUINode::captureTheCurrentPlane()
         PRINT_LOG(3, "All planes are not completed\n");
     }
     PRINT_LOG(1, "Completed\n");
+    endTime = clock();
+    elapsedTime = double(endTime - beginTime) / (CLOCKS_PER_SEC/1000);
+    PRINT_DEBUG(1, "Time taken for function is " << elapsedTime << " ms.\n");
 
 }
 
@@ -3293,6 +3370,9 @@ ControlUINode::captureTheCurrentPlane()
 void
 ControlUINode::adjustForNextCapture()
 {
+    clock_t beginTime, endTime;
+    double elapsedTime;
+    beginTime = clock();
     PRINT_LOG(1, "Started\n");
     vector< vector<float> > test_plane_parameters;
     Point3f top_left = this_continuous_bounding_box_points[0];
@@ -3500,6 +3580,9 @@ ControlUINode::adjustForNextCapture()
         PRINT_LOG(3, "Please click 4 points on the DRONE CAMERA FEED window\n");
     }
     PRINT_LOG(1, "Completed\n");
+    endTime = clock();
+    elapsedTime = double(endTime - beginTime) / (CLOCKS_PER_SEC/1000);
+    PRINT_DEBUG(1, "Time taken for function is " << elapsedTime << " ms.\n");
 }
 
 /**
@@ -3509,6 +3592,9 @@ ControlUINode::adjustForNextCapture()
 void
 ControlUINode::alignQuadcopterToNextPlane()
 {
+    clock_t beginTime, endTime;
+    double elapsedTime;
+    beginTime = clock();
     PRINT_LOG(1, "Started\n");
     PRINT_LOG(3, "Completed no. of planes: " 
             << _node_completed_number_of_planes
@@ -3813,6 +3899,9 @@ ControlUINode::alignQuadcopterToNextPlane()
         _next_plane_angle = _node_main_angles.front();
     }
     PRINT_DEBUG(1, "Completed\n");
+    endTime = clock();
+    elapsedTime = double(endTime - beginTime) / (CLOCKS_PER_SEC/1000);
+    PRINT_DEBUG(1, "Time taken for function is " << elapsedTime << " ms.\n");
     return ;
 }
 
@@ -3833,7 +3922,6 @@ ControlUINode::alignQuadcopterToNextPlane()
 void
 ControlUINode::testUtility(int test_no)
 {
-    PRINT_DEBUG(1, "Running test no.: " << test_no << "\n");
     clock_t beginTime, endTime;
     double elapsedTime;
     if(test_no == 0)
