@@ -580,8 +580,8 @@ getCurrentPlaneIndex(const vector< vector<float> > &plane_parameters,
 						const vector< vector<float> > &temp_plane_parameters,
 						const vector<float> &percentagePlane)
 {
-	// planeIndex = -2 means the parameter I'm seeing is not there in plane_parameters
-	// planeIndex = -1 means the parameter I'm seeing are all there in plane_parameters
+	// planeIndex = -2 means the planes I'm seeing is not there in plane_parameters
+	// planeIndex = -1 means the planes I'm seeing are all there in plane_parameters
 	int planeIndex = -2;
 	float plane_heuristic = 0.9848; // +-15 degrees variation
 	float dot_p;
@@ -641,8 +641,8 @@ getCurrentPlaneIndex(const vector< vector<float> > &plane_parameters,
 	}
 	else
 	{
-		PRINT_DEBUG(3, print2dVector(temp_plane_parameters, "Current visible planes:\n"));
-		PRINT_DEBUG(3, print2dVector(plane_parameters, "Already visited planes:\n"));
+		PRINT_DEBUG(3, print2dVector(temp_plane_parameters, "Current visible planes:\n", ""));
+		PRINT_DEBUG(3, print2dVector(plane_parameters, "Already visited planes:\n", ""));
 		for (unsigned int i = 0; i < temp_plane_parameters.size(); ++i)
 		{
 			bool found = false;
@@ -659,8 +659,8 @@ getCurrentPlaneIndex(const vector< vector<float> > &plane_parameters,
 					plane_normal_2.push_back(plane_parameters[j][k]);
 				}
 				dot_p = normalized_dot_product(plane_normal_1, plane_normal_2); //in_a*out_a + in_b*out_b + in_c*out_c;
-				PRINT_DEBUG(3, print1dVector(plane_normal_2, "Visited plane: "));
-				PRINT_DEBUG(3, print1dVector(plane_normal_1, "Current plane visible: "));
+				PRINT_DEBUG(3, print1dVector(plane_normal_2, "Visited plane: ", ""));
+				PRINT_DEBUG(3, print1dVector(plane_normal_1, "Current plane visible: ", ""));
 				PRINT_DEBUG(3, "dot_p: " << dot_p << "\n");
 				if(dot_p >= plane_heuristic)
 				{
@@ -917,17 +917,17 @@ convertWRTCurrentQuadcopterOrigin(const vector<double> &current_pos_of_drone,
 	vector<Point3f> current_points;
 	Mat rotationMatrix = Mat::eye(3, 3, CV_64F);
 	double angle = current_pos_of_drone[3];
-	angle = (angle*3.14)/180.0;
+	angle = (angle*3.14159)/180.0;
 	rotationMatrix.at<double>(0, 0) = cos(angle);
 	rotationMatrix.at<double>(0, 1) = -sin(angle);
 	rotationMatrix.at<double>(1, 0) = sin(angle);
 	rotationMatrix.at<double>(1, 1) = cos(angle);
-	// cout << "[ DEBUG] Rotation Matrix: " << rotationMatrix << "\n";
+	PRINT_DEBUG(6, "Rotation Matrix: " << rotationMatrix << "\n");
 	Mat translationVector(3, 1, DataType<double>::type);
 	translationVector.at<double>(0, 0) = current_pos_of_drone[0];
 	translationVector.at<double>(1, 0) = current_pos_of_drone[1];
 	translationVector.at<double>(2, 0) = current_pos_of_drone[2];
-	// cout << "[ DEBUG] Translation Vector: " << translationVector << "\n";
+	PRINT_DEBUG(6, "Translation Vector: " << translationVector << "\n");
 	Mat x = rotationMatrix*translationVector;
 	Mat c(3, 1, DataType<double>::type);
 	for (unsigned int i = 0; i < points.size(); ++i)
@@ -982,12 +982,12 @@ fixPlaneOrientation(const vector<double> &position,
 	float centroidZ = z_c;
 	Point3f p(centroidX, centroidY, centroidZ), qp;
 	PRINT_DEBUG(3, "Centroid: " << p << "\n");
-	PRINT_DEBUG(3, print1dVector(position, "Position of drone: "));
+	PRINT_DEBUG(3, print1dVector(position, "Position of drone: ", ""));
 	float a = plane_parameters[0];
 	float b = plane_parameters[1];
 	float c = plane_parameters[2];
 	float mag = ((a*a)+(b*b)+(c*c));
-	PRINT_DEBUG(3, print1dVector(plane_parameters, "Old Plane Parameters: "));
+	PRINT_DEBUG(3, print1dVector(plane_parameters, "Old Plane Parameters: ", ""));
 	Point3f pos((float)position[0], (float)position[1], (float)position[2]);
 	qp = pos - p;
 	PRINT_DEBUG(3, "qp: " << qp << "\n");
@@ -1055,7 +1055,7 @@ orderPlanesFromQuadcopterPosition(const vector<double> &current_pos_of_drone,
 	}
 	// Sort the x centroids
 	sortData( xCentroidPoints, sortedXCentroidPoints, indices, true);
-	PRINT_DEBUG(3, print1dVector(indices, "New Plane Indices: "));
+	PRINT_DEBUG(3, print1dVector(indices, "New Plane Indices: ", ""));
 	for (unsigned int i = 0; i < in_points.size(); ++i)
 	{
 		int index = indices[i];
@@ -1079,19 +1079,19 @@ orderPlanesFromQuadcopterPosition(const vector<double> &current_pos_of_drone,
 		out_points.push_back(dummy_points);
 		out_p.push_back(in_p[index]);
 	}
-	PRINT_DEBUG(3, print2dVector(in_pp, "Input Plane Parameters:\n"));
-	PRINT_DEBUG(3, print2dVector(out_pp, "Output Plane Parameters:\n"));
-	PRINT_DEBUG(3, print2dVector(in_cbb, "Input Plane CBB:\n"));
-	PRINT_DEBUG(3, print2dVector(out_cbb, "Output Plane CBB:\n"));
-	PRINT_DEBUG(3, print1dVector(in_p, "Input Plane Percentage: "));
-	PRINT_DEBUG(3, print1dVector(out_p, "Output Plane Percentage: "));
+	PRINT_DEBUG(3, print2dVector(in_pp, "Input Plane Parameters:\n", ""));
+	PRINT_DEBUG(3, print2dVector(out_pp, "Output Plane Parameters:\n", ""));
+	PRINT_DEBUG(3, print2dVector(in_cbb, "Input Plane CBB:\n", ""));
+	PRINT_DEBUG(3, print2dVector(out_cbb, "Output Plane CBB:\n", ""));
+	PRINT_DEBUG(3, print1dVector(in_p, "Input Plane Percentage: ", ""));
+	PRINT_DEBUG(3, print1dVector(out_p, "Output Plane Percentage: ", ""));
 	PRINT_DEBUG(3, "Fixing orientations\n");
 	for (unsigned int i = 0; i < out_pp.size(); ++i)
 	{
 		fixPlaneOrientation(current_pos_of_drone, out_points[i], out_pp[i], out_cbb[i]);
 	}
-	PRINT_DEBUG(3, print2dVector(out_pp, "Fixed Output Plane Parameters:\n"));
-	PRINT_DEBUG(3, print2dVector(out_cbb, "Fixed Output PlaneCBB:\n"));
+	PRINT_DEBUG(3, print2dVector(out_pp, "Fixed Output Plane Parameters:\n", ""));
+	PRINT_DEBUG(3, print2dVector(out_cbb, "Fixed Output Plane CBB:\n", ""));
 	PRINT_DEBUG(3, "Fixing Done\n");
 	PRINT_DEBUG(1, "Completed\n");
 	dummy_points.clear();
