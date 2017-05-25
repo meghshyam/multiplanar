@@ -936,8 +936,8 @@ class ControlUINode
          */
         void
         moveDrone (const std::vector<double> &prevPosition,
-                                        std::vector< std::vector<double> > tPoints,
-                                        double prevYaw, double yaw);
+                   std::vector< std::vector<double> > tPoints,
+                   double prevYaw, double yaw);
 
         /**
          * @brief Checks the position of the drone and whether the error is less than a threshold
@@ -977,7 +977,8 @@ class ControlUINode
         setMainDirections(const vector<RotateDirection> &main_directions);
 
         void
-        setValues(int number_of_planes, float min_height_of_plane, float min_distance, float max_height_of_plane, float max_distance);
+        setValues(int number_of_planes, float min_height_of_plane, float min_distance, 
+                  float max_height_of_plane, float max_distance);
 
         /**
          * @brief Gets the current position of the drone in _node_current_pos_of_drone (See private variables)
@@ -996,16 +997,16 @@ class ControlUINode
 
         void
         getMultiplePlanes3d (const vector<int> &ccPoints, const vector< vector<int> > &pointsClicked,
-                                vector< vector<float> > &planeParameters,
-                                vector< vector<Point3f> > &continuousBoundingBoxPoints,
-                                vector< vector<Point3f> > &sorted_3d_points,
-                                vector<float> &percentageOfEachPlane);
+                             vector< vector<float> > &planeParameters,
+                             vector< vector<Point3f> > &continuousBoundingBoxPoints,
+                             vector< vector<Point3f> > &sorted_3d_points,
+                             vector<float> &percentageOfEachPlane);
 
         void
         getMultiplePlanes3d (vector< vector<float> > &planeParameters,
-                                vector< vector<Point3f> > &continuousBoundingBoxPoints,
-                                vector< vector<Point3f> > &sorted_3d_points,
-                                vector<float> &percentageOfEachPlane);
+                             vector< vector<Point3f> > &continuousBoundingBoxPoints,
+                             vector< vector<Point3f> > &sorted_3d_points,
+                             vector<float> &percentageOfEachPlane);
 
         void
         testUtility(int test_no);
@@ -1109,18 +1110,18 @@ class ControlUINode
 
         void
         checkPlaneParametersSign(const vector<double> &position, 
-                                                            const vector<Point3f> &points,
-                                                            vector<float> &plane_parameters);
+                                const vector<Point3f> &points,
+                                vector<float> &plane_parameters);
 
         void
         getCompleteCurrentPlaneInfo(const vector< vector<float> > &plane_parameters,
-                                                                    const vector< vector<Point3f> > &cbb,
-                                                                    const vector< vector<Point3f> > &points,
-                                                                    const vector<float> &percPlane,
-                                                                    int currPlaneIndex,
-                                                                    vector<float> &out_plane_parameters,
-                                                                    vector<Point3f> &out_cbb,
-                                                                    vector<Point3f> &out_3d_points);
+                                    const vector< vector<Point3f> > &cbb,
+                                    const vector< vector<Point3f> > &points,
+                                    const vector<float> &percPlane,
+                                    int currPlaneIndex,
+                                    vector<float> &out_plane_parameters,
+                                    vector<Point3f> &out_cbb,
+                                    vector<Point3f> &out_3d_points);
 
         void
         adjustYawToCurrentPlane();
@@ -1130,8 +1131,8 @@ class ControlUINode
 
         void
         moveInDirection(const vector<float> &dir, 
-                                        const vector<double> &position,
-                                        const vector<Point3f> &points);
+                        const vector<double> &position,
+                        const vector<Point3f> &points);
 
 };
 

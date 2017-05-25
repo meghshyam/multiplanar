@@ -704,6 +704,8 @@ ControlUINode::moveQuadcopter(const vector< vector<float> > &planeParameters,
         uvAxes.clear();
         // Convert XYZ bounding points to UV coordinates
         PRINT_LOG(1, "Generating the UV axes for the plane: " << plane_index+1 << ".\n");
+        PRINT_DEBUG(3, print1dVector(continuousBoundingBoxPoints[plane_index], "Bounding Box points for plane:\n", ""));
+        PRINT_DEBUG(3, print1dVector(planeParameters[plane_index], "Plane Parameters for plane:\n", ""));
         AllXYZToUVCoordinates(continuousBoundingBoxPoints[plane_index], planeParameters[plane_index],
                               uvCoordinates, uvAxes);
         // Push the generated UV axis to the required vectors
@@ -719,7 +721,7 @@ ControlUINode::moveQuadcopter(const vector< vector<float> > &planeParameters,
         // Build the Grid by dividing the plane into cells
         PRINT_LOG(1, "Building the grid for the plane: " << plane_index+1 << ".\n");
         pGrid grid = buildPGrid(uvCoordinates);
-        int num_rows = grid.rowSquares.size(), num_cols = 0;
+        int num_rows = grid.rowSquares.size()-1, num_cols = 0;
         if(num_rows > 0)
         {
             num_cols = grid.rowSquares[0].size();
@@ -733,6 +735,7 @@ ControlUINode::moveQuadcopter(const vector< vector<float> > &planeParameters,
         // Call to function for generating the pTargetPoints
         PRINT_LOG(1, "Generating target points for capturing videos of the plane: " << plane_index+1 << ".\n");
         getPTargetPoints(grid, planeParameters[plane_index], plane_index, uvAxes, pTargetPoints);
+        PRINT_DEBUG(3, print2dVector(pTargetPoints, "pTargetPoints:\n", "matlab"));
         // Calculate the angle to rotate to align the drone'e yaw to the plane's normal
         double desiredYaw = 0;
         Point3f projectedNormal(planeParameters[plane_index][0], planeParameters[plane_index][1], 0);
@@ -773,7 +776,7 @@ ControlUINode::moveQuadcopter(const vector< vector<float> > &planeParameters,
                                     planeParameters[plane_index], plane_index);
         }
         PRINT_LOG(1, "Moving the drone for the plane: " << plane_index+1 << ".\n");
-        if(plane_index != 0)
+        if(plane_index >= 0)
         {
             prevPosition[0] = targetPoints.back()[0];
             prevPosition[1] = targetPoints.back()[1];
@@ -1322,6 +1325,8 @@ ControlUINode::getPTargetPoints(const pGrid &g, const vector<float> & plane,
     // Matrix hilders for rotation and translation
     Mat rvec(3, 1, DataType<double>::type);
     Mat tvec(3, 1, DataType<double>::type);
+    PRINT_DEBUG(3, "Camera Matrix: " << cameraMatrix << "\n");
+    PRINT_DEBUG(3, "Distortion co-efficients: " << cameraMatrix << "\n");
     //
     vector<Point3d> objPoints;
     // Whether the drone is moving forward or backward (left to right or right to left)
@@ -1487,10 +1492,11 @@ ControlUINode::getPTargetPoints(const pGrid &g, const vector<float> & plane,
         int n  = g.rowSquares[i].size();
         numColsPerRow.push_back(n);
     }
+    PRINT_LOG(1, print2dVector(tPoints, "LOG Target points:\n", ""));
     sortTargetPoints(numRows, numColsPerRow, tPoints, sortedTPoints);
     // PRINT_LOG(1, "Target Points\n\n");
     // print3dPoints(sortedTPoints);
-    PRINT_LOG(1, print2dVector(sortedTPoints, "[getPTargetPoints] LOG Target points:\n", ""));
+    PRINT_LOG(1, print2dVector(sortedTPoints, "Sorted LOG Target points:\n", ""));
     string filename = "/home/sonapraneeth/plane"+to_string(plane_no+1)+"_map";
     PRINT_LOG(1, "Writing " << sortedTPoints.size() << " points to file: " << filename << "\n");
     write3DPointsToCSV(sortedTPoints, filename);
@@ -2475,6 +2481,8 @@ ControlUINode::getMultiplePlanes3d (vector< vector<float> > &planeParameters,
                                     vector< vector<Point3f> > &sorted_3d_points,
                                     vector<float> &percentageOfEachPlane)
 {
+    clock_t beginTime, endTime;
+    double elapsedTime;
     PRINT_DEBUG(1, "Started\n");
     vector< Point3f > _in_points;
     _in_points.clear();
@@ -2488,13 +2496,18 @@ ControlUINode::getMultiplePlanes3d (vector< vector<float> > &planeParameters,
         _in_points.push_back(featurePt);
     }
     pthread_mutex_unlock(&keyPoint_CS);
+    PRINT_DEBUG(10, print1dVector(_in_points, "Points Clicked by the user in 3D:\n", ""));
     PRINT_DEBUG(1, "Captured all the 3d points available\n");
     // See multiplePlanes.cpp
     vector< vector<Point3f> > in_points;
     vector< vector<float> > in_pp;
     vector< vector<Point3f> > in_cbb;
     vector<float> in_p;
+    beginTime = clock();
     findPercBoundEachPlane(_in_points, in_pp, in_cbb, in_points, in_p);
+    endTime = clock();
+    elapsedTime = double(endTime - beginTime) / (CLOCKS_PER_SEC/1000);
+    PRINT_DEBUG(1, "Time taken for function is " << elapsedTime << " ms.\n");
     getCurrentPositionOfDrone();
     PRINT_DEBUG(5, "Fixing plane orientation and CBB\n");
     orderPlanesFromQuadcopterPosition(_node_current_pos_of_drone, in_points, in_pp, in_cbb, in_p,
@@ -2652,6 +2665,9 @@ ControlUINode::checkVisibility(const vector<float> &plane_parameters,
 void
 ControlUINode::doJLinkage()
 {
+    clock_t beginTime, endTime;
+    double elapsedTime;
+    beginTime = clock();
     PRINT_DEBUG(5, "Started\n");
     clear2dVector(jlink_all_plane_parameters);
     clear2dVector(jlink_all_continuous_bounding_box_points);
@@ -2676,6 +2692,9 @@ ControlUINode::doJLinkage()
     PRINT_DEBUG(5, print1dVector(this_plane_parameters, "Sig PP"));
     PRINT_DEBUG(5, print1dVector(this_continuous_bounding_box_points, "Sig CBB"));
     PRINT_DEBUG(5, "Completed\n");
+    endTime = clock();
+    elapsedTime = double(endTime - beginTime) / (CLOCKS_PER_SEC/1000);
+    PRINT_DEBUG(1, "Time taken for function is " << elapsedTime << " ms.\n");
     return ;
 }
 
@@ -2691,11 +2710,11 @@ ControlUINode::doJLinkage(const vector<int> &ccPoints, const vector< vector<int>
     getMultiplePlanes3d (ccPoints, pointsClicked, jlink_all_plane_parameters, 
                         jlink_all_continuous_bounding_box_points, jlink_three_d_points, 
                         jlink_all_percentage_of_each_plane);
-    PRINT_DEBUG(5, print2dVector(jlink_all_plane_parameters, "JLink Plane Params"));
-    PRINT_DEBUG(5, print2dVector(jlink_all_continuous_bounding_box_points, "JLink CBB"));
-    PRINT_DEBUG(5, print1dVector(jlink_all_percentage_of_each_plane, "JLink Pecentage"));
-    PRINT_DEBUG(5, print2dVector(visited_plane_parameters, "Visited PP"));
-    PRINT_DEBUG(5, print2dVector(visited_continuous_bounding_box_points, "Visited CBB"));
+    PRINT_DEBUG(5, print2dVector(jlink_all_plane_parameters, "JLink Plane Params:\n", ""));
+    PRINT_DEBUG(5, print2dVector(jlink_all_continuous_bounding_box_points, "JLink CBB:\n", ""));
+    PRINT_DEBUG(5, print1dVector(jlink_all_percentage_of_each_plane, "JLink Pecentage:\n", ""));
+    PRINT_DEBUG(5, print2dVector(visited_plane_parameters, "Visited PP:\n", ""));
+    PRINT_DEBUG(5, print2dVector(visited_continuous_bounding_box_points, "Visited CBB:\n", ""));
     _sig_plane_index = getCurrentPlaneIndex(visited_plane_parameters, jlink_all_plane_parameters, jlink_all_percentage_of_each_plane);
     _actual_plane_index = _sig_plane_index;
     if(_actual_plane_index == -2) {_actual_plane_index = 0;}
@@ -2707,8 +2726,8 @@ ControlUINode::doJLinkage(const vector<int> &ccPoints, const vector< vector<int>
                                 jlink_all_percentage_of_each_plane, _actual_plane_index,
                                 this_plane_parameters, this_continuous_bounding_box_points,
                                 this_sorted_3d_points);
-    PRINT_DEBUG(5, print1dVector(this_plane_parameters, "Sig PP"));
-    PRINT_DEBUG(5, print1dVector(this_continuous_bounding_box_points, "Sig CBB"));
+    PRINT_DEBUG(5, print1dVector(this_plane_parameters, "Sig PP: ", ""));
+    PRINT_DEBUG(5, print1dVector(this_continuous_bounding_box_points, "Sig CBB:\n", ""));
     PRINT_DEBUG(5, "Completed\n");
     return ;
 }
@@ -2833,8 +2852,8 @@ ControlUINode::getCompleteCurrentPlaneInfo(const vector< vector<float> > &plane_
         projectPointsOnPlane(bbp, out_plane_parameters, out_cbb);
         three_d_points.clear();
         bbp.clear();
-        PRINT_LOG(5, print1dVector(out_plane_parameters, "Current visible plane parameters"));
-        PRINT_LOG(5, print1dVector(out_cbb, "Current visible cbb"));
+        PRINT_LOG(5, print1dVector(out_plane_parameters, "Current visible plane parameters: ", ""));
+        PRINT_LOG(5, print1dVector(out_cbb, "Current visible cbb:\n", ""));
     }
     PRINT_LOG(5, "Completed\n");
     return ;
@@ -2864,12 +2883,12 @@ ControlUINode::checkPlaneParametersSign(const vector<double> &position,
     float centroidZ = z_c;
     Point3f p(centroidX, centroidY, centroidZ), qp;
     PRINT_DEBUG(5, "Centroid: " << p << "\n");
-    PRINT_DEBUG(5, print1dVector(position, "Position of drone"));
+    PRINT_DEBUG(5, print1dVector(position, "Position of drone: ", ""));
     float a = plane_parameters[0];
     float b = plane_parameters[1];
     float c = plane_parameters[2];
     float mag = ((a*a)+(b*b)+(c*c));
-    PRINT_DEBUG(5, print1dVector(plane_parameters, "Old Plane Parameters"));
+    PRINT_DEBUG(5, print1dVector(plane_parameters, "Old Plane Parameters: ", ""));
     Point3f pos((float)position[0], (float)position[1], (float)position[2]);
     qp = pos - p;
     PRINT_DEBUG(5, "qp: " << qp << "\n");
@@ -2883,7 +2902,7 @@ ControlUINode::checkPlaneParametersSign(const vector<double> &position,
         plane_parameters[2] = -plane_parameters[2];
         plane_parameters[3] = -plane_parameters[3];
     }
-    PRINT_DEBUG(5, print1dVector(plane_parameters, "New Plane Parameters"));
+    PRINT_DEBUG(5, print1dVector(plane_parameters, "New Plane Parameters: ", ""));
     PRINT_LOG(5, "Completed\n");
     return ;
 }
@@ -3068,7 +3087,7 @@ void
 ControlUINode::captureTheCurrentPlane()
 {
     PRINT_LOG(1, "Started\n");
-    PRINT_LOG(3, "Number of planes: " << _node_number_of_planes 
+    PRINT_LOG(3, "Total Number of planes: " << _node_number_of_planes 
             << ", Number of planes covered: " << _node_completed_number_of_planes << "\n");
     // 2d image points clicked on the DRONE CAMERA FEED Screen
     vector< vector<int> > points_clicked;
@@ -3087,9 +3106,18 @@ ControlUINode::captureTheCurrentPlane()
     image_gui->extractBoundingPoly();
     _sig_plane_index = 0;
     image_gui->getCCPoints(cc_points);
+    PRINT_DEBUG(3, print2dVector(points_clicked, "Points Clicked by the user in 2D:\n", ""));
+    PRINT_DEBUG(3, print1dVector(cc_points, "CCPoints:\n", ""));
+    clear2dVector(key_points_nearest);
+    for(unsigned int  i = 0; i < points_clicked.size(); i++)
+    {
+        key_points_nearest.push_back(searchNearest(points_clicked[i], true));
+    }
+    PRINT_DEBUG(3, print2dVector(key_points_nearest, "Points Clicked by the user in 3D:\n", ""));
     PRINT_LOG(3, "Get multiple planes from the clicked points using JLinkage\n");
     // Calls JLinkage and finds all planes within the clicked region
     vector< vector<float> > test_plane_parameters;
+    // @todo Can it be changed to RANSAC assuming we're clicking on single plane???
     doJLinkage(cc_points, points_clicked);
     // Render significant plane
     image_gui->setContinuousBoundingBoxPoints(jlink_all_continuous_bounding_box_points);
@@ -3099,7 +3127,7 @@ ControlUINode::captureTheCurrentPlane()
     image_gui->setRender(false, false, true, true);
     PRINT_DEBUG(3, "SigPlaneIndex: " << _sig_plane_index << "\n");
     PRINT_DEBUG(3, "ActualPlaneIndex: " << _actual_plane_index << "\n");
-    PRINT_DEBUG(3, "Rendering poly and sig plane and visited planes\n");
+    PRINT_DEBUG(3, "Rendering significant plane in white and visited planes in black\n");
     image_gui->renderFrame();
     // Check if the plane is completed by finding if a new plane is visible or not other than current one
     clear2dVector(test_plane_parameters);
@@ -3762,184 +3790,27 @@ ControlUINode::alignQuadcopterToNextPlane()
 void
 ControlUINode::testUtility(int test_no)
 {
-    cout << "[ INFO] [testUtility] Running test no.: " << test_no << "\n";
+    PRINT_DEBUG(1, "Running test no.: " << test_no << "\n");
+    clock_t beginTime, endTime;
+    double elapsedTime;
     if(test_no == 0)
     {
+        PRINT_DEBUG(1, "Print Current position of drone\n");
         getCurrentPositionOfDrone();
-        cout << "Current Position of drone: ";
-        cout << "(" << _node_current_pos_of_drone[0] << ", " << _node_current_pos_of_drone[1] 
-                << ", " << _node_current_pos_of_drone[2] << ", " << _node_current_pos_of_drone[3] << ")\n";
+        PRINT_DEBUG(1, print1dVector(_node_current_pos_of_drone, "Current position of drone: ", ""));
     }
     else if(test_no == 1)
     {
-        cout << "[ INFO] Testing for changing yaw of drone\n";
-        _node_number_of_planes = 1;
-        _node_min_distance = 3.0;
-        _node_max_distance = 5.0;
-        getCurrentPositionOfDrone();
-        cout << "Current Position of drone: ";
-        cout << "(" << _node_current_pos_of_drone[0] << ", " << _node_current_pos_of_drone[1] 
-                << ", " << _node_current_pos_of_drone[2] << ", " << _node_current_pos_of_drone[3] << ")\n";
-        designPathToChangeYaw(_node_current_pos_of_drone, 30.0);
-        cout << "[ DEBUG] [testUtility] Acquired changeyaw_CS Lock\n";
-        linearTraversal = false;
-        moveDroneViaSetOfPoints(_interm_path);
-        cout << "[ DEBUG] [testUtility] Moved drone changing yaw\n";
-    }
-    else if(test_no == 2)
-    {
-        cout << "[ INFO] [testUtility] Testing for linear translation and rotation of drone\n";
-        _node_number_of_planes = 1;
-        _node_min_distance = 3.0;
-        _node_max_distance = 5.0;
-        getCurrentPositionOfDrone();
-        cout << "[ INFO] [testUtility] Current Position of drone: ";
-        cout << "(" << _node_current_pos_of_drone[0] << ", " << _node_current_pos_of_drone[1] 
-                << ", " << _node_current_pos_of_drone[2] << ", " << _node_current_pos_of_drone[3] << ")\n";
-        _node_dest_pos_of_drone.clear();
-        _node_dest_pos_of_drone.push_back(-2.0);
-        _node_dest_pos_of_drone.push_back(-2.5);
-        _node_dest_pos_of_drone.push_back(2.0);
-        _node_dest_pos_of_drone.push_back(0.0);
-        convertWRTQuadcopterOrigin(_node_current_pos_of_drone, _node_dest_pos_of_drone, _node_ac_dest_pos_of_drone);
-        cout << "[ INFO] [testUtility] Final Expected Position of drone: ";
-        cout << "(" << _node_ac_dest_pos_of_drone[0] << ", " << _node_ac_dest_pos_of_drone[1] 
-                << ", " << _node_ac_dest_pos_of_drone[2] << ", " << _node_ac_dest_pos_of_drone[3] << ")\n";
-        // designPathForDrone(_node_current_pos_of_drone, _node_ac_dest_pos_of_drone);
-        // linearTraversal = true;
-        // moveDroneViaSetOfPoints(_interm_path);
-        cout << "[ DEBUG] [testUtility] Moved drone linearly\n";
-    }
-    else if(test_no == 3)
-    {
-        cout << "[ INFO] [testUtility] Testing for linear translation to the left edge of the plane\n";
-        _node_number_of_planes = 1;
-        _node_min_distance = 3.0;
-        _node_max_distance = 5.0;
-        getCurrentPositionOfDrone();
-        cout << "[ INFO] [testUtility] Current Position of drone: ";
-        cout << "(" << _node_current_pos_of_drone[0] << ", " << _node_current_pos_of_drone[1] 
-                << ", " << _node_current_pos_of_drone[2] << ", " << _node_current_pos_of_drone[3] << ")\n";
+        PRINT_DEBUG(1, "Perform Jlinkage\n");
+        beginTime = clock();
         doJLinkage();
-        // Render significant plane
-        //image_gui->setRender(false, true, true, false);
-        //cout << "[ INFO] [testUtility] Rendering the frames in the DRONE CAMERA FEED GUI\n";
-        //image_gui->setSigPlaneBoundingBoxPoints(jlink_all_continuous_bounding_box_points[_sig_plane_index]);
-        //image_gui->renderFrame();
-        adjustLeftEdge();
-        cout << "[ INFO] [testUtility] Adjusting to left edge completed\n";
-    }
-    else if(test_no == 4)
-    {
-        cout << "[ INFO] [testUtility] Testing for linear translation to top and bottom edge of the plane\n";
-        _node_number_of_planes = 1;
-        _node_min_distance = 3.0;
-        _node_max_distance = 5.0;
-        getCurrentPositionOfDrone();
-        cout << "[ INFO] [testUtility] Current Position of drone: ";
-        cout << "(" << _node_current_pos_of_drone[0] << ", " << _node_current_pos_of_drone[1] 
-                << ", " << _node_current_pos_of_drone[2] << ", " << _node_current_pos_of_drone[3] << ")\n";
-        doJLinkage();
-        // Render significant plane
-        //image_gui->setRender(false, true, true, false);
-        //cout << "[ INFO] [testUtility] Rendering the frames in the DRONE CAMERA FEED GUI\n";
-        //image_gui->setSigPlaneBoundingBoxPoints(jlink_all_continuous_bounding_box_points[_sig_plane_index]);
-        //image_gui->renderFrame();
-        adjustTopBottomEdges();
-        cout << "[ INFO] [testUtility] Adjusting to top edge completed\n";
-    }
-    else if(test_no == 5)
-    {
-        cout << "[ INFO] [testUtility] Testing for capture next part of the same plane\n";
-        _node_number_of_planes = 1;
-        _node_min_distance = 3.0;
-        _node_max_distance = 5.0;
-        getCurrentPositionOfDrone();
-        cout << "[ INFO] [testUtility] Current Position of drone: ";
-        cout << "(" << _node_current_pos_of_drone[0] << ", " << _node_current_pos_of_drone[1] 
-                << ", " << _node_current_pos_of_drone[2] << ", " << _node_current_pos_of_drone[3] << ")\n";
-        doJLinkage();
-        // Render significant plane
-        //image_gui->setRender(false, true, true, false);
-        //cout << "[ INFO] [testUtility] Rendering the frames in the DRONE CAMERA FEED GUI\n";
-        //image_gui->setSigPlaneBoundingBoxPoints(jlink_all_continuous_bounding_box_points[_sig_plane_index]);
-        //image_gui->renderFrame();
-        _next_plane_dir = CLOCKWISE;
-        _next_plane_angle = 0.0;
-        adjustForNextCapture();
-        cout << "[ INFO] [testUtility] Adjusting to capture next part of same plane completed\n";
-    }
-    else if(test_no == 6)
-    {
-        cout << "[ INFO] [testUtility] Testing for translation to the next plane\n";
-        _node_number_of_planes = 1;
-        _node_min_distance = 3.0;
-        _node_max_distance = 5.0;
-        getCurrentPositionOfDrone();
-        cout << "[ INFO] [testUtility] Current Position of drone: ";
-        cout << "(" << _node_current_pos_of_drone[0] << ", " << _node_current_pos_of_drone[1] 
-                << ", " << _node_current_pos_of_drone[2] << ", " << _node_current_pos_of_drone[3] << ")\n";
-        doJLinkage();
-        /*visited_plane_parameters.clear();
-        vector<float> pp;
-        pp.push_back(0.0208796);
-        pp.push_back(0.999466);
-        pp.push_back(0.0251287);
-        pp.push_back(-1.85729);
-        visited_plane_parameters.push_back(pp);*/
-        _next_plane_dir = COUNTERCLOCKWISE;
-        _next_plane_angle = 30.0;
-        adjustForNextCapture();
-        //pp.clear();
-        alignQuadcopterToNextPlane();
-    }
-    else if(test_no == 7)
-    {
-        cout << "[ INFO] [testUtility] Testing for translation to the next plane\n";
-        _node_number_of_planes = 1;
-        _node_min_distance = 3.0;
-        _node_max_distance = 5.0;
-        getCurrentPositionOfDrone();
-        cout << "[ INFO] [testUtility] Current Position of drone: ";
-        cout << "(" << _node_current_pos_of_drone[0] << ", " << _node_current_pos_of_drone[1] 
-                << ", " << _node_current_pos_of_drone[2] << ", " << _node_current_pos_of_drone[3] << ")\n";
-        doJLinkage();
-    }
-    else if(test_no == 8)
-    {
-        vector< Point3f > _in_points;
-        _in_points.clear();
-        pthread_mutex_lock(&keyPoint_CS);
-        for(unsigned int i = 0; i < _3d_points.size(); i++)
-        {
-            Point3f featurePt;
-            featurePt.x = _3d_points[i][0];
-            featurePt.y = _3d_points[i][1];
-            featurePt.z = _3d_points[i][2];
-            _in_points.push_back(featurePt);
-        }
-        pthread_mutex_unlock(&keyPoint_CS);
-        vector<float> plane_1, plane_2;
-        cout << "[ INFO] [testUtility] bestFitPlane\n";
-        plane_1 = bestFitPlane(_in_points);
-        cout << "[ INFO] [testUtility] fitPlane3D\n";
-        fitPlane3D(_in_points, plane_2);
-        PRINT_LOG(5, print1dVector(plane_1, "4 matrix"));
-        PRINT_LOG(5, print1dVector(plane_2, "3 matrix"));
-    }
-    else if(test_no == 9)
-    {
-        cout << "[ INFO] Testing for aligning the quadcopter to the current plane\n";
-        _node_number_of_planes = 1;
-        _node_min_distance = 3.0;
-        _node_max_distance = 5.0;
-        doJLinkage();
-        alignQuadcopterToCurrentPlane();
-        cout << "[ DEBUG] [testUtility] Alignment done\n";
+        endTime = clock();
+        elapsedTime = double(endTime - beginTime) / (CLOCKS_PER_SEC/1000);
+        cout << "Time taken for function is " << elapsedTime << " ms.\n";
     }
     else
     {
-        cout << "[ ERROR] [testUtility] This test is not implemented\n";
+
     }
-    cout << "[ DEBUG] [testUtility] Testing Completed\n";
+    PRINT_DEBUG(1, "Test Completed\n");
 }
