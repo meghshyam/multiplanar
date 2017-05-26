@@ -2213,6 +2213,9 @@ ControlUINode::moveInDirection(const vector<float> &dir,
 void
 ControlUINode::moveDroneViaSetOfPoints(const vector< vector<double> > &dest_points)
 {
+    clock_t beginTime, endTime;
+    double elapsedTime;
+    beginTime = clock();
     PRINT_LOG(1, "Started.\n");
     pthread_mutex_lock(&changeyaw_CS);
     changeyawLockReleased = 1;
@@ -2253,6 +2256,9 @@ ControlUINode::moveDroneViaSetOfPoints(const vector< vector<double> > &dest_poin
     just_navigation_total_commands = -1;
     just_navigation_command_number = -1;
     PRINT_LOG(1, "Completed.\n");
+    endTime = clock();
+    elapsedTime = double(endTime - beginTime) / (CLOCKS_PER_SEC/1000);
+    PRINT_DEBUG(1, "Time taken for function is " << elapsedTime << " ms.\n");
 }
 
 void
