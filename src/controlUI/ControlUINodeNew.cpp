@@ -1392,8 +1392,8 @@ ControlUINode::getPTargetPoints(const pGrid &g, const vector<float> & plane,
                 PRINT_DEBUG(3, "yaw in degrees: " << ((yaw*180)/M_PI) << "\n");
                 Mat rot_guess = Mat::eye(3,3, CV_64F);
                 rot_guess.at<double>(0,0) = cos(yaw);
-                rot_guess.at<double>(0,2) = sin(yaw);
-                rot_guess.at<double>(2,0) = -sin(yaw);
+                rot_guess.at<double>(0,2) = -sin(yaw);
+                rot_guess.at<double>(2,0) = sin(yaw);
                 rot_guess.at<double>(2,2) = cos(yaw);
                 PRINT_DEBUG(3, "Rotation guess: " << rot_guess << "\n");
                 Rodrigues(rot_guess, rvec);
@@ -1487,8 +1487,8 @@ ControlUINode::getPTargetPoints(const pGrid &g, const vector<float> & plane,
                 PRINT_DEBUG(3, "yaw in degrees: " << ((yaw*180)/M_PI) << "\n");
                 Mat rot_guess = Mat::eye(3,3, CV_64F);
                 rot_guess.at<double>(0,0) = cos(yaw);
-                rot_guess.at<double>(0,2) = sin(yaw);
-                rot_guess.at<double>(2,0) = -sin(yaw);
+                rot_guess.at<double>(0,2) = -sin(yaw);
+                rot_guess.at<double>(2,0) = sin(yaw);
                 rot_guess.at<double>(2,2) = cos(yaw);
                 PRINT_DEBUG(3, "Rotation guess: " << rot_guess << "\n");
                 Rodrigues(rot_guess, rvec);
