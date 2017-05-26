@@ -3600,7 +3600,7 @@ ControlUINode::alignQuadcopterToNextPlane()
     PRINT_LOG(1, "Started\n");
     PRINT_LOG(3, "Completed no. of planes: " 
             << _node_completed_number_of_planes
-            << ", Total number of planes: " << _node_number_of_planes << "\n")
+            << ", Total number of planes: " << _node_number_of_planes << "\n");
     float angle;
     if(_next_plane_dir == COUNTERCLOCKWISE)
     {
