@@ -33,3 +33,11 @@ camera_object = cameraParameters('IntrinsicMatrix', camera_matrix, ...
 % camera_object.IntrinsicMatrix = camera_matrix;
 [worldOrientation,worldLocation,inlierIndex,status] = estimateWorldCameraPose(image_points, object_points, camera_object, ...
                                     'Confidence', 99, 'MaxReprojectionError', 1.75)
+                                
+ans = -inv(worldOrientation)*worldLocation';
+
+plot3(object_points(:,1), -object_points(:,3), object_points(:,2), '*'); hold on;
+plot3(ans(1), -ans(3), ans(2), '*');
+xlabel('X');
+ylabel('Y');
+zlabel('Z');
