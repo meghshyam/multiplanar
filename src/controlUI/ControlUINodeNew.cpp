@@ -1346,10 +1346,13 @@ ControlUINode::getPTargetPoints(const pGrid &g, const vector<float> & plane,
     // Matrix hilders for rotation and translation
     Mat rvec(3, 1, DataType<double>::type);
     Mat tvec(3, 1, DataType<double>::type);
+    Mat final_result(3, 1, DataType<double>::type);
     PRINT_DEBUG(3, "Camera Matrix: " << cameraMatrix << "\n");
     PRINT_DEBUG(3, "Distortion co-efficients: " << distCoeffs << "\n");
     //
     vector<Point3d> objPoints;
+    Point3f projectedNormal(plane[0], plane[1], 0);
+    Point3f yAxis(0, 1, 0);
     // Whether the drone is moving forward or backward (left to right or right to left)
     bool forward = true; // Need to iterate forward or backward
     for(unsigned int i = 0; i < g.rowSquares.size()-1; i++)
@@ -1396,32 +1399,63 @@ ControlUINode::getPTargetPoints(const pGrid &g, const vector<float> & plane,
                 objPoints.push_back(center);
                 // 
                 Mat objPoints_mat(9, 1, CV_64FC3);
+                Mat objPoints_matrix(9, 3, CV_64F);
+                Mat objPoints_matrix_pass(9, 1, CV_64FC3);
                 for(int i = 0; i < 9; i++)
+                {
                     objPoints_mat.at<Point3d>(i,0) = objPoints[i];
-                PRINT_DEBUG(3, "Object Points: " << objPoints << "\n");
+                    objPoints_matrix.at<double>(i, 0) = objPoints[i].x;
+                    objPoints_matrix.at<double>(i, 1) = objPoints[i].y;
+                    objPoints_matrix.at<double>(i, 2) = objPoints[i].z;
+                }
+                PRINT_DEBUG(3, "Object Points:\n" << objPoints << "\n");
                 // [MGP]Dont know but we have to call undistortPoints as a dummy call
                 // Something to do with older version of opencv which gets linked by mrpt
                 Mat dummy;
                 undistortPoints(imgPoints_mat, dummy, cameraMatrix, distCoeffs);
-                Point3f projectedNormal(plane[0], plane[1], 0);
-                Point3f yAxis(0, 1, 0);
-                float yaw = findAngle(projectedNormal, yAxis);
+
+                double yaw = findAngle(projectedNormal, yAxis);
+                yaw = -yaw;
                 PRINT_DEBUG(3, "yaw in radians: " << yaw << "\n");
                 PRINT_DEBUG(3, "yaw in degrees: " << ((yaw*180)/M_PI) << "\n");
                 Mat rot_guess = Mat::eye(3,3, CV_64F);
-                rot_guess.at<double>(0,0) = cos(yaw);
+                PRINT_DEBUG(3, "Rotation guess: " << rot_guess << "\n");
+                /*rot_guess.at<double>(0,0) = cos(yaw);
                 rot_guess.at<double>(0,2) = -sin(yaw);
                 rot_guess.at<double>(2,0) = sin(yaw);
-                rot_guess.at<double>(2,2) = cos(yaw);
-                PRINT_DEBUG(3, "Rotation guess: " << rot_guess << "\n");
+                rot_guess.at<double>(2,2) = cos(yaw);*/
+                Mat rotation = Mat::eye(3, 3, CV_64F);
+                rotation.at<double>(0, 0) = cos(yaw);
+                rotation.at<double>(0, 2) = -sin(yaw);
+                rotation.at<double>(2, 0) = sin(yaw);
+                rotation.at<double>(2, 2) = cos(yaw);
+                PRINT_DEBUG(3, "Rotation matrix to bring normal: " << rotation << "\n");
+                Mat rot_objPoints_mat = rotation.inv()*objPoints_matrix.t();
+                for(int j=0; j<9; j++)
+                {
+                    objPoints_matrix_pass.at<Point3d>(j,0) = \
+                    Point3d(rot_objPoints_mat.at<double>(0,j), 
+                            rot_objPoints_mat.at<double>(1,j),
+                            rot_objPoints_mat.at<double>(2,j));
+                    if (j==8)
+                    {
+                        center = Point3d(rot_objPoints_mat.at<double>(0,j), 
+                                    rot_objPoints_mat.at<double>(1,j),
+                                    rot_objPoints_mat.at<double>(2,j));
+                    }
+                }
                 Rodrigues(rot_guess, rvec);
-                tvec.at<double>(0)  = -(center.x-0.6*plane[0]);
+                /*tvec.at<double>(0)  = -(center.x-0.6*plane[0]);
                 tvec.at<double>(1)  = -(center.y+0.6*plane[2]);
-                tvec.at<double>(2)  = -(center.z-0.6*plane[1]);
+                tvec.at<double>(2)  = -(center.z-0.6*plane[1]);*/
+                tvec.at<double>(0)  = -(center.x);
+                tvec.at<double>(1)  = -(center.y);
+                tvec.at<double>(2)  = -(center.z-0.6);
                 PRINT_DEBUG(3, "Translation: " << tvec << "\n");
                 // 
                 // solvePnPRansac(objPoints_mat, imgPoints_mat, cameraMatrix, distCoeffs, rvec, tvec);//, true, CV_ITERATIVE);
-                solvePnP(objPoints_mat, imgPoints_mat, cameraMatrix, distCoeffs, rvec, tvec, true, CV_ITERATIVE);
+                // solvePnP(objPoints_mat, imgPoints_mat, cameraMatrix, distCoeffs, rvec, tvec, true, CV_ITERATIVE);
+                solvePnP(objPoints_matrix_pass, imgPoints_mat, cameraMatrix, distCoeffs, rvec, tvec, true, CV_ITERATIVE);
                 // 
                 Mat rot(3, 3, DataType<double>::type);
                 Rodrigues(rvec, rot);
@@ -1434,17 +1468,19 @@ ControlUINode::getPTargetPoints(const pGrid &g, const vector<float> & plane,
                 // 
                 tvec = -rotinv * tvec;
                 PRINT_DEBUG(3, "Translation: " << tvec << "\n");
+                final_result = rotation*tvec;
+                PRINT_DEBUG(3, "Final Result: " << final_result << "\n");
                 // 
                 vector<double> pt;
-                pt.push_back(tvec.at<double>(0));
-                pt.push_back(tvec.at<double>(2));
-                pt.push_back(-tvec.at<double>(1));
+                pt.push_back(final_result.at<double>(0));
+                pt.push_back(final_result.at<double>(2));
+                pt.push_back(-final_result.at<double>(1));
                 PRINT_DEBUG(3, print1dVector(pt, "Pt one: ", ""));
                 tPoints.push_back(pt);
                 // 
                 pt.clear();
                 pt.push_back(gs.u + (gs.width/2));
-                pt.push_back(tvec.at<double>(2));
+                pt.push_back(final_result.at<double>(2));
                 pt.push_back(gs.v - (gs.height/2));
                 PRINT_DEBUG(3, print1dVector(pt, "Pt two: ", ""));
                 tPoints_z.push_back(pt);
@@ -1494,34 +1530,65 @@ ControlUINode::getPTargetPoints(const pGrid &g, const vector<float> & plane,
                 objPoints.push_back(mid4);
                 objPoints.push_back(center);
                 Mat objPoints_mat(9,1, CV_64FC3);
+                Mat objPoints_matrix(9, 3, CV_64F);
+                Mat objPoints_matrix_pass(9, 1, CV_64FC3);
                 for(int i=0; i<9; i++)
+                {
                     objPoints_mat.at<Point3d>(i,0) = objPoints[i];
+                    objPoints_matrix.at<double>(i, 0) = objPoints[i].x;
+                    objPoints_matrix.at<double>(i, 1) = objPoints[i].y;
+                    objPoints_matrix.at<double>(i, 2) = objPoints[i].z;
+                }
                 PRINT_DEBUG(3, "Object Points: " << objPoints << "\n");
                 // [MGP]Dont know but we have to call undistortPoints as a dummy call
                 // Something to do with older version of opencv which gets linked by mrpt
                 Mat dummy;
                 undistortPoints(imgPoints_mat, dummy, cameraMatrix, distCoeffs);
-                Point3f projectedNormal(plane[0], plane[1], 0);
-                Point3f yAxis(0, 1, 0);
-                float yaw = findAngle(projectedNormal, yAxis);
+
+                double yaw = findAngle(projectedNormal, yAxis);
+                yaw = -yaw;
                 PRINT_DEBUG(3, "yaw in radians: " << yaw << "\n");
                 PRINT_DEBUG(3, "yaw in degrees: " << ((yaw*180)/M_PI) << "\n");
                 Mat rot_guess = Mat::eye(3,3, CV_64F);
-                // rot_guess.at<double>(0,0) = cos(yaw);
-                // rot_guess.at<double>(0,2) = -sin(yaw);
-                // rot_guess.at<double>(2,0) = sin(yaw);
-                // rot_guess.at<double>(2,2) = cos(yaw);
                 PRINT_DEBUG(3, "Rotation guess: " << rot_guess << "\n");
+                /*rot_guess.at<double>(0,0) = cos(yaw);
+                rot_guess.at<double>(0,2) = -sin(yaw);
+                rot_guess.at<double>(2,0) = sin(yaw);
+                rot_guess.at<double>(2,2) = cos(yaw);*/
+                Mat rotation = Mat::eye(3, 3, CV_64F);
+                rotation.at<double>(0, 0) = cos(yaw);
+                rotation.at<double>(0, 2) = -sin(yaw);
+                rotation.at<double>(2, 0) = sin(yaw);
+                rotation.at<double>(2, 2) = cos(yaw);
+                PRINT_DEBUG(3, "Rotation matrix to bring normal: " << rotation << "\n");
+                Mat rot_objPoints_mat = rotation.inv()*objPoints_matrix.t();
+                for(int j=0; j<9; j++)
+                {
+                    objPoints_matrix_pass.at<Point3d>(j,0) = \
+                    Point3d(rot_objPoints_mat.at<double>(0,j), 
+                            rot_objPoints_mat.at<double>(1,j),
+                            rot_objPoints_mat.at<double>(2,j));
+                    if (j==8)
+                    {
+                        center = Point3d(rot_objPoints_mat.at<double>(0,j), 
+                                    rot_objPoints_mat.at<double>(1,j),
+                                    rot_objPoints_mat.at<double>(2,j));
+                    }
+                }
                 Rodrigues(rot_guess, rvec);
-                tvec.at<double>(0)  = -(center.x-0.6*plane[0]);
+                /*tvec.at<double>(0)  = -(center.x-0.6*plane[0]);
                 tvec.at<double>(1)  = -(center.y+0.6*plane[2]);
-                tvec.at<double>(2)  = -(center.z-0.6*plane[1]);
+                tvec.at<double>(2)  = -(center.z-0.6*plane[1]);*/
+                tvec.at<double>(0)  = -(center.x);
+                tvec.at<double>(1)  = -(center.y);
+                tvec.at<double>(2)  = -(center.z-0.6);
                 PRINT_DEBUG(3, "Translation: " << tvec << "\n");
                 // 
-                // solvePnPRansac(objPoints_mat, imgPoints_mat, cameraMatrix, distCoeffs, rvec, tvec, true);//, true, CV_P3P);
-                solvePnP(objPoints_mat, imgPoints_mat, cameraMatrix, distCoeffs, rvec, tvec, true, CV_ITERATIVE);
+                // solvePnPRansac(objPoints_mat, imgPoints_mat, cameraMatrix, distCoeffs, rvec, tvec);//, true, CV_ITERATIVE);
+                // solvePnP(objPoints_mat, imgPoints_mat, cameraMatrix, distCoeffs, rvec, tvec, true, CV_ITERATIVE);
+                solvePnP(objPoints_matrix_pass, imgPoints_mat, cameraMatrix, distCoeffs, rvec, tvec, true, CV_ITERATIVE);
                 // 
-                Mat rot(3,3, DataType<double>::type);
+                Mat rot(3, 3, DataType<double>::type);
                 Rodrigues(rvec, rot);
                 PRINT_DEBUG(3, "Rotation: " << rot << "\n");
                 PRINT_DEBUG(3, "Rotation Vector: " << rvec << "\n");
@@ -1532,17 +1599,19 @@ ControlUINode::getPTargetPoints(const pGrid &g, const vector<float> & plane,
                 // 
                 tvec = -rotinv * tvec;
                 PRINT_DEBUG(3, "Translation: " << tvec << "\n");
+                final_result = rotation*tvec;
+                PRINT_DEBUG(3, "Final Result: " << final_result << "\n");
                 // 
                 vector<double> pt;
-                pt.push_back(tvec.at<double>(0));
-                pt.push_back(tvec.at<double>(2));
-                pt.push_back(-tvec.at<double>(1));
+                pt.push_back(final_result.at<double>(0));
+                pt.push_back(final_result.at<double>(2));
+                pt.push_back(-final_result.at<double>(1));
                 PRINT_DEBUG(3, print1dVector(pt, "Pt one: ", ""));
                 tPoints.push_back(pt);
                 // 
                 pt.clear();
                 pt.push_back(gs.u + (gs.width/2));
-                pt.push_back(tvec.at<double>(2));
+                pt.push_back(final_result.at<double>(2));
                 pt.push_back(gs.v - (gs.height/2));
                 PRINT_DEBUG(3, print1dVector(pt, "Pt two: ", ""));
                 tPoints_z.push_back(pt);
