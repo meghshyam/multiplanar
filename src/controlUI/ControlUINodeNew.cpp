@@ -1114,6 +1114,7 @@ ControlUINode::generatePathPoints(const vector<double> &startPosition,
     double prevYaw = startPosition[3];
     double desiredYaw = endPosition[3];
     PRINT_DEBUG(1, "Initial pathPoints size: " << pathPoints.size() << "\n");
+    double angle;
     if(rotation)
     {
         PRINT_DEBUG(1, "With rotation\n");
@@ -1125,7 +1126,19 @@ ControlUINode::generatePathPoints(const vector<double> &startPosition,
             interm_point[0] = ((i+1)*endPosition[0] + (num_steps-i-1)*startPosition[0])/num_steps;
             interm_point[1] = ((i+1)*endPosition[1] + (num_steps-i-1)*startPosition[1])/num_steps;
             interm_point[2] = ((i+1)*endPosition[2] + (num_steps-i-1)*startPosition[2])/num_steps;
-            interm_point[3] = ((i+1)*endPosition[3] + (num_steps-i-1)*startPosition[3])/num_steps;
+            angle = ((i+1)*endPosition[3] + (num_steps-i-1)*startPosition[3])/num_steps;
+            if(angle < -180.0)
+            {
+                interm_point[3] = 360.0+angle;
+            }
+            if(angle >= 180.0)
+            {
+                interm_point[3] = -360.0+angle;
+            }
+            else
+            {
+                interm_point[3] = angle;
+            }
             PRINT_DEBUG(1, print1dVector(interm_point, "Interim point: ", ""));
             pathPoints.push_back(interm_point);
         }
@@ -1369,6 +1382,8 @@ ControlUINode::getPTargetPoints(const pGrid &g, const vector<float> & plane,
                 mid4.z = getY(mid4.x, -mid4.y, plane);
                 Point3d center = (mid1 + mid3)*0.5;
                 center.z = getY(center.x, -center.y,plane);
+                PRINT_DEBUG(3, "Center: " << center << "\n");
+                PRINT_DEBUG(3, print1dVector(plane, "Plane normal: ", ""));
                 // 
                 objPoints.push_back(corner1);
                 objPoints.push_back(mid1);
@@ -1405,8 +1420,8 @@ ControlUINode::getPTargetPoints(const pGrid &g, const vector<float> & plane,
                 tvec.at<double>(2)  = -(center.z-0.6*plane[1]);
                 PRINT_DEBUG(3, "Translation: " << tvec << "\n");
                 // 
-                solvePnPRansac(objPoints_mat, imgPoints_mat, cameraMatrix, distCoeffs, rvec, tvec);//, true, CV_ITERATIVE);
-                // solvePnP(objPoints_mat, imgPoints_mat, cameraMatrix, distCoeffs, rvec, tvec, true, CV_P3P);
+                // solvePnPRansac(objPoints_mat, imgPoints_mat, cameraMatrix, distCoeffs, rvec, tvec);//, true, CV_ITERATIVE);
+                solvePnP(objPoints_mat, imgPoints_mat, cameraMatrix, distCoeffs, rvec, tvec, true, CV_ITERATIVE);
                 // 
                 Mat rot(3, 3, DataType<double>::type);
                 Rodrigues(rvec, rot);
@@ -1466,6 +1481,8 @@ ControlUINode::getPTargetPoints(const pGrid &g, const vector<float> & plane,
                 mid4.z = getY(mid4.x, -mid4.y, plane);
                 Point3d center = (mid1 + mid3)*0.5;
                 center.z = getY(center.x, -center.y,plane);
+                PRINT_DEBUG(3, "Center: " << center << "\n");
+                PRINT_DEBUG(3, print1dVector(plane, "Plane normal: ", ""));
                 // 
                 objPoints.push_back(corner1);
                 objPoints.push_back(mid1);
@@ -1490,10 +1507,10 @@ ControlUINode::getPTargetPoints(const pGrid &g, const vector<float> & plane,
                 PRINT_DEBUG(3, "yaw in radians: " << yaw << "\n");
                 PRINT_DEBUG(3, "yaw in degrees: " << ((yaw*180)/M_PI) << "\n");
                 Mat rot_guess = Mat::eye(3,3, CV_64F);
-                rot_guess.at<double>(0,0) = cos(yaw);
-                rot_guess.at<double>(0,2) = -sin(yaw);
-                rot_guess.at<double>(2,0) = sin(yaw);
-                rot_guess.at<double>(2,2) = cos(yaw);
+                // rot_guess.at<double>(0,0) = cos(yaw);
+                // rot_guess.at<double>(0,2) = -sin(yaw);
+                // rot_guess.at<double>(2,0) = sin(yaw);
+                // rot_guess.at<double>(2,2) = cos(yaw);
                 PRINT_DEBUG(3, "Rotation guess: " << rot_guess << "\n");
                 Rodrigues(rot_guess, rvec);
                 tvec.at<double>(0)  = -(center.x-0.6*plane[0]);
@@ -1501,8 +1518,8 @@ ControlUINode::getPTargetPoints(const pGrid &g, const vector<float> & plane,
                 tvec.at<double>(2)  = -(center.z-0.6*plane[1]);
                 PRINT_DEBUG(3, "Translation: " << tvec << "\n");
                 // 
-                solvePnPRansac(objPoints_mat, imgPoints_mat, cameraMatrix, distCoeffs, rvec, tvec);//, true, CV_P3P);
-                // solvePnP(objPoints_mat, imgPoints_mat, cameraMatrix, distCoeffs, rvec, tvec, true, CV_P3P);
+                // solvePnPRansac(objPoints_mat, imgPoints_mat, cameraMatrix, distCoeffs, rvec, tvec, true);//, true, CV_P3P);
+                solvePnP(objPoints_mat, imgPoints_mat, cameraMatrix, distCoeffs, rvec, tvec, true, CV_ITERATIVE);
                 // 
                 Mat rot(3,3, DataType<double>::type);
                 Rodrigues(rvec, rot);
@@ -3301,12 +3318,12 @@ ControlUINode::captureTheCurrentPlane()
         step_distance = fabs(_node_current_pos_of_drone[2] - height);
         if(move == -1)
         {
-            PRINT_DEBUG(3, "Moving down");
+            PRINT_DEBUG(3, "Moving down\n");
             moveDown(step_distance);
         }
         else if(move == 1)
         {
-            PRINT_DEBUG(3, "Moving up");
+            PRINT_DEBUG(3, "Moving up\n");
             moveUp(step_distance);
         }
         doJLinkage();
