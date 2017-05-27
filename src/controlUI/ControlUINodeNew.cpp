@@ -146,13 +146,16 @@ ControlUINode::ControlUINode()
     _next_plane_dir = CLOCKWISE;
     _next_plane_angle = 0.0;
     _plane_d = 0.0;
-    _step_distance = 0.5;
     _fixed_distance = _node_max_distance;
     _fixed_height = 0.7;
     _fixed_height_set = false;
     _is_adjusted = false;
+    /* working heuristics
     _move_heuristic = 0.5;
-    _angle_heuristic = 4.0;
+    _angle_heuristic = 4.0;*/
+    _move_heuristic = 0.75;
+    _angle_heuristic = 5.0;
+    _jlinkage_calls = 0;
     _sig_plane_index = 0;
     _actual_plane_index = 0;
 
@@ -1402,7 +1405,8 @@ ControlUINode::getPTargetPoints(const pGrid &g, const vector<float> & plane,
                 tvec.at<double>(2)  = -(center.z-0.6*plane[1]);
                 PRINT_DEBUG(3, "Translation: " << tvec << "\n");
                 // 
-                solvePnP(objPoints_mat, imgPoints_mat, cameraMatrix, distCoeffs, rvec, tvec, true, CV_ITERATIVE);
+                solvePnPRansac(objPoints_mat, imgPoints_mat, cameraMatrix, distCoeffs, rvec, tvec);//, true, CV_ITERATIVE);
+                // solvePnP(objPoints_mat, imgPoints_mat, cameraMatrix, distCoeffs, rvec, tvec, true, CV_P3P);
                 // 
                 Mat rot(3, 3, DataType<double>::type);
                 Rodrigues(rvec, rot);
@@ -1497,7 +1501,8 @@ ControlUINode::getPTargetPoints(const pGrid &g, const vector<float> & plane,
                 tvec.at<double>(2)  = -(center.z-0.6*plane[1]);
                 PRINT_DEBUG(3, "Translation: " << tvec << "\n");
                 // 
-                solvePnP(objPoints_mat, imgPoints_mat, cameraMatrix, distCoeffs, rvec, tvec, true, CV_ITERATIVE);
+                solvePnPRansac(objPoints_mat, imgPoints_mat, cameraMatrix, distCoeffs, rvec, tvec);//, true, CV_P3P);
+                // solvePnP(objPoints_mat, imgPoints_mat, cameraMatrix, distCoeffs, rvec, tvec, true, CV_P3P);
                 // 
                 Mat rot(3,3, DataType<double>::type);
                 Rodrigues(rvec, rot);
@@ -2744,7 +2749,7 @@ ControlUINode::checkVisibility(const vector<float> &plane_parameters,
 void
 ControlUINode::doJLinkage()
 {
-
+    _jlinkage_calls++;
     clock_t beginTime, endTime;
     double elapsedTime;
     beginTime = clock();
@@ -2781,6 +2786,7 @@ ControlUINode::doJLinkage()
 void
 ControlUINode::doJLinkage(const vector<int> &ccPoints, const vector< vector<int> > &pointsClicked)
 {
+    _jlinkage_calls++;
     clock_t beginTime, endTime;
     double elapsedTime;
     beginTime = clock();
@@ -3337,6 +3343,7 @@ ControlUINode::captureTheCurrentPlane()
             PRINT_LOG(3, "All planes covered\n");
             PRINT_LOG(3, "Landing the quadcopter\n");
             sendLand();
+            PRINT_LOG(1, "Total number of jlinkage calls: " << _jlinkage_calls << "\n");
         }
     }
     else

@@ -551,7 +551,7 @@ class ControlUINode
         int _node_completed_number_of_planes;
         float _plane_d;
         int _plane_d_num = 0;
-        float _step_distance;
+        int _jlinkage_calls;
         float _fixed_distance;
         bool _fixed_height_set;
         float _fixed_height;
