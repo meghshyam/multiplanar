@@ -1390,7 +1390,7 @@ ControlUINode::getPTargetPoints(const pGrid &g, const vector<float> & plane,
                 undistortPoints(imgPoints_mat, dummy, cameraMatrix, distCoeffs);
                 Point3f projectedNormal(plane[0], plane[1], 0);
                 Point3f yAxis(0, 1, 0);
-                yaw = findAngle(projectedNormal, yAxis);
+                float yaw = findAngle(projectedNormal, yAxis);
                 PRINT_DEBUG(3, "yaw in radians: " << yaw << "\n");
                 PRINT_DEBUG(3, "yaw in degrees: " << ((yaw*180)/M_PI) << "\n");
                 Mat rot_guess = Mat::eye(3,3, CV_64F);
@@ -1486,7 +1486,7 @@ ControlUINode::getPTargetPoints(const pGrid &g, const vector<float> & plane,
                 undistortPoints(imgPoints_mat, dummy, cameraMatrix, distCoeffs);
                 Point3f projectedNormal(plane[0], plane[1], 0);
                 Point3f yAxis(0, 1, 0);
-                yaw = findAngle(projectedNormal, yAxis);
+                float yaw = findAngle(projectedNormal, yAxis);
                 PRINT_DEBUG(3, "yaw in radians: " << yaw << "\n");
                 PRINT_DEBUG(3, "yaw in degrees: " << ((yaw*180)/M_PI) << "\n");
                 Mat rot_guess = Mat::eye(3,3, CV_64F);
