@@ -292,7 +292,7 @@ class ImageView : private CVD::Thread, private MouseKeyHandler
 		/*** NEWER FUNCTIONS ***/
 
 		void 
-		readInfo(string filename,
+		readPlaneInfo(string filename,
 						vector< vector<float> > &sortedPlaneParameters,
 						vector< vector<Point3f> > &boundingBoxPoints);
 

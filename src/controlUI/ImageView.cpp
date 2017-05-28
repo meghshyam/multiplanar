@@ -695,7 +695,7 @@ ImageView::on_key_down(int key)
 		string filename = inputDirectory + "Plane_Info.txt";
 		vector< vector<float> > sortedPlaneParameters;
 		vector< vector<Point3f> > boundingBoxPoints;
-		readInfo(filename, sortedPlaneParameters, boundingBoxPoints);
+		readPlaneInfo(filename, sortedPlaneParameters, boundingBoxPoints);
 		PRINT_LOG(1, print2dVector(sortedPlaneParameters, "Plane Parameters:\n", ""));
 		PRINT_LOG(1, print2dVector(boundingBoxPoints, "Bounding Box points:\n", ""));
 		// Get the continuoous bounding box points
@@ -943,9 +943,9 @@ ImageView::extractBoundingRect()
  * @param [out] [vector< vector<Point3f> >] boundingBoxPoints - Corresponding boudning box points
  */
 void
-ImageView::readInfo(string filename,
-					vector< vector<float> > &planeParameters,
-					vector< vector<Point3f> > &boundingBoxPoints)
+ImageView::readPlaneInfo(string filename,
+						vector< vector<float> > &planeParameters,
+						vector< vector<Point3f> > &boundingBoxPoints)
 {
 	unsigned int size;
 	size = planeParameters.size();
