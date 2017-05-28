@@ -823,7 +823,7 @@ ControlUINode::moveDroneBetweenPlanes(const vector<double> &previousPosition,
     vector< vector<double> > pathPoints;
     clear2dVector(pathPoints);
     vector<double> startPosition(4), endPosition(4);
-    float distance = -1.5;
+    float distance = -1.75;
     if (curr_coord_box_points.size() == 0 && curr_plane_parameters.size() == 0 && plane_index == 0)
     {
         PRINT_LOG(1, "You are currently adjusting for plane " << plane_index+1 << "\n");
@@ -1011,6 +1011,7 @@ ControlUINode::moveDroneBetweenPlanes(const vector<double> &previousPosition,
         Point3f intersection_point(0.0f, 0.0f, 0.0f), mid_plane_normal(0.0f, 0.0f, 0.0f), path_mid_point(0.0f, 0.0f, 0.0f);
         Point3f next_plane_midpoint(0.0f, 0.0f, 0.0f), next_plane_left_edge_midpoint(0.0f, 0.0f, 0.0f);
         Point3f next_plane_left_edge_midpoint_projection(0.0f, 0.0f, 0.0f);
+        Point3f next_plane_midpoint_projection(0.0f, 0.0f, 0.0f);
         // Get the next plane's mid point
         next_plane_midpoint.x += (next_coord_box_points[0].x+next_coord_box_points[1].x);
         next_plane_midpoint.x += (next_coord_box_points[2].x+next_coord_box_points[3].x);
@@ -1076,6 +1077,9 @@ ControlUINode::moveDroneBetweenPlanes(const vector<double> &previousPosition,
         next_plane_left_edge_midpoint_projection.x = next_plane_left_edge_midpoint.x + distance*next_plane_normal.x;
         next_plane_left_edge_midpoint_projection.y = next_plane_left_edge_midpoint.y + distance*next_plane_normal.y;
         next_plane_left_edge_midpoint_projection.z = next_plane_left_edge_midpoint.z + distance*next_plane_normal.z;
+        next_plane_midpoint_projection.x = next_plane_midpoint.x + distance*next_plane_normal.x;
+        next_plane_midpoint_projection.y = next_plane_midpoint.y + distance*next_plane_normal.y;
+        next_plane_midpoint_projection.z = next_plane_midpoint.z + distance*next_plane_normal.z;
         startPosition[0] = path_mid_point.x;
         startPosition[1] = path_mid_point.y;
         startPosition[2] = path_mid_point.z;
@@ -1088,6 +1092,18 @@ ControlUINode::moveDroneBetweenPlanes(const vector<double> &previousPosition,
         PRINT_DEBUG(1, print1dVector(endPosition, "2.5 -> Ending position", ""));
         generatePathPoints(startPosition, endPosition, pathPoints, true);
         PRINT_DEBUG(1, "2.5 -> pathPoints size: " << pathPoints.size() << "\n");
+        startPosition[0] = next_plane_left_edge_midpoint_projection.x;
+        startPosition[1] = next_plane_left_edge_midpoint_projection.y;
+        startPosition[2] = next_plane_left_edge_midpoint_projection.z;
+        startPosition[3] = angleBetweenPlanes;
+        endPosition[0] = next_plane_midpoint_projection.x;
+        endPosition[1] = next_plane_midpoint_projection.y;
+        endPosition[2] = next_plane_midpoint_projection.z;
+        endPosition[3] = angleBetweenPlanes;
+        PRINT_DEBUG(1, print1dVector(startPosition, "2.6 -> Starting position", ""));
+        PRINT_DEBUG(1, print1dVector(endPosition, "2.6 -> Ending position", ""));
+        generatePathPoints(startPosition, endPosition, pathPoints, false);
+        PRINT_DEBUG(1, "2.6 -> pathPoints size: " << pathPoints.size() << "\n");
     }
     moveDronePathPoints[plane_index] = (int)pathPoints.size() + 8;
     PRINT_LOG(1, print2dVector(pathPoints, "Points needed by drone to move from one plane to another:\n", "matlab"));
@@ -4006,20 +4022,6 @@ ControlUINode::alignQuadcopterToNextPlane()
     return ;
 }
 
-/**
- * @brief Code for performing module tests on functions written
- * @details Called by pressing a numeric key from DRONE CAMERA FEED Window
- *  Key 0 - Get the current position of drone
- *  Key 1 - Changing the yaw of drone
- *  Key 2 - Translation and rotation of drone
- *  Key 3 - Aligning the quadcopter to see the left edge of the plane
- *  Key 4 - Aligning the quadcopter to see the top and bottom edge of the plane
- *  Key 5 - Capture next part of the same plane
- *  Key 6 - Move quadcopter to the next unvisited plane
- *  Key 7 - 
- *  Key 8 - 
- *  Key 9 - Align the quadcopter to the current plane
- */
 void
 ControlUINode::testUtility(int test_no)
 {
@@ -4040,6 +4042,22 @@ ControlUINode::testUtility(int test_no)
         elapsedTime = double(endTime - beginTime) / (CLOCKS_PER_SEC/1000);
         cout << "Time taken for function is " << elapsedTime << " ms.\n";
     }
+    else if(test_no == 2)
+    {}
+    else if(test_no == 3)
+    {}
+    else if(test_no == 4)
+    {}
+    else if(test_no == 5)
+    {}
+    else if(test_no == 6)
+    {}
+    else if(test_no == 7)
+    {}
+    else if(test_no == 8)
+    {}
+    else if(test_no == 9)
+    {}
     else
     {
 
