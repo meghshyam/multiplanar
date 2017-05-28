@@ -605,8 +605,8 @@ getCurrentPlaneIndex(const vector< vector<float> > &plane_parameters,
 			}
 			dot_p = normalized_dot_product(plane_normal_1, plane_normal_2); // yaw_axis[0]*a + yaw_axis[1]*b + yaw_axis[2]*c;
 			dot_p_vec.push_back(dot_p);
-			PRINT_DEBUG(3, print1dVector(plane_normal_1, "Expected yaw of drone: "));
-			PRINT_DEBUG(3, print1dVector(plane_normal_2, "Current plane visible: "));
+			PRINT_DEBUG(3, print1dVector(plane_normal_1, "Expected yaw of drone: ", ""));
+			PRINT_DEBUG(3, print1dVector(plane_normal_2, "Current plane visible: ", ""));
 			PRINT_DEBUG(3, "dot_p: " << dot_p << "\n");
 			if(dot_p >= plane_heuristic)
 			{
@@ -633,7 +633,7 @@ getCurrentPlaneIndex(const vector< vector<float> > &plane_parameters,
 		if(planeIndex < 0)
 		{
 			PRINT_DEBUG(3, "planeIndex: " << planeIndex << "\n");
-			PRINT_DEBUG(3, print1dVector(dot_p_vec, "Dot Product Values: "));
+			PRINT_DEBUG(3, print1dVector(dot_p_vec, "Dot Product Values: ", ""));
 			planeIndex = distance(dot_p_vec.begin(),
 					 std::max_element(dot_p_vec.begin(), dot_p_vec.end()));
 			PRINT_DEBUG(3, "planeIndex: " << planeIndex << "\n");
@@ -874,6 +874,9 @@ convertWRTQuadcopterOrigin(const vector<double> &current_pos_of_drone,
 											const vector<double> &dest_pos_of_drone,
 											vector<double> &ac_dest_pos_of_drone)
 {
+	clock_t beginTime, endTime;
+    double elapsedTime;
+    beginTime = clock();
 	assert(current_pos_of_drone.size() == dest_pos_of_drone.size());
 	ac_dest_pos_of_drone.clear();
 	Mat rotationMatrix = Mat::eye(3, 3, CV_64F);
@@ -902,6 +905,9 @@ convertWRTQuadcopterOrigin(const vector<double> &current_pos_of_drone,
 	ac_dest_pos_of_drone.push_back(x.at<double>(1, 0));
 	ac_dest_pos_of_drone.push_back(x.at<double>(2, 0));
 	ac_dest_pos_of_drone.push_back(current_pos_of_drone[3]+dest_pos_of_drone[3]);
+	endTime = clock();
+    elapsedTime = double(endTime - beginTime) / (CLOCKS_PER_SEC/1000);
+    PRINT_DEBUG(1, "Time taken for function is " << elapsedTime << " ms.\n");
 }
 
 /**
@@ -1333,7 +1339,7 @@ getDistanceToSeePlane(int height)
 	Mat rotinv;
 	transpose(rot, rotinv);
 	tvec = -rotinv * tvec;
-	PRINT_DEBUG(3, "Expected Quadcopter Location to see height: " << height << "and width: " << width 
+	PRINT_DEBUG(3, "Expected Quadcopter Location to see height: " << height << " and width: " << width 
 		<< ": (" << tvec.at<double>(0) << ", " << tvec.at<double>(2) << ", " << -tvec.at<double>(1) << ")\n");
 	double dist = tvec.at<double>(2);
 	return dist;
