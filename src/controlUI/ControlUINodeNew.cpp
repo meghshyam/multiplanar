@@ -1887,7 +1887,7 @@ ControlUINode::newPoseCb (const tum_ardrone::filter_stateConstPtr statePtr)
     pthread_mutex_unlock(&pose_CS);
     // Goto commands left to be executed
     pthread_mutex_lock(&command_CS);
-    PRINT_DEBUG(5, "Acquired command_CS Lock\n");
+    PRINT_DEBUG(10, "Acquired command_CS Lock\n");
     static int numCommands = 0;
     /*cout << "[ DEBUG] [poseCb] Checking for just navigation commands\n";
     cout << "[ DEBUG] [poseCb] Number of commands left: " << just_navigation_commands.size() << "\n";
@@ -1898,7 +1898,7 @@ ControlUINode::newPoseCb (const tum_ardrone::filter_stateConstPtr statePtr)
     {
         pthread_mutex_unlock(&changeyaw_CS);
         changeyawLockReleased = 0;
-        PRINT_DEBUG(4, "Released first changeyaw_CS Lock\n");
+        PRINT_DEBUG(10, "Released first changeyaw_CS Lock\n");
     }
     else if(just_navigation_commands.size() > 0 && !justNavigation)
     {
@@ -1927,7 +1927,7 @@ ControlUINode::newPoseCb (const tum_ardrone::filter_stateConstPtr statePtr)
                     << fabs(z-z_drone) << ", " << fabs(ya-yaw) << "\n";*/
         //printf("[ DEBUG] [poseCb] Error %lf\n", ea);
         getCurrentPositionOfDrone();
-        PRINT_DEBUG(5, "Current position of drone: (" << x_drone << ", " << y_drone << ", " << z_drone << ")\n");
+        PRINT_DEBUG(10, "Current position of drone: (" << x_drone << ", " << y_drone << ", " << z_drone << ")\n");
         /*print1dVector(_node_current_pos_of_drone, "[ DEBUG] [newPoseCb] Current position of drone");
         cout << " [DEBUG] [newPoseCb] x: " << x << ", y: " << y << ", z: " << z << "\n";
         cout << "[ DEBUG] [newPoseCb] Error: " << fabs(x-x_drone) << ", " << fabs(y-y_drone) << ", "
@@ -1936,7 +1936,7 @@ ControlUINode::newPoseCb (const tum_ardrone::filter_stateConstPtr statePtr)
         bool var2 = (fabs(y-y_drone) < 0.08);
         bool var3 = (fabs(z-z_drone) < 0.08);
         bool var4 = (fabs(ya-yaw) < 0.3);
-        PRINT_DEBUG(5, "x: " << var1 << ", y: " << var2 << ", z: " << var3 << ", yaw: " << var4 << "\n");
+        PRINT_DEBUG(10, "x: " << var1 << ", y: " << var2 << ", z: " << var3 << ", yaw: " << var4 << "\n");
         if( var1 & var2 & var3 & var4 )
         {
             // cout << "[ DEBUG] [poseCb] Destination reached for command no. " << just_navigation_number << "\n";
@@ -2063,7 +2063,7 @@ ControlUINode::newPoseCb (const tum_ardrone::filter_stateConstPtr statePtr)
         // do nothing
     }
     pthread_mutex_unlock(&command_CS);
-    PRINT_DEBUG(5, "Released command_CS Lock\n");
+    PRINT_DEBUG(10, "Released command_CS Lock\n");
 }
 
 /**
@@ -2480,7 +2480,7 @@ ControlUINode::copyNecessaryInfo()
     beginTime = clock();
     PRINT_LOG(1, "Started\n");
     // If the plane was covered in one snap, ie, the plane is smaller in dimension
-    if(!_is_big_plane)
+    if(!_is_big_plane && aug_three_d_points.size() == 0)
     {
         PRINT_LOG(2, "Not a big plane. Covered in one go. Copying the necessary information\n");
         PRINT_LOG(2, "Plane no.: " << _node_completed_number_of_planes << "\n");
@@ -2490,21 +2490,25 @@ ControlUINode::copyNecessaryInfo()
         visited_plane_parameters.push_back(this_plane_parameters);
         // Currently captured bounding box points of the plane
         visited_continuous_bounding_box_points.push_back(this_continuous_bounding_box_points);
-        PRINT_LOG(2, "Rendering visited plane");
+        PRINT_LOG(2, "Rendering visited plane\n");
         image_gui->setRender(false, false, true, true);
         image_gui->renderFrame();
         image_gui->setVisitedBoundingBoxPoints(visited_continuous_bounding_box_points);
     }
     // If the plane was big enough to fit in the drone's view in onwe shot
-    else
+    else if((!_is_big_plane && aug_three_d_points.size() > 0) || _is_big_plane)
     {
         PRINT_LOG(2, "A big plane. Could not cover in one go. Estimating the best plane\n");
+        if(!_is_big_plane)
+        {
+            PRINT_LOG(2, "Using information from augmentInfo()\n");
+        }
         PRINT_LOG(2, "Plane no.: " << _node_completed_number_of_planes << "\n");
         vector<float> new_plane_params;
         new_plane_params.clear();
         // Fit the plane to the augmented 3D points
         fitPlane3D(aug_three_d_points, new_plane_params);
-        PRINT_DEBUG(5, print1dVector(new_plane_params, "New plane parameters:\n", ""));
+        PRINT_DEBUG(3, print1dVector(new_plane_params, "New plane parameters:\n", ""));
         getCurrentPositionOfDrone();
         // Fix the plane parameters sign based on its position
         checkPlaneParametersSign(_node_current_pos_of_drone, aug_three_d_points, new_plane_params);
@@ -2512,7 +2516,7 @@ ControlUINode::copyNecessaryInfo()
         vector<Point3f> new_bounding_box_points;
         new_bounding_box_points.clear();
         PRINT_DEBUG(3, print1dVector(aug_plane_bounding_box_points, "Aug. Continuous Bounding Box Points:\n", ""));
-        PRINT_DEBUG(5, "Calculating the bounding box points\n");
+        PRINT_DEBUG(3, "Calculating the bounding box points\n");
         projectPointsOnPlane(aug_plane_bounding_box_points, new_plane_params, new_bounding_box_points);
         PRINT_DEBUG(3, print1dVector(new_bounding_box_points, "New Continuous Bounding Box Points:\n", ""));
         PRINT_LOG(3, "Copying the necessary information\n");
@@ -2554,10 +2558,6 @@ ControlUINode::augmentInfo()
     PRINT_DEBUG(3, "Index: " << index << ", Actual Plane Index: " << _actual_plane_index 
                     << ", SigPlaneIndex: " << _sig_plane_index << "\n");
     //if(index == -1) {index  = 0;}
-    for (unsigned int i = 0; i < jlink_three_d_points[index].size(); ++i)
-    {
-        aug_three_d_points.push_back(jlink_three_d_points[index][i]);
-    }
     PRINT_DEBUG(3, "Stage of plane observation: " << _stage_of_plane_observation << "\n");
     if(_stage_of_plane_observation)
     {
@@ -2566,10 +2566,19 @@ ControlUINode::augmentInfo()
         {
             aug_plane_bounding_box_points.push_back(this_continuous_bounding_box_points[i]);
         }
+        aug_three_d_points.clear();
+        for (unsigned int i = 0; i < jlink_three_d_points[index].size(); ++i)
+        {
+            aug_three_d_points.push_back(jlink_three_d_points[index][i]);
+        }
         _stage_of_plane_observation = false;
     }
     else
     {
+        for (unsigned int i = 0; i < jlink_three_d_points[index].size(); ++i)
+        {
+            aug_three_d_points.push_back(jlink_three_d_points[index][i]);
+        }
         Point3f a0, a1, a2, a3;
         a0 = aug_plane_bounding_box_points[0];
         a1 = this_continuous_bounding_box_points[1];
@@ -3164,7 +3173,7 @@ ControlUINode::adjustYawToCurrentPlane()
     beginTime = clock();
     PRINT_LOG(1, "Started\n");
     getCurrentPositionOfDrone();
-    PRINT_LOG(5, print1dVector(_node_current_pos_of_drone, "Current position of drone"));
+    PRINT_LOG(5, print1dVector(_node_current_pos_of_drone, "Current position of drone: ", ""));
     _node_dest_pos_of_drone.clear();
     _node_dest_pos_of_drone.push_back(0.0);
     _node_dest_pos_of_drone.push_back(1.0);
@@ -3387,12 +3396,12 @@ ControlUINode::captureTheCurrentPlane()
         float step_distance = fabs(distance - point_distance);
         if(move == -1)
         {
-            PRINT_DEBUG(3, "Moving backwards");
+            PRINT_DEBUG(3, "Moving backward\n");
             moveBackward(step_distance);
         }
         else if(move == 1)
         {
-            PRINT_DEBUG(3, "Moving forwards");
+            PRINT_DEBUG(3, "Moving forward\n");
             moveForward(step_distance);
         }
         getCurrentPositionOfDrone();
@@ -3411,6 +3420,7 @@ ControlUINode::captureTheCurrentPlane()
             PRINT_DEBUG(3, "Moving up\n");
             moveUp(step_distance);
         }
+        // @todo check if this doJlinkage is necessary?
         doJLinkage();
     }
     PRINT_DEBUG(3, "Observe the plane without rotation\n");
@@ -3679,16 +3689,17 @@ ControlUINode::adjustForNextCapture()
         PRINT_LOG(5, print2dVector(visited_continuous_bounding_box_points, "All Plane BBP"));
         PRINT_LOG(5, print2dVector(visited_motion_points, "All motion points"));
         PRINT_LOG(3, "All planes are covered!\n");
-        PRINT_LOG(3, "anding the quadcopter\n");
+        PRINT_LOG(3, "Landing the quadcopter\n");
         sendLand();
     }
     if((_is_plane_covered) &&
             (_node_completed_number_of_planes != _node_number_of_planes))
     {
-            PRINT_LOG(3, "Current plane is covered. All planes are covered\n");
-            PRINT_DEBUG(3, "VPP: \n");
-            PRINT_DEBUG(5, print2dVector(visited_plane_parameters, "Visited plane parameters"));
-            PRINT_LOG(3, "Aligning quadcoter to next plane\n");
+            PRINT_LOG(3, "Current plane is covered.\n");
+            PRINT_LOG(3, "Completed no. of planes: " << _node_completed_number_of_planes << "\n");
+            PRINT_LOG(3, "Total no. of planes: " << _node_number_of_planes << "\n");
+            PRINT_DEBUG(3, print2dVector(visited_plane_parameters, "Visited plane parameters"));
+            PRINT_LOG(3, "Aligning quadcopter to next plane\n");
             _is_adjusted = true;
             alignQuadcopterToNextPlane();
     }
@@ -3713,9 +3724,8 @@ ControlUINode::alignQuadcopterToNextPlane()
     double elapsedTime;
     beginTime = clock();
     PRINT_LOG(1, "Started\n");
-    PRINT_LOG(3, "Completed no. of planes: " 
-            << _node_completed_number_of_planes
-            << ", Total number of planes: " << _node_number_of_planes << "\n");
+    PRINT_LOG(3, "Completed no. of planes: " << _node_completed_number_of_planes
+                    << ", Total number of planes: " << _node_number_of_planes << "\n");
     float angle;
     if(_next_plane_dir == COUNTERCLOCKWISE)
     {
@@ -3801,6 +3811,8 @@ ControlUINode::alignQuadcopterToNextPlane()
             bool aligned = false;
             double denom = 3.0;
             double initial_move = 0.8;
+            PRINT_DEBUG(3, "Next plane angle: " << _next_plane_angle << "\n");
+            PRINT_DEBUG(3, "Initial Move: " << initial_move << ", Denominator: " << denom << "\n");
             if(_next_plane_angle <= 50.0)
             {
                 initial_move = 0.8;
@@ -3833,6 +3845,7 @@ ControlUINode::alignQuadcopterToNextPlane()
                     angle_to_rotate = _next_plane_angle/denom;
                 }
                 PRINT_DEBUG(3, "Round no.: " << rounds << ", Next plane angle: " << _next_plane_angle << "\n");
+                PRINT_DEBUG(3, "Angle to rotate: " << angle_to_rotate << "\n");
                 if(yaw_change)
                 {
                     PRINT_DEBUG(3, "Changing yaw cc by: " << angle_to_rotate << "\n");

@@ -699,6 +699,7 @@ ImageView::on_key_down(int key)
 		PRINT_LOG(1, print2dVector(sortedPlaneParameters, "Plane Parameters:\n", ""));
 		PRINT_LOG(1, print2dVector(boundingBoxPoints, "Bounding Box points:\n", ""));
 		// Get the continuoous bounding box points
+		clear2dVector(continuousBoundingBoxPoints);
 		getContinuousBoundingBox (boundingBoxPoints, sortedPlaneParameters, continuousBoundingBoxPoints);
 		PRINT_LOG(1, print2dVector(continuousBoundingBoxPoints, "Continuous Bounding Box points:\n", ""));
 		// Path planning: Cover multiple planes
