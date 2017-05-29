@@ -823,7 +823,7 @@ ControlUINode::moveDroneBetweenPlanes(const vector<double> &previousPosition,
     vector< vector<double> > pathPoints;
     clear2dVector(pathPoints);
     vector<double> startPosition(4), endPosition(4);
-    float distance = -1.75;
+    float distance = -2.0;
     if (curr_coord_box_points.size() == 0 && curr_plane_parameters.size() == 0 && plane_index == 0)
     {
         PRINT_LOG(1, "You are currently adjusting for plane " << plane_index+1 << "\n");
@@ -1092,7 +1092,7 @@ ControlUINode::moveDroneBetweenPlanes(const vector<double> &previousPosition,
         PRINT_DEBUG(1, print1dVector(endPosition, "2.5 -> Ending position", ""));
         generatePathPoints(startPosition, endPosition, pathPoints, true);
         PRINT_DEBUG(1, "2.5 -> pathPoints size: " << pathPoints.size() << "\n");
-        startPosition[0] = next_plane_left_edge_midpoint_projection.x;
+        /*startPosition[0] = next_plane_left_edge_midpoint_projection.x;
         startPosition[1] = next_plane_left_edge_midpoint_projection.y;
         startPosition[2] = next_plane_left_edge_midpoint_projection.z;
         startPosition[3] = angleBetweenPlanes;
@@ -1103,7 +1103,7 @@ ControlUINode::moveDroneBetweenPlanes(const vector<double> &previousPosition,
         PRINT_DEBUG(1, print1dVector(startPosition, "2.6 -> Starting position", ""));
         PRINT_DEBUG(1, print1dVector(endPosition, "2.6 -> Ending position", ""));
         generatePathPoints(startPosition, endPosition, pathPoints, false);
-        PRINT_DEBUG(1, "2.6 -> pathPoints size: " << pathPoints.size() << "\n");
+        PRINT_DEBUG(1, "2.6 -> pathPoints size: " << pathPoints.size() << "\n");*/
     }
     moveDronePathPoints[plane_index] = (int)pathPoints.size() + 8;
     PRINT_LOG(1, print2dVector(pathPoints, "Points needed by drone to move from one plane to another:\n", "matlab"));
@@ -1435,7 +1435,7 @@ ControlUINode::getPTargetPoints(const pGrid &g, const vector<float> & plane,
                 PRINT_DEBUG(3, "yaw in radians: " << yaw << "\n");
                 PRINT_DEBUG(3, "yaw in degrees: " << ((yaw*180)/M_PI) << "\n");
                 Mat rot_guess = Mat::eye(3,3, CV_64F);
-                PRINT_DEBUG(3, "Rotation guess: " << rot_guess << "\n");
+                PRINT_DEBUG(3, "Rotation guess:\n" << rot_guess << "\n");
                 /*rot_guess.at<double>(0,0) = cos(yaw);
                 rot_guess.at<double>(0,2) = -sin(yaw);
                 rot_guess.at<double>(2,0) = sin(yaw);
@@ -1445,7 +1445,7 @@ ControlUINode::getPTargetPoints(const pGrid &g, const vector<float> & plane,
                 rotation.at<double>(0, 2) = -sin(yaw);
                 rotation.at<double>(2, 0) = sin(yaw);
                 rotation.at<double>(2, 2) = cos(yaw);
-                PRINT_DEBUG(3, "Rotation matrix to bring normal: " << rotation << "\n");
+                PRINT_DEBUG(3, "Rotation matrix to bring normal:\n" << rotation << "\n");
                 Mat rot_objPoints_mat = rotation.inv()*objPoints_matrix.t();
                 for(int j=0; j<9; j++)
                 {
@@ -1467,7 +1467,7 @@ ControlUINode::getPTargetPoints(const pGrid &g, const vector<float> & plane,
                 tvec.at<double>(0)  = -(center.x);
                 tvec.at<double>(1)  = -(center.y);
                 tvec.at<double>(2)  = -(center.z-0.6);
-                PRINT_DEBUG(3, "Translation: " << tvec << "\n");
+                PRINT_DEBUG(3, "Translation:\n" << tvec << "\n");
                 // 
                 // solvePnPRansac(objPoints_mat, imgPoints_mat, cameraMatrix, distCoeffs, rvec, tvec);//, true, CV_ITERATIVE);
                 // solvePnP(objPoints_mat, imgPoints_mat, cameraMatrix, distCoeffs, rvec, tvec, true, CV_ITERATIVE);
@@ -1475,17 +1475,17 @@ ControlUINode::getPTargetPoints(const pGrid &g, const vector<float> & plane,
                 // 
                 Mat rot(3, 3, DataType<double>::type);
                 Rodrigues(rvec, rot);
-                PRINT_DEBUG(3, "Rotation: " << rot << "\n");
-                PRINT_DEBUG(3, "Rotation Vector: " << rvec << "\n");
+                PRINT_DEBUG(3, "Rotation:\n" << rot << "\n");
+                PRINT_DEBUG(3, "Rotation Vector:\n" << rvec << "\n");
                 // 
                 Mat rotinv;
                 transpose(rot, rotinv);
-                PRINT_DEBUG(3, "Rotation Inverse: " << rotinv << "\n");
+                PRINT_DEBUG(3, "Rotation Inverse:\n" << rotinv << "\n");
                 // 
                 tvec = -rotinv * tvec;
-                PRINT_DEBUG(3, "Translation: " << tvec << "\n");
+                PRINT_DEBUG(3, "Translation:\n" << tvec << "\n");
                 final_result = rotation*tvec;
-                PRINT_DEBUG(3, "Final Result: " << final_result << "\n");
+                PRINT_DEBUG(3, "Final Result:\n" << final_result << "\n");
                 // 
                 vector<double> pt;
                 pt.push_back(final_result.at<double>(0));
@@ -1566,7 +1566,7 @@ ControlUINode::getPTargetPoints(const pGrid &g, const vector<float> & plane,
                 PRINT_DEBUG(3, "yaw in radians: " << yaw << "\n");
                 PRINT_DEBUG(3, "yaw in degrees: " << ((yaw*180)/M_PI) << "\n");
                 Mat rot_guess = Mat::eye(3,3, CV_64F);
-                PRINT_DEBUG(3, "Rotation guess: " << rot_guess << "\n");
+                PRINT_DEBUG(3, "Rotation guess:\n" << rot_guess << "\n");
                 /*rot_guess.at<double>(0,0) = cos(yaw);
                 rot_guess.at<double>(0,2) = -sin(yaw);
                 rot_guess.at<double>(2,0) = sin(yaw);
@@ -1576,7 +1576,7 @@ ControlUINode::getPTargetPoints(const pGrid &g, const vector<float> & plane,
                 rotation.at<double>(0, 2) = -sin(yaw);
                 rotation.at<double>(2, 0) = sin(yaw);
                 rotation.at<double>(2, 2) = cos(yaw);
-                PRINT_DEBUG(3, "Rotation matrix to bring normal: " << rotation << "\n");
+                PRINT_DEBUG(3, "Rotation matrix to bring normal:\n" << rotation << "\n");
                 Mat rot_objPoints_mat = rotation.inv()*objPoints_matrix.t();
                 for(int j=0; j<9; j++)
                 {
@@ -1598,7 +1598,7 @@ ControlUINode::getPTargetPoints(const pGrid &g, const vector<float> & plane,
                 tvec.at<double>(0)  = -(center.x);
                 tvec.at<double>(1)  = -(center.y);
                 tvec.at<double>(2)  = -(center.z-0.6);
-                PRINT_DEBUG(3, "Translation: " << tvec << "\n");
+                PRINT_DEBUG(3, "Translation:\n" << tvec << "\n");
                 // 
                 // solvePnPRansac(objPoints_mat, imgPoints_mat, cameraMatrix, distCoeffs, rvec, tvec);//, true, CV_ITERATIVE);
                 // solvePnP(objPoints_mat, imgPoints_mat, cameraMatrix, distCoeffs, rvec, tvec, true, CV_ITERATIVE);
@@ -1606,17 +1606,17 @@ ControlUINode::getPTargetPoints(const pGrid &g, const vector<float> & plane,
                 // 
                 Mat rot(3, 3, DataType<double>::type);
                 Rodrigues(rvec, rot);
-                PRINT_DEBUG(3, "Rotation: " << rot << "\n");
-                PRINT_DEBUG(3, "Rotation Vector: " << rvec << "\n");
+                PRINT_DEBUG(3, "Rotation:\n" << rot << "\n");
+                PRINT_DEBUG(3, "Rotation Vector:\n" << rvec << "\n");
                 // 
                 Mat rotinv;
                 transpose(rot, rotinv);
-                PRINT_DEBUG(3, "Rotation Inverse: " << rotinv << "\n");
+                PRINT_DEBUG(3, "Rotation Inverse:\n" << rotinv << "\n");
                 // 
                 tvec = -rotinv * tvec;
-                PRINT_DEBUG(3, "Translation: " << tvec << "\n");
+                PRINT_DEBUG(3, "Translation:\n" << tvec << "\n");
                 final_result = rotation*tvec;
-                PRINT_DEBUG(3, "Final Result: " << final_result << "\n");
+                PRINT_DEBUG(3, "Final Result:\n" << final_result << "\n");
                 // 
                 vector<double> pt;
                 pt.push_back(final_result.at<double>(0));
@@ -3475,9 +3475,9 @@ ControlUINode::captureTheCurrentPlane()
         {
             image_gui->WriteInfoToFile(visited_continuous_bounding_box_points[i], visited_plane_parameters[i], i+1, filename);
         }
-        PRINT_LOG(5, print2dVector(visited_plane_parameters, "All Plane Parameters"));
-        PRINT_LOG(5, print2dVector(visited_continuous_bounding_box_points, "All Plane BBP"));
-        PRINT_LOG(5, print2dVector(visited_motion_points, "All motion points"));
+        PRINT_LOG(3, print2dVector(visited_plane_parameters, "All Plane Parameters"));
+        PRINT_LOG(3, print2dVector(visited_continuous_bounding_box_points, "All Plane BBP"));
+        PRINT_LOG(3, print2dVector(visited_motion_points, "All motion points"));
     }
     else
     {
