@@ -934,7 +934,18 @@ ImageView::extractBoundingRect()
 	bPoints.push_back(maxYIndex);
 }
 
-/*** PRANEETH's CODE ***/
+void
+ImageView::split(	const string &s,
+		char delim,
+		vector<float> &elems)
+{
+	stringstream ss(s);
+	string item;
+	while (getline(ss, item, delim))
+	{
+		elems.push_back(stof(item));
+	}
+}
 
 /**
  * @brief Read information about various file froma   file

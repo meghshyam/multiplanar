@@ -290,6 +290,27 @@ class ImageView : private CVD::Thread, private MouseKeyHandler
 		void extractBoundingRect();
 
 		void 
+		split(	const string &s,
+				char delim,
+				vector<float> &elems);
+
+		template<typename T>
+		inline static void
+		split(	const string &s,
+				vector<T> &elems)
+		{
+			istringstream ss(s);
+			while( ! ss.eof() )
+			{
+				T tmp_f;
+				if ( ss >> tmp_f )
+				{
+					elems.push_back(tmp_f);
+				}
+			}
+		}
+
+		void 
 		readPlaneInfo(string filename,
 						vector< vector<float> > &sortedPlaneParameters,
 						vector< vector<Point3f> > &boundingBoxPoints);
@@ -300,7 +321,7 @@ class ImageView : private CVD::Thread, private MouseKeyHandler
 						int &type_of_surface,
 						int &max_height_of_plane,
 						vector<double> &main_angles,
-						vector<int> &main_directions)
+						vector<int> &main_directions);
 
 		void
 		WriteInfoToFile(const vector<Point3f> &bounding_box_points, 
