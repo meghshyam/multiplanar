@@ -328,7 +328,7 @@ TopView::checkMenu(float x, float y)
 		glutDestroyWindow(_window);
 		glutLeaveMainLoop();
 		stopSystem();
-		cout << "[ INFO] Exiting TopView Application...";
+		cout << "Exiting TopView Application...\n";
 		_exit_app = true;
 		return ;
 	}
@@ -484,6 +484,12 @@ TopView::calculateAngles()
 		cerr << "Please check if the file is existing and has required permissions ";
 		cerr << " for writing.\n";
 	}
+	outFile << "Number-of-Planes\n";
+	outFile << _number_of_planes << "\n\n";
+	outFile << "Type-of-Surface\n";
+	outFile << _type_of_surface << "\n\n";
+	outFile << "Max-Height-of-the-Plane\n";
+	outFile << _max_plane_height << "\n\n";
 	outFile << "Rotate-Directions\n";
 	for (int i = 0; i < direction.size(); ++i)
 	{
@@ -1037,7 +1043,7 @@ void
 TopView::startSystem()
 {
 	run_status = true;
-	cout << "[ INFO] Starting TopView...\n";
+	PRINT_LOG(1, "Starting TopView...\n");
 	start();
 }
 
@@ -1045,14 +1051,14 @@ void
 TopView::stopSystem()
 {
 	run_status = false;
-	cout << "[ INFO] Stopping TopView...\n";
+	PRINT_LOG(1, "Stopping TopView...\n");
 	join();
 }
 
 void
 TopView::run()
 {
-	cout << "[ INFO] Initiating TopView GUI...\n";
+	PRINT_LOG(1, "Initiating TopView GUI...\n");
 	init();
 	/*while(run_status)
 	{
