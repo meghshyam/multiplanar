@@ -1008,6 +1008,20 @@ class ControlUINode
                              vector< vector<Point3f> > &sorted_3d_points,
                              vector<float> &percentageOfEachPlane);
 
+        /**
+         * @brief Code for performing module tests on functions written
+         * @details Called by pressing a numeric key from DRONE CAMERA FEED Window
+         *  Key 0 - Get the current position of drone
+         *  Key 1 - Perform Jlinkage
+         *  Key 2 - 
+         *  Key 3 - 
+         *  Key 4 - 
+         *  Key 5 - 
+         *  Key 6 - 
+         *  Key 7 - 
+         *  Key 8 - 
+         *  Key 9 - 
+         */
         void
         testUtility(int test_no);
 
