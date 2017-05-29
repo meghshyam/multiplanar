@@ -1009,19 +1009,78 @@ ImageView::readPlaneInfo(string filename,
 	plane_info.close();
 }
 
+
 void
-ImageView::split(	const string &s,
-					vector<float> &elems)
+ImageView::readTopViewInfo(string filename,
+							int &number_of_planes,
+							int &type_of_surface,
+							int &max_height_of_plane,
+							vector<double> &main_angles,
+							vector<int> &main_directions)
 {
-	istringstream ss(s);
-	while( ! ss.eof() )
+	main_angles.clear();
+	main_directions.clear();
+	ifstream topview_info;
+	topview_info.open(filename.c_str(), std::ifstream::in);
+	string line;
+	vector<float> copyVector;
+	string main_angles_string("Angles");
+	string direction_string("Rotate-Directions");
+	string num_planes_string("Number-of-Planes");
+	string surface_string("Type-of-Surface");
+	string height_string("Max-Height-of-the-Plane");
+	if (topview_info.is_open())
 	{
-		float tmp_f;
-		if ( ss >> tmp_f )
+		while ( getline (topview_info, line) )
 		{
-			elems.push_back(tmp_f);
+			if(!line.empty() && line.compare(num_planes_string)==0)
+			{
+				getline(topview_info, line);
+				// cout << "Number-of-Planes: " << line << "\n";
+				number_of_planes = stoi(line);
+			}
+			if(!line.empty() && line.compare(surface_string)==0)
+			{
+				getline(topview_info, line);
+				// cout << "Type-of-Surface: " << line << "\n";
+				type_of_surface = stoi(line);
+			}
+			if(!line.empty() && line.compare(height_string)==0)
+			{
+				getline(topview_info, line);
+				// cout << "Max-Height-of-the-Plane: " << line << "\n";
+				max_height_of_plane = stoi(line);
+			}
+			if(!line.empty() && line.compare(main_angles_string)==0)
+			{
+				copyVector.clear();
+				getline(topview_info, line);
+				split(line, main_angles);
+				// split(line, copyVector);
+				// main_angles.push_back(copyVector);
+				/*cout << "Main angles: ";
+				printVector(main_angles);*/
+				copyVector.clear();
+			}
+			if(!line.empty() && line.compare(direction_string)==0)
+			{
+				copyVector.clear();
+				getline(topview_info, line);
+				split(line, main_directions);
+				// split(line, copyVector);
+				// main_directions.push_back(copyVector);
+				/*cout << "Main directions: ";
+				printVector(main_directions);*/
+				copyVector.clear();
+			}
 		}
 	}
+	else
+	{
+		cerr << "[ DEBUG] File " << filename << " doesn't open\n";
+		return ;
+	}
+	topview_info.close();
 }
 
 /**
@@ -1072,19 +1131,6 @@ ImageView::WriteInfoToFile(const vector<Point3f> &bounding_box_points,
 	// Close the file
 	outFile.close();
 	return ;
-}
-
-void
-ImageView::split(	const string &s,
-					char delim,
-					vector<float> &elems)
-{
-	stringstream ss(s);
-	string item;
-	while (getline(ss, item, delim))
-	{
-		elems.push_back(stof(item));
-	}
 }
 
 void

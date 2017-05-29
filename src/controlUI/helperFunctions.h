@@ -1468,6 +1468,37 @@ copyVector(const vector<T> vec1, vector<T> &vec2)
 	return ;
 }
 
+template<typename T>
+inline static void
+split(	const string &s,
+		vector<T> &elems)
+{
+	istringstream ss(s);
+	while( ! ss.eof() )
+	{
+		float tmp_f;
+		if ( ss >> tmp_f )
+		{
+			elems.push_back(tmp_f);
+		}
+	}
+}
+
+void
+split(	const string &s,
+		char delim,
+		vector<float> &elems)
+{
+	stringstream ss(s);
+	string item;
+	while (getline(ss, item, delim))
+	{
+		elems.push_back(stof(item));
+	}
+}
+
+
+
 /**
  * @brief Translates the fitted plane by the given distance along its normal toward origin
  * @details Currently not using

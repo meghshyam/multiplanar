@@ -289,22 +289,23 @@ class ImageView : private CVD::Thread, private MouseKeyHandler
 		 */
 		void extractBoundingRect();
 
-		/*** NEWER FUNCTIONS ***/
-
 		void 
 		readPlaneInfo(string filename,
 						vector< vector<float> > &sortedPlaneParameters,
 						vector< vector<Point3f> > &boundingBoxPoints);
 
 		void
+		readTopViewInfo(string filename,
+						int &number_of_planes,
+						int &type_of_surface,
+						int &max_height_of_plane,
+						vector<double> &main_angles,
+						vector<int> &main_directions)
+
+		void
 		WriteInfoToFile(const vector<Point3f> &bounding_box_points, 
 					const vector<float> &plane_parameters, 
 					int plane_num, string filename);
-
-		void
-		split(	const string &s, char delim, vector<float> &elems);
-
-		void split(	const string &s, vector<float> &elems);
 
 		void
 		getContinuousBoundingBoxPoints(vector< vector<Point3f> > &continuousBoundingBoxPoints);
