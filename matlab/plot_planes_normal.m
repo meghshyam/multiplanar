@@ -1,4 +1,6 @@
-[plane_bounding_box_points, plane_parameters] = read_params_from_file('Plane_Info.txt', 0);
+function [] = plot_planes_normal(filename)
+
+[plane_bounding_box_points, plane_parameters] = read_params_from_file(filename, 0);
 [num_planes, other] = size(plane_parameters);
 x = plane_bounding_box_points(:,1);
 y = plane_bounding_box_points(:,2);
