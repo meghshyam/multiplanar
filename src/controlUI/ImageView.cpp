@@ -753,7 +753,82 @@ ImageView::on_key_down(int key)
 	// W
 	else if(key == 'W')
 	{
-		
+		/* Launches GUI: Return approx. angles and orientations */
+		/* Angle with which	quadcopter has to rotate to orient itself to the new plane */
+		std::vector< double > main_angles;
+		/* Direction in which quadcopter should rotate to orient its yaw with normal of new plane */
+		std::vector< int > directions;
+		std::vector< RotateDirection > main_directions;
+		/* Printing the information to the terminal */
+		int number_of_planes = 0;
+		int type_of_surface = 0;
+		int max_height_of_plane = 0;
+		int view_dir = 0;
+		string filename = "TopViewInfo.txt";
+		readTopViewInfo(filename, number_of_planes, type_of_surface,
+						max_height_of_plane, main_angles,
+						directions);
+		for (unsigned int i = 0; i < directions.size(); ++i)
+		{
+			if(directions[i] == 0)
+				main_directions.push_back(RotateDirection::CLOCKWISE);
+			if(directions[i] == 1)
+				main_directions.push_back(RotateDirection::COUNTERCLOCKWISE);
+		}
+		if(number_of_planes == 0)
+		{
+			PRINT_LOG(1, "[ ERROR] [Key 'W'] No diagram drawn\n");
+			PRINT_LOG(1, "[ ERROR] [Key 'W'] So, landing the quadcopter\n");
+			node->sendLand();
+			PRINT_LOG(1, "[Key 'W'] Quadcopter has landed.\n");
+		}
+		else
+		{
+			PRINT_LOG(1, "[Key 'W'] Number of planes: " << number_of_planes << "\n");
+			PRINT_LOG(1, "[Key 'W'] Max Height of the plane (as estimated by the user): " << max_height_of_plane << "\n");
+			if(type_of_surface == 0)
+			{
+				PRINT_LOG(1, "[Key 'W'] Surface Drawn: " << "Open Surface" << "\n");
+				if(view_dir == 0)
+				{
+					PRINT_LOG(1, "[Key 'W'] Viewing the surface from front\n");
+				}
+				if(view_dir == 1)
+				{
+					PRINT_LOG(1, "[Key 'W'] Viewing the surface from back\n");
+				}
+			}
+			if(type_of_surface == 1)
+			{
+				PRINT_LOG(1, "[Key 'W'] Surface Drawn: " << "Closed Surface" << "\n");
+				if(view_dir == 2)
+				{
+					PRINT_LOG(1, "[Key 'W'] Viewing the surface from outside the structure\n");
+				}
+				if(view_dir == 3)
+				{
+					PRINT_LOG(1, "[Key 'W'] Viewing the surface from inside the structure\n");
+				}
+			}
+			PRINT_LOG(1, print1dVector(main_angles, "[Key 'W'] Angles: ", ""));
+			PRINT_LOG(1, "[Key 'W'] Directions: ");
+			for (unsigned int i = 0; i < main_directions.size(); ++i)
+			{
+				if(main_directions[i] == 0)
+					cout << "CLOCKWISE" << " ";
+				else if(main_directions[i] == 1)
+					cout << "ANTI-CLOCKWISE" << " ";
+			}
+			PRINT_LOG(1, "\n");
+			int min_height_of_plane = 2.0;
+			float min_distance = getDistanceToSeePlane(min_height_of_plane);
+			float max_distance = getDistanceToSeePlane(max_height_of_plane);
+			PRINT_LOG(1, "[Key 'W'] Min. Distance: " << min_distance << ", Max. Distance: " << max_distance << "\n");
+			node->setValues(number_of_planes, min_height_of_plane, min_distance, max_height_of_plane, max_distance);
+			node->setMainAngles(main_angles);
+			node->setMainDirections(main_directions);
+			node->align_drone->startSystem();
+		}
 	}
 	// E
 	else if(key == 'E')
