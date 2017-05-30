@@ -1,5 +1,6 @@
-#ifndef _ALL_HEADERS_H
-#define _ALL_HEADERS_H
+#ifndef _HEADERS_H
+#define _HEADERS_H
+#pragma once
 
 #include "ros/ros.h"
 
@@ -45,6 +46,18 @@
 // Namespaces
 using namespace std;
 using namespace cv;
+
+inline const std::string get_current_time()
+{
+	std::array<char, 64> buffer;
+	buffer.fill(0);
+	time_t rawtime;
+	time(&rawtime);
+	const auto timeinfo = localtime(&rawtime);
+	strftime(buffer.data(), sizeof(buffer), "%H:%M:%S", timeinfo);
+	std::string timeStr(buffer.data());
+	return timeStr;
+}
 
 
 #endif

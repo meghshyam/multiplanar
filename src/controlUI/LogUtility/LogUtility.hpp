@@ -34,7 +34,8 @@ extern stringstream logMessage;
 extern stringstream logExceptionMessage;
 
 #define LOG_MSG(level) if(LOG_ACTIVATE && level <= LOG_LEVEL) logMessage
-#define PRINT_LOG(level, message) LOG_MSG(level) << "[" << __func__ << "]" \
+#define PRINT_LOG(level, message) LOG_MSG(level) << "[" << get_current_time() << "]" \
+                                    << " [" << __func__ << "]" \
                                     << " Line " << __LINE__ << ": " << message; \
                                     PRINT_LOG_MESSAGE(level);
 
