@@ -691,8 +691,12 @@ ImageView::on_key_down(int key)
 	// Key n - Uses the points written from a file (obtained from key c)
 	else if(key == 'n')
 	{
-		string inputDirectory = "/home/sonapraneeth/";
-		string filename = inputDirectory + "Plane_Info.txt";
+		/*struct passwd *pw = getpwuid(getuid());
+		const char *homedir = pw->pw_dir;
+		string str_home_dir(homedir); 
+		string inputDirectory = str_home_dir + "/";
+		string filename = inputDirectory + "Plane_Info.txt";*/
+		string filename = "Plane_Info.txt";
 		vector< vector<float> > sortedPlaneParameters;
 		vector< vector<Point3f> > boundingBoxPoints;
 		readPlaneInfo(filename, sortedPlaneParameters, boundingBoxPoints);
@@ -700,8 +704,8 @@ ImageView::on_key_down(int key)
 		PRINT_LOG(1, print2dVector(boundingBoxPoints, "Bounding Box points:\n", ""));
 		// Get the continuoous bounding box points
 		clear2dVector(continuousBoundingBoxPoints);
-		getContinuousBoundingBox (boundingBoxPoints, sortedPlaneParameters, continuousBoundingBoxPoints);
-		PRINT_LOG(1, print2dVector(continuousBoundingBoxPoints, "Continuous Bounding Box points:\n", ""));
+		// getContinuousBoundingBox (boundingBoxPoints, sortedPlaneParameters, continuousBoundingBoxPoints);
+		// PRINT_LOG(1, print2dVector(continuousBoundingBoxPoints, "Continuous Bounding Box points:\n", ""));
 		// Path planning: Cover multiple planes
 		if(renderRect)
 		{
@@ -711,10 +715,11 @@ ImageView::on_key_down(int key)
 		}
 		PRINT_LOG(1, "Rendering Visited Planes\n");
 		setRender(false, false, false, true);
-		setVisitedBoundingBoxPoints(continuousBoundingBoxPoints);
+		// setVisitedBoundingBoxPoints(continuousBoundingBoxPoints);
+		setVisitedBoundingBoxPoints(boundingBoxPoints);
 		renderFrame();
 		PRINT_LOG(1, "Calling moveQuadcopter()\n");
-		node->moveQuadcopter(sortedPlaneParameters, continuousBoundingBoxPoints);
+		node->moveQuadcopter(sortedPlaneParameters, boundingBoxPoints);
 	}
 	/* Movement letter keys */
 	else if(key == 'F')

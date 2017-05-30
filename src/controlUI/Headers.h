@@ -27,6 +27,11 @@
 #include <list>
 #include <map>
 
+// Linux Headers
+#include <unistd.h>
+#include <sys/types.h>
+#include <pwd.h>
+
 #include "cvd/thread.h"
 #include "cvd/image.h"
 #include "cvd/byte.h"
@@ -34,8 +39,6 @@
 
 #include "tum_ardrone/keypoint_coord.h"
 #include "tum_ardrone/filter_state.h"
-
-
 
 #include "Line2.hpp"
 #include "Multiple-Plane-JLinkage/utilities.hpp"

@@ -3499,9 +3499,9 @@ ControlUINode::captureTheCurrentPlane()
         {
             image_gui->WriteInfoToFile(visited_continuous_bounding_box_points[i], visited_plane_parameters[i], i+1, filename);
         }
-        PRINT_LOG(3, print2dVector(visited_plane_parameters, "All Plane Parameters"));
-        PRINT_LOG(3, print2dVector(visited_continuous_bounding_box_points, "All Plane BBP"));
-        PRINT_LOG(3, print2dVector(visited_motion_points, "All motion points"));
+        PRINT_LOG(3, print2dVector(visited_plane_parameters, "All Plane Parameters:\n", "matlab"));
+        PRINT_LOG(3, print2dVector(visited_continuous_bounding_box_points, "All Plane BBP:\n", "matlab"));
+        PRINT_LOG(3, print2dVector(visited_motion_points, "All motion points:\n", "matlab"));
     }
     else
     {
