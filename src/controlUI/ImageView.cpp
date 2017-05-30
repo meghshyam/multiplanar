@@ -691,8 +691,12 @@ ImageView::on_key_down(int key)
 	// Key n - Uses the points written from a file (obtained from key c)
 	else if(key == 'n')
 	{
-		string inputDirectory = "/home/sonapraneeth/";
-		string filename = inputDirectory + "Plane_Info.txt";
+		/*struct passwd *pw = getpwuid(getuid());
+		const char *homedir = pw->pw_dir;
+		string str_home_dir(homedir); 
+		string inputDirectory = str_home_dir + "/";
+		string filename = inputDirectory + "Plane_Info.txt";*/
+		string filename = "Plane_Info.txt";
 		vector< vector<float> > sortedPlaneParameters;
 		vector< vector<Point3f> > boundingBoxPoints;
 		readPlaneInfo(filename, sortedPlaneParameters, boundingBoxPoints);
