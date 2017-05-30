@@ -150,11 +150,11 @@ ControlUINode::ControlUINode()
     _fixed_height = 0.7;
     _fixed_height_set = false;
     _is_adjusted = false;
-    /* working heuristics
+    /* working heuristics */
     _move_heuristic = 0.5;
-    _angle_heuristic = 4.0;*/
-    _move_heuristic = 0.75;
-    _angle_heuristic = 5.0;
+    _angle_heuristic = 4.0;
+    /*_move_heuristic = 0.75;
+    _angle_heuristic = 5.0;*/
     _jlinkage_calls = 0;
     _sig_plane_index = 0;
     _actual_plane_index = 0;
@@ -823,7 +823,7 @@ ControlUINode::moveDroneBetweenPlanes(const vector<double> &previousPosition,
     vector< vector<double> > pathPoints;
     clear2dVector(pathPoints);
     vector<double> startPosition(4), endPosition(4);
-    float distance = -2.0;
+    float distance = -1.75;
     if (curr_coord_box_points.size() == 0 && curr_plane_parameters.size() == 0 && plane_index == 0)
     {
         PRINT_LOG(1, "You are currently adjusting for plane " << plane_index+1 << "\n");
@@ -1092,7 +1092,7 @@ ControlUINode::moveDroneBetweenPlanes(const vector<double> &previousPosition,
         PRINT_DEBUG(1, print1dVector(endPosition, "2.5 -> Ending position", ""));
         generatePathPoints(startPosition, endPosition, pathPoints, true);
         PRINT_DEBUG(1, "2.5 -> pathPoints size: " << pathPoints.size() << "\n");
-        /*startPosition[0] = next_plane_left_edge_midpoint_projection.x;
+        startPosition[0] = next_plane_left_edge_midpoint_projection.x;
         startPosition[1] = next_plane_left_edge_midpoint_projection.y;
         startPosition[2] = next_plane_left_edge_midpoint_projection.z;
         startPosition[3] = angleBetweenPlanes;
@@ -1103,7 +1103,7 @@ ControlUINode::moveDroneBetweenPlanes(const vector<double> &previousPosition,
         PRINT_DEBUG(1, print1dVector(startPosition, "2.6 -> Starting position", ""));
         PRINT_DEBUG(1, print1dVector(endPosition, "2.6 -> Ending position", ""));
         generatePathPoints(startPosition, endPosition, pathPoints, false);
-        PRINT_DEBUG(1, "2.6 -> pathPoints size: " << pathPoints.size() << "\n");*/
+        PRINT_DEBUG(1, "2.6 -> pathPoints size: " << pathPoints.size() << "\n");
     }
     moveDronePathPoints[plane_index] = (int)pathPoints.size() + 8;
     PRINT_LOG(1, print2dVector(pathPoints, "Points needed by drone to move from one plane to another:\n", "matlab"));
@@ -1997,7 +1997,18 @@ ControlUINode::newPoseCb (const tum_ardrone::filter_stateConstPtr statePtr)
         }
         if(numCommands < startTargetPtIndex[planeIndexCurrent]+moveDronePathPoints[planeIndexCurrent])
         {
+            PRINT_LOG(3, "Sleeping for 1 seconds\n");
             ros::Duration(1).sleep();
+            if(numCommands == startTargetPtIndex[planeIndexCurrent]+moveDronePathPoints[planeIndexCurrent]-8)
+            {
+                PRINT_LOG(3, "Sleeping for 15 seconds\n");
+                ros::Duration(15).sleep();
+            }
+            else if(numCommands > startTargetPtIndex[planeIndexCurrent])
+            {
+                PRINT_LOG(3, "Sleeping for 3 seconds\n");
+                ros::Duration(3).sleep();
+            }
             currentCommand = false;
             commands.pop_front();
             targetPoints.pop_front();
