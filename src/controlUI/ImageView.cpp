@@ -700,8 +700,8 @@ ImageView::on_key_down(int key)
 		PRINT_LOG(1, print2dVector(boundingBoxPoints, "Bounding Box points:\n", ""));
 		// Get the continuoous bounding box points
 		clear2dVector(continuousBoundingBoxPoints);
-		getContinuousBoundingBox (boundingBoxPoints, sortedPlaneParameters, continuousBoundingBoxPoints);
-		PRINT_LOG(1, print2dVector(continuousBoundingBoxPoints, "Continuous Bounding Box points:\n", ""));
+		// getContinuousBoundingBox (boundingBoxPoints, sortedPlaneParameters, continuousBoundingBoxPoints);
+		// PRINT_LOG(1, print2dVector(continuousBoundingBoxPoints, "Continuous Bounding Box points:\n", ""));
 		// Path planning: Cover multiple planes
 		if(renderRect)
 		{
@@ -711,10 +711,11 @@ ImageView::on_key_down(int key)
 		}
 		PRINT_LOG(1, "Rendering Visited Planes\n");
 		setRender(false, false, false, true);
-		setVisitedBoundingBoxPoints(continuousBoundingBoxPoints);
+		// setVisitedBoundingBoxPoints(continuousBoundingBoxPoints);
+		setVisitedBoundingBoxPoints(boundingBoxPoints);
 		renderFrame();
 		PRINT_LOG(1, "Calling moveQuadcopter()\n");
-		node->moveQuadcopter(sortedPlaneParameters, continuousBoundingBoxPoints);
+		node->moveQuadcopter(sortedPlaneParameters, boundingBoxPoints);
 	}
 	/* Movement letter keys */
 	else if(key == 'F')
