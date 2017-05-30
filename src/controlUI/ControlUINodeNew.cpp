@@ -1258,9 +1258,11 @@ ControlUINode::buildPGrid(const vector<Point2f> &uvCoordinates)
     PRINT_LOG(1, "Started.\n");
     // Vectors for u and v co-ordinates in UV co-ordinate system
     vector<float> uCoord, vCoord;
+    PRINT_LOG(3, print1dVector(uvCoordinates, "UV Co-ordinates:\n", ""));
     vector<Point2f> sortedUVCoordinates;
     // Sort the uv co-ordinates
     sortUVCorners(uvCoordinates, sortedUVCoordinates);
+    PRINT_LOG(3, print1dVector(sortedUVCoordinates, "Sorted UV Co-ordinates:\n", ""));
     // Make the X Co-ordinates of plane bounding box points
     // There are 4 corners for a bounded plane
     for (int j = 0; j < 4; ++j)
@@ -1272,16 +1274,21 @@ ControlUINode::buildPGrid(const vector<Point2f> &uvCoordinates)
     {
         vCoord.push_back(sortedUVCoordinates[j].y);
     }
+    PRINT_LOG(3, print1dVector(uCoord, "U Co-ord: ", ""));
+    PRINT_LOG(3, print1dVector(vCoord, "V Co-ord: ", ""));
     vector<float> uVector(2), vVector(2);
     uVector[0] = uCoord[1]-uCoord[0];
     uVector[1] = vCoord[1]-vCoord[0];
     vVector[0] = uCoord[0]-uCoord[3];
     vVector[1] = vCoord[0]-vCoord[3];
+    PRINT_LOG(3, print1dVector(uVector, "U vector: ", ""));
+    PRINT_LOG(3, print1dVector(vVector, "V vector: ", ""));
     // Get the height and width of the plane?
     float horizDist1 = sqrt(pow(uCoord[0]-uCoord[1],2)+pow(vCoord[0]-vCoord[1],2));
     float horizDist2 = sqrt(pow(uCoord[2]-uCoord[3],2)+pow(vCoord[2]-vCoord[3],2));
     float vertDist1 = sqrt(pow(uCoord[2]-uCoord[1],2)+pow(vCoord[2]-vCoord[1],2));
     float vertDist2 = sqrt(pow(uCoord[0]-uCoord[3],2)+pow(vCoord[0]-vCoord[3],2));
+    PRINT_LOG(3, horizDist1 << ", " << horizDist2 << ", " << vertDist1 << ", " << vertDist2 << "\n");
     // Dimensions of the cells of the grid
     float squareWidth = 0.8;
     float squareHeight = 0.45;
@@ -1295,13 +1302,18 @@ ControlUINode::buildPGrid(const vector<Point2f> &uvCoordinates)
     vVector[0] /= vertDist1;
     vVector[1] /= vertDist1;
     // pGridSquare width and height
+    PRINT_LOG(3, "Making pGrid\n");
     pGrid grid(uCoord[0], vCoord[0], uVector, vVector, squareWidth, squareHeight, overlap, maxR, maxD);
+    PRINT_LOG(3, "Making pGridSquare\n");
     pGridSquare gridSquare = pGridSquare(uCoord[0], vCoord[0], squareWidth, squareHeight, uVector, vVector);
     grid.add(gridSquare);
+    PRINT_LOG(3, "Adding pGridSquare\n");
+    PRINT_LOG(3, "In while loop\n");
     while (grid.translate(gridSquare))
     {
         gridSquare = grid.getLatest();
     }
+    PRINT_LOG(3, "Out of while loop\n");
     PRINT_LOG(1, "Completed.\n");
     return grid;
 }
@@ -1912,7 +1924,7 @@ ControlUINode::newPoseCb (const tum_ardrone::filter_stateConstPtr statePtr)
         targetPoint = targetPoints.front();
         PRINT_DEBUG(3, "Just navigation current target " << just_navigation_command_number
                 <<" of " << just_navigation_total_commands << ": (" << targetPoint[0] << ", " 
-                << targetPoint[1] << "," << targetPoint[2] << ", " << targetPoint[3] << ")\n");
+                << targetPoint[1] << ", " << targetPoint[2] << ", " << targetPoint[3] << ")\n");
     }
     else if(justNavigation && !traverseComplete)
     {
