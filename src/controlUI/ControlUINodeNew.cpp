@@ -2011,16 +2011,16 @@ ControlUINode::newPoseCb (const tum_ardrone::filter_stateConstPtr statePtr)
         {
             PRINT_LOG(3, "Sleeping for 1 seconds\n");
             ros::Duration(1).sleep();
-            if(numCommands == startTargetPtIndex[planeIndexCurrent]+moveDronePathPoints[planeIndexCurrent]-8)
+            /*if(numCommands == startTargetPtIndex[planeIndexCurrent]+moveDronePathPoints[planeIndexCurrent]-8)
             {
                 PRINT_LOG(3, "Sleeping for 15 seconds\n");
                 ros::Duration(15).sleep();
-            }
-            else if(numCommands > startTargetPtIndex[planeIndexCurrent])
+            }*/
+            /*else if(numCommands > startTargetPtIndex[planeIndexCurrent])
             {
                 PRINT_LOG(3, "Sleeping for 3 seconds\n");
                 ros::Duration(3).sleep();
-            }
+            }*/
             currentCommand = false;
             commands.pop_front();
             targetPoints.pop_front();
