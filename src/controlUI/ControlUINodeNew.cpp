@@ -1353,7 +1353,7 @@ ControlUINode::getPTargetPoints(const pGrid &g, const vector<float> & plane,
     Mat imgPoints_mat(9, 1, CV_64FC2);
     for(int i = 0; i < 9; i++)
         imgPoints_mat.at<Point2d>(i,0) = imgPoints[i];
-    PRINT_DEBUG(3, "Image Points: " << imgPoints_mat << "\n");
+    PRINT_DEBUG(3, "Image Points:\n" << imgPoints_mat << "\n");
     // Camera Matrix
     Mat cameraMatrix(3, 3, DataType<double>::type);
     // Setting camera matrix for vga quality
@@ -1380,10 +1380,12 @@ ControlUINode::getPTargetPoints(const pGrid &g, const vector<float> & plane,
     Mat rvec(3, 1, DataType<double>::type);
     Mat tvec(3, 1, DataType<double>::type);
     Mat final_result(3, 1, DataType<double>::type);
-    PRINT_DEBUG(3, "Camera Matrix: " << cameraMatrix << "\n");
-    PRINT_DEBUG(3, "Distortion co-efficients: " << distCoeffs << "\n");
+    PRINT_DEBUG(3, "Camera Matrix:\n" << cameraMatrix << "\n");
+    PRINT_DEBUG(3, "Distortion co-efficients:\n" << distCoeffs << "\n");
     //
     vector<Point3d> objPoints;
+    vector< vector<Point3d> > completeObjPoints;
+    clear2dVector(completeObjPoints);
     Point3f projectedNormal(plane[0], plane[1], 0);
     Point3f yAxis(0, 1, 0);
     // Whether the drone is moving forward or backward (left to right or right to left)
@@ -1430,6 +1432,7 @@ ControlUINode::getPTargetPoints(const pGrid &g, const vector<float> & plane,
                 objPoints.push_back(corner4);
                 objPoints.push_back(mid4);
                 objPoints.push_back(center);
+                completeObjPoints.push_back(objPoints);
                 // 
                 Mat objPoints_mat(9, 1, CV_64FC3);
                 Mat objPoints_matrix(9, 3, CV_64F);
@@ -1562,6 +1565,7 @@ ControlUINode::getPTargetPoints(const pGrid &g, const vector<float> & plane,
                 objPoints.push_back(corner4);
                 objPoints.push_back(mid4);
                 objPoints.push_back(center);
+                completeObjPoints.push_back(objPoints);
                 Mat objPoints_mat(9,1, CV_64FC3);
                 Mat objPoints_matrix(9, 3, CV_64F);
                 Mat objPoints_matrix_pass(9, 1, CV_64FC3);
@@ -1659,6 +1663,8 @@ ControlUINode::getPTargetPoints(const pGrid &g, const vector<float> & plane,
         int n  = g.rowSquares[i].size();
         numColsPerRow.push_back(n);
     }
+    PRINT_LOG(3, "Printing Object points for plane " << plane_no << "\n");
+    PRINT_LOG(3, print2dVector(completeObjPoints, "Complete object points:\n", ""));
     PRINT_LOG(1, print2dVector(tPoints, "LOG Target points:\n", ""));
     PRINT_DEBUG(3, "Numrows: " << numRows << "\n");
     PRINT_DEBUG(3, print1dVector(numColsPerRow, "Number of cols per row:\n", ""));
@@ -4090,7 +4096,7 @@ ControlUINode::testUtility(int test_no)
     else if(test_no == 2)
     {
         reverse(visited_motion_points.begin(), visited_motion_points.end());
-        pushCommands(visited_motion_points);
+        moveDroneViaSetOfPoints(visited_motion_points);
     }
     else if(test_no == 3)
     {}
