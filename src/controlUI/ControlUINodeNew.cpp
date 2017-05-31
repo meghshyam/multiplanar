@@ -328,7 +328,8 @@ ControlUINode::load2dPoints (vector<float> x_img, vector<float> y_img)
 }
 
 void
-ControlUINode::write3DPointsToCSV(vector<vector<double> > &_3d_points, string filename, string separator)
+ControlUINode::write3DPointsToCSV(vector< vector<double> > &_3d_points, string filename, 
+                                    string separator, string prefix, int precision)
 {
     int numberOfPoints = _3d_points.size();
     const char* outFilename = filename.c_str();
@@ -347,13 +348,17 @@ ControlUINode::write3DPointsToCSV(vector<vector<double> > &_3d_points, string fi
         int dimensions = _3d_points[i].size();
         for (int j = 0; j < dimensions; ++j)
         {
+            if(j == 0)
+            {
+                outFile << prefix;
+            }
             if(j != dimensions-1)
             {
-                outFile << std::setprecision(6) << _3d_points[i][j] << separator;
+                outFile << std::setprecision(precision) << _3d_points[i][j] << separator;
             }
             else
             {
-                outFile << std::setprecision(6) << _3d_points[i][j] << "\n";
+                outFile << std::setprecision(precision) << _3d_points[i][j] << "\n";
             }
         }
     }
@@ -1567,7 +1572,7 @@ ControlUINode::getPTargetPoints(const pGrid &g, const vector<float> & plane,
                     objPoints_matrix.at<double>(i, 1) = objPoints[i].y;
                     objPoints_matrix.at<double>(i, 2) = objPoints[i].z;
                 }
-                PRINT_DEBUG(3, "Object Points: " << objPoints << "\n");
+                PRINT_DEBUG(3, "Object Points:\n" << objPoints << "\n");
                 // [MGP]Dont know but we have to call undistortPoints as a dummy call
                 // Something to do with older version of opencv which gets linked by mrpt
                 Mat dummy;
@@ -3502,6 +3507,9 @@ ControlUINode::captureTheCurrentPlane()
         PRINT_LOG(3, print2dVector(visited_plane_parameters, "All Plane Parameters:\n", "matlab"));
         PRINT_LOG(3, print2dVector(visited_continuous_bounding_box_points, "All Plane BBP:\n", "matlab"));
         PRINT_LOG(3, print2dVector(visited_motion_points, "All motion points:\n", "matlab"));
+        PRINT_LOG(3, "Writing visited motion points to file: motion_points.txt\n");
+        reverse(visited_motion_points.begin(), visited_motion_points.end());
+        write3DPointsToCSV(visited_motion_points, "motion_points.txt", " ", "goto ", 4);
     }
     else
     {
@@ -4077,10 +4085,13 @@ ControlUINode::testUtility(int test_no)
         doJLinkage();
         endTime = clock();
         elapsedTime = double(endTime - beginTime) / (CLOCKS_PER_SEC/1000);
-        cout << "Time taken for function is " << elapsedTime << " ms.\n";
+        PRINT_DEBUG(1, "Time taken for function is " << elapsedTime << " ms.\n");
     }
     else if(test_no == 2)
-    {}
+    {
+        reverse(visited_motion_points.begin(), visited_motion_points.end());
+        pushCommands(visited_motion_points);
+    }
     else if(test_no == 3)
     {}
     else if(test_no == 4)

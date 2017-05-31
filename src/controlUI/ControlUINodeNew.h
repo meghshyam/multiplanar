@@ -881,7 +881,7 @@ class ControlUINode
          */
         void
         write3DPointsToCSV(std::vector<std::vector<double> > &_3d_points, string filename="points.txt",
-                            string separator=" ");
+                            string separator=" ", string prefix="", int precision=3);
 
         /**
          * @brief A helper function to get the number of key points in the current frame

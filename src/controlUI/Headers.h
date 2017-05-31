@@ -26,6 +26,7 @@
 #include <sstream>
 #include <list>
 #include <map>
+#include <algorithm>
 
 // Linux Headers
 #include <unistd.h>
