@@ -1425,7 +1425,7 @@ ControlUINode::getPTargetPoints(const pGrid &g, const vector<float> & plane,
                 getGridSquareUVCorners(gs, uvCorners);
                 AllUVToXYZCoordinates(uvCorners, uvAxes, plane[3], xyzCorners);
                 PRINT_DEBUG(3, print1dVector(xyzCorners, "XYZ Corners:\n", ""));
-                rotate3fPoints(xyzCorners, rotation_cam, rotatedXYZCorners);
+                rotate3fPoints(xyzCorners, rotation, rotatedXYZCorners);
                 PRINT_DEBUG(3, print1dVector(rotatedXYZCorners, "Rotated XYZ Corners:\n", ""));
                 sortXYZCorners(rotatedXYZCorners, sortedXYZCorners);
                 PRINT_DEBUG(3, print1dVector(sortedXYZCorners, "Sorted XYZ Corners:\n", ""));
@@ -1526,7 +1526,7 @@ ControlUINode::getPTargetPoints(const pGrid &g, const vector<float> & plane,
                 getGridSquareUVCorners(gs, uvCorners);
                 AllUVToXYZCoordinates(uvCorners, uvAxes, plane[3], xyzCorners);
                 PRINT_DEBUG(3, print1dVector(xyzCorners, "XYZ Corners:\n", ""));
-                rotate3fPoints(xyzCorners, rotation_cam.inv(), rotatedXYZCorners);
+                rotate3fPoints(xyzCorners, rotation, rotatedXYZCorners);
                 PRINT_DEBUG(3, print1dVector(rotatedXYZCorners, "Rotated XYZ Corners:\n", ""));
                 sortXYZCorners(rotatedXYZCorners, sortedXYZCorners);
                 PRINT_DEBUG(3, print1dVector(sortedXYZCorners, "Sorted XYZ Corners:\n", ""));
