@@ -1393,6 +1393,12 @@ ControlUINode::getPTargetPoints(const pGrid &g, const vector<float> & plane,
     yaw = -yaw;
     PRINT_DEBUG(3, "yaw in radians: " << yaw << "\n");
     PRINT_DEBUG(3, "yaw in degrees: " << ((yaw*180)/M_PI) << "\n");
+    Mat rotation = Mat::eye(3, 3, CV_64F);
+    rotation.at<double>(0, 0) = cos(yaw);
+    rotation.at<double>(0, 2) = -sin(yaw);
+    rotation.at<double>(2, 0) = sin(yaw);
+    rotation.at<double>(2, 2) = cos(yaw);
+    PRINT_DEBUG(3, "Rotation matrix to bring normal:\n" << rotation << "\n");
     // Whether the drone is moving forward or backward (left to right or right to left)
     bool forward = true; // Need to iterate forward or backward
     vector<Point2f> uvCorners;
@@ -1414,7 +1420,7 @@ ControlUINode::getPTargetPoints(const pGrid &g, const vector<float> & plane,
                 getGridSquareUVCorners(gs, uvCorners);
                 AllUVToXYZCoordinates(uvCorners, uvAxes, plane[3], xyzCorners);
                 PRINT_DEBUG(3, print1dVector(xyzCorners, "XYZ Corners:\n", ""));
-                rotate3dPoints(xyzCorners, yaw, rotatedXYZCorners);
+                rotate3fPoints(xyzCorners, rotation, rotatedXYZCorners);
                 PRINT_DEBUG(3, print1dVector(rotatedXYZCorners, "Rotated XYZ Corners:\n", ""));
                 sortXYZCorners(rotatedXYZCorners, sortedXYZCorners);
                 PRINT_DEBUG(3, print1dVector(sortedXYZCorners, "Sorted XYZ Corners:\n", ""));
@@ -1447,14 +1453,9 @@ ControlUINode::getPTargetPoints(const pGrid &g, const vector<float> & plane,
                 completeObjPoints.push_back(objPoints);
                 // 
                 Mat objPoints_mat(9, 1, CV_64FC3);
-                Mat objPoints_matrix(9, 3, CV_64F);
-                Mat objPoints_matrix_pass(9, 1, CV_64FC3);
                 for(int i = 0; i < 9; i++)
                 {
                     objPoints_mat.at<Point3d>(i,0) = objPoints[i];
-                    objPoints_matrix.at<double>(i, 0) = objPoints[i].x;
-                    objPoints_matrix.at<double>(i, 1) = objPoints[i].y;
-                    objPoints_matrix.at<double>(i, 2) = objPoints[i].z;
                 }
                 PRINT_DEBUG(3, "Object Points:\n" << objPoints << "\n");
                 // [MGP]Dont know but we have to call undistortPoints as a dummy call
@@ -1464,30 +1465,6 @@ ControlUINode::getPTargetPoints(const pGrid &g, const vector<float> & plane,
                 //
                 Mat rot_guess = Mat::eye(3,3, CV_64F);
                 PRINT_DEBUG(3, "Rotation guess:\n" << rot_guess << "\n");
-                /*rot_guess.at<double>(0,0) = cos(yaw);
-                rot_guess.at<double>(0,2) = -sin(yaw);
-                rot_guess.at<double>(2,0) = sin(yaw);
-                rot_guess.at<double>(2,2) = cos(yaw);*/
-                Mat rotation = Mat::eye(3, 3, CV_64F);
-                rotation.at<double>(0, 0) = cos(yaw);
-                rotation.at<double>(0, 2) = -sin(yaw);
-                rotation.at<double>(2, 0) = sin(yaw);
-                rotation.at<double>(2, 2) = cos(yaw);
-                PRINT_DEBUG(3, "Rotation matrix to bring normal:\n" << rotation << "\n");
-                Mat rot_objPoints_mat = rotation.inv()*objPoints_matrix.t();
-                for(int j=0; j<9; j++)
-                {
-                    objPoints_matrix_pass.at<Point3d>(j,0) = \
-                    Point3d(rot_objPoints_mat.at<double>(0,j), 
-                            rot_objPoints_mat.at<double>(1,j),
-                            rot_objPoints_mat.at<double>(2,j));
-                    if (j==8)
-                    {
-                        center = Point3d(rot_objPoints_mat.at<double>(0,j), 
-                                    rot_objPoints_mat.at<double>(1,j),
-                                    rot_objPoints_mat.at<double>(2,j));
-                    }
-                }
                 Rodrigues(rot_guess, rvec);
                 /*tvec.at<double>(0)  = -(center.x-0.6*plane[0]);
                 tvec.at<double>(1)  = -(center.y+0.6*plane[2]);
@@ -1499,7 +1476,7 @@ ControlUINode::getPTargetPoints(const pGrid &g, const vector<float> & plane,
                 // 
                 // solvePnPRansac(objPoints_mat, imgPoints_mat, cameraMatrix, distCoeffs, rvec, tvec);//, true, CV_ITERATIVE);
                 // solvePnP(objPoints_mat, imgPoints_mat, cameraMatrix, distCoeffs, rvec, tvec, true, CV_ITERATIVE);
-                solvePnP(objPoints_matrix_pass, imgPoints_mat, cameraMatrix, distCoeffs, rvec, tvec, true, CV_ITERATIVE);
+                solvePnP(objPoints_mat, imgPoints_mat, cameraMatrix, distCoeffs, rvec, tvec, true, CV_ITERATIVE);
                 // 
                 Mat rot(3, 3, DataType<double>::type);
                 Rodrigues(rvec, rot);
@@ -1516,18 +1493,18 @@ ControlUINode::getPTargetPoints(const pGrid &g, const vector<float> & plane,
                 PRINT_DEBUG(3, "Final Result:\n" << final_result << "\n");
                 // 
                 vector<double> pt;
-                pt.push_back(final_result.at<double>(0));
-                pt.push_back(final_result.at<double>(2));
-                pt.push_back(-final_result.at<double>(1));
+                pt.push_back(tvec.at<double>(0));
+                pt.push_back(tvec.at<double>(2));
+                pt.push_back(-tvec.at<double>(1));
                 PRINT_DEBUG(3, print1dVector(pt, "Pt one: ", ""));
                 tPoints.push_back(pt);
                 // 
-                pt.clear();
+                /*pt.clear();
                 pt.push_back(gs.u + (gs.width/2));
-                pt.push_back(final_result.at<double>(2));
+                pt.push_back(tvec.at<double>(2));
                 pt.push_back(gs.v - (gs.height/2));
                 PRINT_DEBUG(3, print1dVector(pt, "Pt two: ", ""));
-                tPoints_z.push_back(pt);
+                tPoints_z.push_back(pt);*/
             }
         }
         else
@@ -1544,7 +1521,7 @@ ControlUINode::getPTargetPoints(const pGrid &g, const vector<float> & plane,
                 getGridSquareUVCorners(gs, uvCorners);
                 AllUVToXYZCoordinates(uvCorners, uvAxes, plane[3], xyzCorners);
                 PRINT_DEBUG(3, print1dVector(xyzCorners, "XYZ Corners:\n", ""));
-                rotate3dPoints(xyzCorners, yaw, rotatedXYZCorners);
+                rotate3fPoints(xyzCorners, rotation, rotatedXYZCorners);
                 PRINT_DEBUG(3, print1dVector(rotatedXYZCorners, "Rotated XYZ Corners:\n", ""));
                 sortXYZCorners(rotatedXYZCorners, sortedXYZCorners);
                 PRINT_DEBUG(3, print1dVector(sortedXYZCorners, "Sorted XYZ Corners:\n", ""));
@@ -1578,14 +1555,9 @@ ControlUINode::getPTargetPoints(const pGrid &g, const vector<float> & plane,
                 objPoints.push_back(center);
                 completeObjPoints.push_back(objPoints);
                 Mat objPoints_mat(9,1, CV_64FC3);
-                Mat objPoints_matrix(9, 3, CV_64F);
-                Mat objPoints_matrix_pass(9, 1, CV_64FC3);
                 for(int i=0; i<9; i++)
                 {
                     objPoints_mat.at<Point3d>(i,0) = objPoints[i];
-                    objPoints_matrix.at<double>(i, 0) = objPoints[i].x;
-                    objPoints_matrix.at<double>(i, 1) = objPoints[i].y;
-                    objPoints_matrix.at<double>(i, 2) = objPoints[i].z;
                 }
                 PRINT_DEBUG(3, "Object Points:\n" << objPoints << "\n");
                 // [MGP]Dont know but we have to call undistortPoints as a dummy call
@@ -1595,30 +1567,6 @@ ControlUINode::getPTargetPoints(const pGrid &g, const vector<float> & plane,
                 //
                 Mat rot_guess = Mat::eye(3,3, CV_64F);
                 PRINT_DEBUG(3, "Rotation guess:\n" << rot_guess << "\n");
-                /*rot_guess.at<double>(0,0) = cos(yaw);
-                rot_guess.at<double>(0,2) = -sin(yaw);
-                rot_guess.at<double>(2,0) = sin(yaw);
-                rot_guess.at<double>(2,2) = cos(yaw);*/
-                Mat rotation = Mat::eye(3, 3, CV_64F);
-                rotation.at<double>(0, 0) = cos(yaw);
-                rotation.at<double>(0, 2) = -sin(yaw);
-                rotation.at<double>(2, 0) = sin(yaw);
-                rotation.at<double>(2, 2) = cos(yaw);
-                PRINT_DEBUG(3, "Rotation matrix to bring normal:\n" << rotation << "\n");
-                Mat rot_objPoints_mat = rotation.inv()*objPoints_matrix.t();
-                for(int j=0; j<9; j++)
-                {
-                    objPoints_matrix_pass.at<Point3d>(j,0) = \
-                    Point3d(rot_objPoints_mat.at<double>(0,j), 
-                            rot_objPoints_mat.at<double>(1,j),
-                            rot_objPoints_mat.at<double>(2,j));
-                    if (j==8)
-                    {
-                        center = Point3d(rot_objPoints_mat.at<double>(0,j), 
-                                    rot_objPoints_mat.at<double>(1,j),
-                                    rot_objPoints_mat.at<double>(2,j));
-                    }
-                }
                 Rodrigues(rot_guess, rvec);
                 /*tvec.at<double>(0)  = -(center.x-0.6*plane[0]);
                 tvec.at<double>(1)  = -(center.y+0.6*plane[2]);
@@ -1630,7 +1578,7 @@ ControlUINode::getPTargetPoints(const pGrid &g, const vector<float> & plane,
                 // 
                 // solvePnPRansac(objPoints_mat, imgPoints_mat, cameraMatrix, distCoeffs, rvec, tvec);//, true, CV_ITERATIVE);
                 // solvePnP(objPoints_mat, imgPoints_mat, cameraMatrix, distCoeffs, rvec, tvec, true, CV_ITERATIVE);
-                solvePnP(objPoints_matrix_pass, imgPoints_mat, cameraMatrix, distCoeffs, rvec, tvec, true, CV_ITERATIVE);
+                solvePnP(objPoints_mat, imgPoints_mat, cameraMatrix, distCoeffs, rvec, tvec, true, CV_ITERATIVE);
                 // 
                 Mat rot(3, 3, DataType<double>::type);
                 Rodrigues(rvec, rot);
@@ -1647,18 +1595,18 @@ ControlUINode::getPTargetPoints(const pGrid &g, const vector<float> & plane,
                 PRINT_DEBUG(3, "Final Result:\n" << final_result << "\n");
                 // 
                 vector<double> pt;
-                pt.push_back(final_result.at<double>(0));
-                pt.push_back(final_result.at<double>(2));
-                pt.push_back(-final_result.at<double>(1));
+                pt.push_back(tvec.at<double>(0));
+                pt.push_back(tvec.at<double>(2));
+                pt.push_back(-tvec.at<double>(1));
                 PRINT_DEBUG(3, print1dVector(pt, "Pt one: ", ""));
                 tPoints.push_back(pt);
                 // 
-                pt.clear();
+                /*pt.clear();
                 pt.push_back(gs.u + (gs.width/2));
-                pt.push_back(final_result.at<double>(2));
+                pt.push_back(tvec.at<double>(2));
                 pt.push_back(gs.v - (gs.height/2));
                 PRINT_DEBUG(3, print1dVector(pt, "Pt two: ", ""));
-                tPoints_z.push_back(pt);
+                tPoints_z.push_back(pt);*/
             }
         }
         forward = !forward;
@@ -1676,13 +1624,32 @@ ControlUINode::getPTargetPoints(const pGrid &g, const vector<float> & plane,
     PRINT_DEBUG(3, "Numrows: " << numRows << "\n");
     PRINT_DEBUG(3, print1dVector(numColsPerRow, "Number of cols per row:\n", ""));
     sortTargetPoints(numRows, numColsPerRow, tPoints, sortedTPoints);
-    // PRINT_LOG(1, "Target Points\n\n");
-    // print3dPoints(sortedTPoints);
     PRINT_LOG(1, print2dVector(sortedTPoints, "Sorted LOG Target points:\n", ""));
+    PRINT_DEBUG(3, "Number of SortedTPoints: " << sortedTPoints.size() << "\n");
+    PRINT_DEBUG(3, "SortedTPoints size: " << sortedTPoints[0].size() << "\n");
+    vector<Point3d> sortedTPointsVec, rotSortedTPointsVec;
+    for(unsigned int i = 0; i < sortedTPoints.size(); i++)
+    {
+        sortedTPointsVec.push_back(Point3d(sortedTPoints[i][0], sortedTPoints[i][1], sortedTPoints[i][2]));
+    }
+    rotate3dPoints(sortedTPointsVec, rotation, rotSortedTPointsVec);
+    vector< vector<double> > finalSortTPoints;
+    clear2dVector(finalSortTPoints);
+    vector<double> finalSortTPoint;
+    for(unsigned int i = 0; i < rotSortedTPointsVec.size(); i++)
+    {
+        finalSortTPoint.clear();
+        finalSortTPoint.push_back(rotSortedTPointsVec[i].x);
+        finalSortTPoint.push_back(rotSortedTPointsVec[i].y);
+        finalSortTPoint.push_back(rotSortedTPointsVec[i].z);
+        finalSortTPoints.push_back(finalSortTPoint);
+    }
+    finalSortTPoint.clear();
     string filename = "/home/sonapraneeth/plane"+to_string(plane_no+1)+"_map";
-    PRINT_LOG(1, "Writing " << sortedTPoints.size() << " points to file: " << filename << "\n");
-    write3DPointsToCSV(sortedTPoints, filename);
+    PRINT_LOG(1, "Writing " << finalSortTPoints.size() << " points to file: " << filename << "\n");
+    write3DPointsToCSV(finalSortTPoints, filename);
     PRINT_LOG(1, "Completed.\n");
+    clear2dVector(finalSortTPoints);
 }
 
 void

@@ -1469,15 +1469,13 @@ copyVector(const vector<T> vec1, vector<T> &vec2)
 }
 
 inline static void
-rotate3dPoints(const vector<Point3f> &_3d_points, double yaw,
+rotate3fPoints(const vector<Point3f> &_3d_points, const Mat &rotation,
 					vector<Point3f> &_rotated_3d_points )
 {
-    Mat rotation = Mat::eye(3, 3, CV_32F);
-    rotation.at<float>(0, 0) = cos(yaw);
-    rotation.at<float>(0, 2) = -sin(yaw);
-    rotation.at<float>(2, 0) = sin(yaw);
-    rotation.at<float>(2, 2) = cos(yaw);
+    Mat float_rotation(rotation.rows, rotation.cols, CV_32F);
+    rotation.convertTo(float_rotation, CV_32F);
     PRINT_DEBUG(3, "Rotation matrix to bring normal:\n" << rotation << "\n");
+    PRINT_DEBUG(3, "Rotation matrix to bring normal:\n" << float_rotation << "\n");
     Mat _3d_points_matrix((int)_3d_points.size(), 3, CV_32F);
     for(unsigned int i = 0; i < _3d_points.size(); i++)
     {
@@ -1486,7 +1484,11 @@ rotate3dPoints(const vector<Point3f> &_3d_points, double yaw,
         _3d_points_matrix.at<float>(i, 2) = _3d_points[i].z;
     }
     PRINT_DEBUG(3, "Object Points:\n" << _3d_points_matrix << "\n");
-    Mat rot_3d_points_matrix = rotation.inv()*_3d_points_matrix.t();
+    PRINT_DEBUG(3, "Rotation matrix dimension: (" << float_rotation.rows << ", " << float_rotation.cols << ")\n");
+    PRINT_DEBUG(3, "Points matrix dimension: (" << _3d_points_matrix.rows << ", " << _3d_points_matrix.cols << ")\n");
+    PRINT_DEBUG(3, float_rotation.inv() << "\n"); cout << "\n";
+    PRINT_DEBUG(3, _3d_points_matrix.t() << "\n");
+    Mat rot_3d_points_matrix = float_rotation.inv()*_3d_points_matrix.t();
     _rotated_3d_points.clear();
     for(unsigned int j = 0; j < _3d_points.size(); j++)
     {
@@ -1494,6 +1496,38 @@ rotate3dPoints(const vector<Point3f> &_3d_points, double yaw,
                         Point3f(rot_3d_points_matrix.at<float>(0, j), 
                             rot_3d_points_matrix.at<float>(1, j),
                             rot_3d_points_matrix.at<float>(2, j)));
+    }
+    return ;
+}
+
+inline static void
+rotate3dPoints(const vector<Point3d> &_3d_points, const Mat &rotation,
+					vector<Point3d> &_rotated_3d_points )
+{
+    Mat double_rotation(rotation.rows, rotation.cols, CV_64F);
+    rotation.convertTo(double_rotation, CV_64F);
+    PRINT_DEBUG(3, "Rotation matrix to bring normal:\n" << rotation << "\n");
+    PRINT_DEBUG(3, "Rotation matrix to bring normal:\n" << double_rotation << "\n");
+    Mat _3d_points_matrix((int)_3d_points.size(), 3, CV_64F);
+    for(unsigned int i = 0; i < _3d_points.size(); i++)
+    {
+        _3d_points_matrix.at<double>(i, 0) = _3d_points[i].x;
+        _3d_points_matrix.at<double>(i, 1) = _3d_points[i].y;
+        _3d_points_matrix.at<double>(i, 2) = _3d_points[i].z;
+    }
+    PRINT_DEBUG(3, "Object Points:\n" << _3d_points_matrix << "\n");
+    PRINT_DEBUG(3, "Rotation matrix dimension: (" << double_rotation.rows << ", " << double_rotation.cols << ")\n");
+    PRINT_DEBUG(3, "Points matrix dimension: (" << _3d_points_matrix.rows << ", " << _3d_points_matrix.cols << ")\n");
+    PRINT_DEBUG(3, double_rotation.inv() << "\n\n");
+    PRINT_DEBUG(3, _3d_points_matrix.t() << "\n");
+    Mat rot_3d_points_matrix = double_rotation.inv()*_3d_points_matrix.t();
+    _rotated_3d_points.clear();
+    for(unsigned int j = 0; j < _3d_points.size(); j++)
+    {
+        _rotated_3d_points.push_back(
+                        Point3d(rot_3d_points_matrix.at<double>(0, j), 
+                            rot_3d_points_matrix.at<double>(1, j),
+                            rot_3d_points_matrix.at<double>(2, j)));
     }
     return ;
 }
