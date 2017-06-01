@@ -1326,7 +1326,7 @@ ControlUINode::buildPGrid(const vector<Point2f> &uvCoordinates)
 void
 ControlUINode::getPTargetPoints(const pGrid &g, const vector<float> & plane,
                                 int plane_no, const vector<Point3f> &uvAxes,
-                                vector< vector<double> > &sortedTPoints)
+                                vector< vector<double> > &finalSortTPoints)
 {
     PRINT_LOG(1, "Started.\n");
     PRINT_DEBUG(3, "Inputs\n");
@@ -1354,6 +1354,7 @@ ControlUINode::getPTargetPoints(const pGrid &g, const vector<float> & plane,
     for(int i = 0; i < 9; i++)
         imgPoints_mat.at<Point2d>(i,0) = imgPoints[i];
     PRINT_DEBUG(3, "Image Points:\n" << imgPoints_mat << "\n");
+    vector< vector<double> > sortedTPoints;
     // Camera Matrix
     Mat cameraMatrix(3, 3, DataType<double>::type);
     // Setting camera matrix for vga quality
@@ -1434,15 +1435,20 @@ ControlUINode::getPTargetPoints(const pGrid &g, const vector<float> & plane,
                 Point3d corner3 = Point3d(sortedXYZCorners[2].x, -sortedXYZCorners[2].z, sortedXYZCorners[2].y);
                 Point3d corner4 = Point3d(sortedXYZCorners[3].x, -sortedXYZCorners[3].z, sortedXYZCorners[3].y);
                 Point3d mid1 = (corner1 + corner2)*0.5;
-                mid1.z = getY(mid1.x, -mid1.y, plane);
+                // mid1.z = getY(mid1.x, -mid1.y, plane);
+                mid1.z = corner1.z;
                 Point3d mid2 = (corner2 + corner3)*0.5;
-                mid2.z = getY(mid2.x, -mid2.y, plane);
+                // mid2.z = getY(mid2.x, -mid2.y, plane);
+                mid2.z = corner1.z;
                 Point3d mid3 = (corner3 + corner4)*0.5;
-                mid3.z = getY(mid3.x, -mid3.y, plane);
+                // mid3.z = getY(mid3.x, -mid3.y, plane);
+                mid3.z = corner1.z;
                 Point3d mid4 = (corner4 + corner1)*0.5;
-                mid4.z = getY(mid4.x, -mid4.y, plane);
+                // mid4.z = getY(mid4.x, -mid4.y, plane);
+                mid4.z = corner1.z;
                 Point3d center = (mid1 + mid3)*0.5;
-                center.z = getY(center.x, -center.y,plane);
+                // center.z = getY(center.x, -center.y,plane);
+                center.z = corner1.z;
                 PRINT_DEBUG(3, "Center: " << center << "\n");
                 PRINT_DEBUG(3, print1dVector(plane, "Plane normal: ", ""));
                 // 
@@ -1537,15 +1543,20 @@ ControlUINode::getPTargetPoints(const pGrid &g, const vector<float> & plane,
                 Point3d corner4 = Point3d(sortedXYZCorners[3].x, -sortedXYZCorners[3].z, sortedXYZCorners[3].y);
                 // 
                 Point3d mid1 = (corner1 + corner2)*0.5;
-                mid1.z = getY(mid1.x, -mid1.y, plane);
+                // mid1.z = getY(mid1.x, -mid1.y, plane);
+                mid1.z = corner1.z;
                 Point3d mid2 = (corner2 + corner3)*0.5;
-                mid2.z = getY(mid2.x, -mid2.y, plane);
+                // mid2.z = getY(mid2.x, -mid2.y, plane);
+                mid2.z = corner1.z;
                 Point3d mid3 = (corner3 + corner4)*0.5;
-                mid3.z = getY(mid3.x, -mid3.y, plane);
+                // mid3.z = getY(mid3.x, -mid3.y, plane);
+                mid3.z = corner1.z;
                 Point3d mid4 = (corner4 + corner1)*0.5;
-                mid4.z = getY(mid4.x, -mid4.y, plane);
+                // mid4.z = getY(mid4.x, -mid4.y, plane);
+                mid4.z = corner4.z;
                 Point3d center = (mid1 + mid3)*0.5;
-                center.z = getY(center.x, -center.y,plane);
+                // center.z = getY(center.x, -center.y,plane);
+                center.z = corner1.z;
                 PRINT_DEBUG(3, "Center: " << center << "\n");
                 PRINT_DEBUG(3, print1dVector(plane, "Plane normal: ", ""));
                 // 
@@ -1638,7 +1649,7 @@ ControlUINode::getPTargetPoints(const pGrid &g, const vector<float> & plane,
         sortedTPointsVec.push_back(Point3d(sortedTPoints[i][0], sortedTPoints[i][1], sortedTPoints[i][2]));
     }
     rotate3dPoints(sortedTPointsVec, rotation.inv(), rotSortedTPointsVec);
-    vector< vector<double> > finalSortTPoints;
+    // vector< vector<double> > finalSortTPoints;
     clear2dVector(finalSortTPoints);
     vector<double> finalSortTPoint;
     for(unsigned int i = 0; i < rotSortedTPointsVec.size(); i++)
@@ -1654,7 +1665,6 @@ ControlUINode::getPTargetPoints(const pGrid &g, const vector<float> & plane,
     PRINT_LOG(1, "Writing " << finalSortTPoints.size() << " points to file: " << filename << "\n");
     write3DPointsToCSV(finalSortTPoints, filename);
     PRINT_LOG(1, "Completed.\n");
-    clear2dVector(finalSortTPoints);
 }
 
 void
