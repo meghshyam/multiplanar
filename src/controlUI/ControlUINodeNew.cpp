@@ -1388,8 +1388,15 @@ ControlUINode::getPTargetPoints(const pGrid &g, const vector<float> & plane,
     clear2dVector(completeObjPoints);
     Point3f projectedNormal(plane[0], plane[1], 0);
     Point3f yAxis(0, 1, 0);
+    // Calculate the yaw of the rotation of the plane
+    double yaw = findAngle(projectedNormal, yAxis);
+    yaw = -yaw;
+    PRINT_DEBUG(3, "yaw in radians: " << yaw << "\n");
+    PRINT_DEBUG(3, "yaw in degrees: " << ((yaw*180)/M_PI) << "\n");
     // Whether the drone is moving forward or backward (left to right or right to left)
     bool forward = true; // Need to iterate forward or backward
+    vector<Point2f> uvCorners;
+    vector<Point3f> xyzCorners, rotatedXYZCorners, sortedXYZCorners;
     for(unsigned int i = 0; i < g.rowSquares.size()-1; i++)
     {
         if(forward)
@@ -1401,10 +1408,15 @@ ControlUINode::getPTargetPoints(const pGrid &g, const vector<float> & plane,
                 objPoints.clear();
                 pGridSquare gs = g.rowSquares[i][j];
                 vector<Point2f> uvCorners;
-                vector<Point3f> xyzCorners, sortedXYZCorners;
+                vector<Point3f> xyzCorners, rotatedXYZCorners, sortedXYZCorners;
+                uvCorners.clear(); xyzCorners.clear();
+                rotatedXYZCorners.clear(); sortedXYZCorners.clear();
                 getGridSquareUVCorners(gs, uvCorners);
                 AllUVToXYZCoordinates(uvCorners, uvAxes, plane[3], xyzCorners);
-                sortXYZCorners(xyzCorners, sortedXYZCorners);
+                PRINT_DEBUG(3, print1dVector(xyzCorners, "XYZ Corners:\n", ""));
+                rotate3dPoints(xyzCorners, yaw, rotatedXYZCorners);
+                PRINT_DEBUG(3, print1dVector(rotatedXYZCorners, "Rotated XYZ Corners:\n", ""));
+                sortXYZCorners(rotatedXYZCorners, sortedXYZCorners);
                 PRINT_DEBUG(3, print1dVector(sortedXYZCorners, "Sorted XYZ Corners:\n", ""));
                 Point3d corner1 = Point3d(sortedXYZCorners[0].x, -sortedXYZCorners[0].z, sortedXYZCorners[0].y);
                 Point3d corner2 = Point3d(sortedXYZCorners[1].x, -sortedXYZCorners[1].z, sortedXYZCorners[1].y);
@@ -1449,11 +1461,7 @@ ControlUINode::getPTargetPoints(const pGrid &g, const vector<float> & plane,
                 // Something to do with older version of opencv which gets linked by mrpt
                 Mat dummy;
                 undistortPoints(imgPoints_mat, dummy, cameraMatrix, distCoeffs);
-
-                double yaw = findAngle(projectedNormal, yAxis);
-                yaw = -yaw;
-                PRINT_DEBUG(3, "yaw in radians: " << yaw << "\n");
-                PRINT_DEBUG(3, "yaw in degrees: " << ((yaw*180)/M_PI) << "\n");
+                //
                 Mat rot_guess = Mat::eye(3,3, CV_64F);
                 PRINT_DEBUG(3, "Rotation guess:\n" << rot_guess << "\n");
                 /*rot_guess.at<double>(0,0) = cos(yaw);
@@ -1531,12 +1539,15 @@ ControlUINode::getPTargetPoints(const pGrid &g, const vector<float> & plane,
                 //ROS_INFO("Accessing %dth square of %dth row", j, i);
                 objPoints.clear();
                 pGridSquare gs = g.rowSquares[i][j];
-                vector<Point2f> uvCorners;
-                vector<Point3f> xyzCorners, sortedXYZCorners;
+                uvCorners.clear(); xyzCorners.clear();
+                rotatedXYZCorners.clear(); sortedXYZCorners.clear();
                 getGridSquareUVCorners(gs, uvCorners);
                 AllUVToXYZCoordinates(uvCorners, uvAxes, plane[3], xyzCorners);
-                sortXYZCorners(xyzCorners, sortedXYZCorners);
-                cout << sortedXYZCorners << "\n";
+                PRINT_DEBUG(3, print1dVector(xyzCorners, "XYZ Corners:\n", ""));
+                rotate3dPoints(xyzCorners, yaw, rotatedXYZCorners);
+                PRINT_DEBUG(3, print1dVector(rotatedXYZCorners, "Rotated XYZ Corners:\n", ""));
+                sortXYZCorners(rotatedXYZCorners, sortedXYZCorners);
+                PRINT_DEBUG(3, print1dVector(sortedXYZCorners, "Sorted XYZ Corners:\n", ""));
                 // 
                 Point3d corner1 = Point3d(sortedXYZCorners[0].x, -sortedXYZCorners[0].z, sortedXYZCorners[0].y);
                 Point3d corner2 = Point3d(sortedXYZCorners[1].x, -sortedXYZCorners[1].z, sortedXYZCorners[1].y);
@@ -1581,11 +1592,7 @@ ControlUINode::getPTargetPoints(const pGrid &g, const vector<float> & plane,
                 // Something to do with older version of opencv which gets linked by mrpt
                 Mat dummy;
                 undistortPoints(imgPoints_mat, dummy, cameraMatrix, distCoeffs);
-
-                double yaw = findAngle(projectedNormal, yAxis);
-                yaw = -yaw;
-                PRINT_DEBUG(3, "yaw in radians: " << yaw << "\n");
-                PRINT_DEBUG(3, "yaw in degrees: " << ((yaw*180)/M_PI) << "\n");
+                //
                 Mat rot_guess = Mat::eye(3,3, CV_64F);
                 PRINT_DEBUG(3, "Rotation guess:\n" << rot_guess << "\n");
                 /*rot_guess.at<double>(0,0) = cos(yaw);
