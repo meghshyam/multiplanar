@@ -1393,12 +1393,17 @@ ControlUINode::getPTargetPoints(const pGrid &g, const vector<float> & plane,
     yaw = -yaw;
     PRINT_DEBUG(3, "yaw in radians: " << yaw << "\n");
     PRINT_DEBUG(3, "yaw in degrees: " << ((yaw*180)/M_PI) << "\n");
+    Mat rotation_cam = Mat::eye(3, 3, CV_64F);
+    rotation_cam.at<double>(0, 0) = cos(yaw);
+    rotation_cam.at<double>(0, 2) = -sin(yaw);
+    rotation_cam.at<double>(2, 0) = sin(yaw);
+    rotation_cam.at<double>(2, 2) = cos(yaw);
+    PRINT_DEBUG(3, "Rotation matrix to bring normal:\n" << rotation_cam << "\n");
     Mat rotation = Mat::eye(3, 3, CV_64F);
     rotation.at<double>(0, 0) = cos(yaw);
-    rotation.at<double>(0, 2) = -sin(yaw);
-    rotation.at<double>(2, 0) = sin(yaw);
-    rotation.at<double>(2, 2) = cos(yaw);
-    PRINT_DEBUG(3, "Rotation matrix to bring normal:\n" << rotation << "\n");
+    rotation.at<double>(0, 1) = -sin(yaw);
+    rotation.at<double>(1, 0) = sin(yaw);
+    rotation.at<double>(1, 1) = cos(yaw);
     // Whether the drone is moving forward or backward (left to right or right to left)
     bool forward = true; // Need to iterate forward or backward
     vector<Point2f> uvCorners;
@@ -1420,7 +1425,7 @@ ControlUINode::getPTargetPoints(const pGrid &g, const vector<float> & plane,
                 getGridSquareUVCorners(gs, uvCorners);
                 AllUVToXYZCoordinates(uvCorners, uvAxes, plane[3], xyzCorners);
                 PRINT_DEBUG(3, print1dVector(xyzCorners, "XYZ Corners:\n", ""));
-                rotate3fPoints(xyzCorners, rotation, rotatedXYZCorners);
+                rotate3fPoints(xyzCorners, rotation_cam, rotatedXYZCorners);
                 PRINT_DEBUG(3, print1dVector(rotatedXYZCorners, "Rotated XYZ Corners:\n", ""));
                 sortXYZCorners(rotatedXYZCorners, sortedXYZCorners);
                 PRINT_DEBUG(3, print1dVector(sortedXYZCorners, "Sorted XYZ Corners:\n", ""));
@@ -1489,7 +1494,7 @@ ControlUINode::getPTargetPoints(const pGrid &g, const vector<float> & plane,
                 // 
                 tvec = -rotinv * tvec;
                 PRINT_DEBUG(3, "Translation:\n" << tvec << "\n");
-                final_result = rotation*tvec;
+                final_result = rotation_cam*tvec;
                 PRINT_DEBUG(3, "Final Result:\n" << final_result << "\n");
                 // 
                 vector<double> pt;
@@ -1521,7 +1526,7 @@ ControlUINode::getPTargetPoints(const pGrid &g, const vector<float> & plane,
                 getGridSquareUVCorners(gs, uvCorners);
                 AllUVToXYZCoordinates(uvCorners, uvAxes, plane[3], xyzCorners);
                 PRINT_DEBUG(3, print1dVector(xyzCorners, "XYZ Corners:\n", ""));
-                rotate3fPoints(xyzCorners, rotation, rotatedXYZCorners);
+                rotate3fPoints(xyzCorners, rotation_cam.inv(), rotatedXYZCorners);
                 PRINT_DEBUG(3, print1dVector(rotatedXYZCorners, "Rotated XYZ Corners:\n", ""));
                 sortXYZCorners(rotatedXYZCorners, sortedXYZCorners);
                 PRINT_DEBUG(3, print1dVector(sortedXYZCorners, "Sorted XYZ Corners:\n", ""));
@@ -1591,7 +1596,7 @@ ControlUINode::getPTargetPoints(const pGrid &g, const vector<float> & plane,
                 // 
                 tvec = -rotinv * tvec;
                 PRINT_DEBUG(3, "Translation:\n" << tvec << "\n");
-                final_result = rotation*tvec;
+                final_result = rotation_cam*tvec;
                 PRINT_DEBUG(3, "Final Result:\n" << final_result << "\n");
                 // 
                 vector<double> pt;
@@ -1619,12 +1624,12 @@ ControlUINode::getPTargetPoints(const pGrid &g, const vector<float> & plane,
         numColsPerRow.push_back(n);
     }
     PRINT_LOG(3, "Printing Object points for plane " << plane_no << "\n");
-    PRINT_LOG(3, print2dVector(completeObjPoints, "Complete object points:\n", ""));
-    PRINT_LOG(1, print2dVector(tPoints, "LOG Target points:\n", ""));
+    PRINT_LOG(3, print2dVector(completeObjPoints, "Complete object points:\n", "matlab"));
+    PRINT_LOG(1, print2dVector(tPoints, "LOG Target points:\n", "matlab"));
     PRINT_DEBUG(3, "Numrows: " << numRows << "\n");
     PRINT_DEBUG(3, print1dVector(numColsPerRow, "Number of cols per row:\n", ""));
     sortTargetPoints(numRows, numColsPerRow, tPoints, sortedTPoints);
-    PRINT_LOG(1, print2dVector(sortedTPoints, "Sorted LOG Target points:\n", ""));
+    PRINT_LOG(1, print2dVector(sortedTPoints, "Sorted LOG Target points:\n", "matlab"));
     PRINT_DEBUG(3, "Number of SortedTPoints: " << sortedTPoints.size() << "\n");
     PRINT_DEBUG(3, "SortedTPoints size: " << sortedTPoints[0].size() << "\n");
     vector<Point3d> sortedTPointsVec, rotSortedTPointsVec;
@@ -1632,7 +1637,7 @@ ControlUINode::getPTargetPoints(const pGrid &g, const vector<float> & plane,
     {
         sortedTPointsVec.push_back(Point3d(sortedTPoints[i][0], sortedTPoints[i][1], sortedTPoints[i][2]));
     }
-    rotate3dPoints(sortedTPointsVec, rotation, rotSortedTPointsVec);
+    rotate3dPoints(sortedTPointsVec, rotation.inv(), rotSortedTPointsVec);
     vector< vector<double> > finalSortTPoints;
     clear2dVector(finalSortTPoints);
     vector<double> finalSortTPoint;
