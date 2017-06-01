@@ -1468,6 +1468,36 @@ copyVector(const vector<T> vec1, vector<T> &vec2)
 	return ;
 }
 
+inline static void
+rotate3dPoints(const vector<Point3f> &_3d_points, double yaw,
+					vector<Point3f> &_rotated_3d_points )
+{
+    Mat rotation = Mat::eye(3, 3, CV_32F);
+    rotation.at<float>(0, 0) = cos(yaw);
+    rotation.at<float>(0, 2) = -sin(yaw);
+    rotation.at<float>(2, 0) = sin(yaw);
+    rotation.at<float>(2, 2) = cos(yaw);
+    PRINT_DEBUG(3, "Rotation matrix to bring normal:\n" << rotation << "\n");
+    Mat _3d_points_matrix((int)_3d_points.size(), 3, CV_32F);
+    for(unsigned int i = 0; i < _3d_points.size(); i++)
+    {
+        _3d_points_matrix.at<float>(i, 0) = _3d_points[i].x;
+        _3d_points_matrix.at<float>(i, 1) = _3d_points[i].y;
+        _3d_points_matrix.at<float>(i, 2) = _3d_points[i].z;
+    }
+    PRINT_DEBUG(3, "Object Points:\n" << _3d_points_matrix << "\n");
+    Mat rot_3d_points_matrix = rotation.inv()*_3d_points_matrix.t();
+    _rotated_3d_points.clear();
+    for(unsigned int j = 0; j < _3d_points.size(); j++)
+    {
+        _rotated_3d_points.push_back(
+                        Point3f(rot_3d_points_matrix.at<float>(0, j), 
+                            rot_3d_points_matrix.at<float>(1, j),
+                            rot_3d_points_matrix.at<float>(2, j)));
+    }
+    return ;
+}
+
 /**
  * @brief Translates the fitted plane by the given distance along its normal toward origin
  * @details Currently not using
