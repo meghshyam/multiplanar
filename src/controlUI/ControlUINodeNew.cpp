@@ -1140,25 +1140,39 @@ ControlUINode::generatePathPoints(const vector<double> &startPosition,
     interm_point[3] = startPosition[3];
     double prevYaw = startPosition[3];
     double desiredYaw = endPosition[3];
+    PRINT_DEBUG(1, "Previous yaw: " << prevYaw << "\n");
+    PRINT_DEBUG(1, "Desired yaw: " << desiredYaw << "\n");
+    if (desiredYaw > 0 && prevYaw < 0 && fabs(180.0-desiredYaw) < 30.0)
+    {
+        desiredYaw = -179.0 - (180.0 - desiredYaw);
+    }
+    if (desiredYaw < 0 && prevYaw > 0 && fabs(-180.0-desiredYaw) < 30.0)
+    {
+        desiredYaw = 179.0 + (180.0 + desiredYaw);
+    }
+    PRINT_DEBUG(1, "Desired yaw: " << desiredYaw << "\n");
     PRINT_DEBUG(1, "Initial pathPoints size: " << pathPoints.size() << "\n");
     double angle;
     if(rotation)
     {
         PRINT_DEBUG(1, "With rotation\n");
         double angle_to_rotate = 4.0;
-        double angle_diff = fabs(endPosition[3]-startPosition[3]);
+        double angle_diff = fabs(desiredYaw-prevYaw);
         int num_steps = ceil(angle_diff/angle_to_rotate);
+        PRINT_DEBUG(1, "Angle difference: " << angle_diff << ", Number of steps: " << num_steps << "\n");
         for(int i = 0; i < num_steps; i++)
         {
             interm_point[0] = ((i+1)*endPosition[0] + (num_steps-i-1)*startPosition[0])/num_steps;
             interm_point[1] = ((i+1)*endPosition[1] + (num_steps-i-1)*startPosition[1])/num_steps;
             interm_point[2] = ((i+1)*endPosition[2] + (num_steps-i-1)*startPosition[2])/num_steps;
-            angle = ((i+1)*endPosition[3] + (num_steps-i-1)*startPosition[3])/num_steps;
+            angle = ((i+1)*desiredYaw + (num_steps-i-1)*prevYaw)/num_steps;
+            PRINT_DEBUG(1, "Previous angle: " << angle << "\n");
+            PRINT_DEBUG(1, "Status: " << (angle < -180.0) << ", " << (angle >= 180.0) << "\n");
             if(angle < -180.0)
             {
                 interm_point[3] = 360.0+angle;
             }
-            if(angle >= 180.0)
+            else if(angle >= 180.0)
             {
                 interm_point[3] = -360.0+angle;
             }
@@ -1166,6 +1180,7 @@ ControlUINode::generatePathPoints(const vector<double> &startPosition,
             {
                 interm_point[3] = angle;
             }
+            PRINT_DEBUG(1, "Correct angle: " << interm_point[3] << "\n");
             PRINT_DEBUG(1, print1dVector(interm_point, "Interim point: ", ""));
             pathPoints.push_back(interm_point);
         }
@@ -1183,7 +1198,7 @@ ControlUINode::generatePathPoints(const vector<double> &startPosition,
             }
             else
             {
-                interm_point[1] = (m*endPosition[1] + startPosition[1])/3;
+                interm_point[1] = (m*endPosition[1] + n*startPosition[1])/3;
             }
             interm_point[3] = prevYaw*(5-i)/5 + desiredYaw*i/5;
             PRINT_DEBUG(1, print1dVector(interm_point, "Interim point: ", ""));
