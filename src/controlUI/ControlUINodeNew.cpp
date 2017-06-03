@@ -828,7 +828,7 @@ ControlUINode::moveDroneBetweenPlanes(const vector<double> &previousPosition,
     vector< vector<double> > pathPoints;
     clear2dVector(pathPoints);
     vector<double> startPosition(4), endPosition(4);
-    float distance = -1.75;
+    float distance = -1.5;
     if (curr_coord_box_points.size() == 0 && curr_plane_parameters.size() == 0 && plane_index == 0)
     {
         PRINT_LOG(1, "You are currently adjusting for plane " << plane_index+1 << "\n");
@@ -989,10 +989,10 @@ ControlUINode::moveDroneBetweenPlanes(const vector<double> &previousPosition,
             PRINT_DEBUG(1, print1dVector(endPosition, "2.1 -> Ending position", ""));
             generatePathPoints(startPosition, endPosition, pathPoints, false);
             PRINT_DEBUG(1, "2.1 -> pathPoints size: " << pathPoints.size() << "\n");
-            startPosition[0] = curr_plane_midpoint_projection.x;
-            startPosition[1] = curr_plane_midpoint_projection.y;
-            startPosition[2] = curr_plane_midpoint_projection.z;
-            startPosition[3] = previousPosition[3];
+            startPosition[0] = endPosition[0];
+            startPosition[1] = endPosition[1];
+            startPosition[2] = endPosition[2];
+            startPosition[3] = endPosition[3];
             endPosition[0] = curr_plane_right_edge_midpoint_projection.x;
             endPosition[1] = curr_plane_right_edge_midpoint_projection.y;
             endPosition[2] = curr_plane_right_edge_midpoint_projection.z;
@@ -1028,7 +1028,7 @@ ControlUINode::moveDroneBetweenPlanes(const vector<double> &previousPosition,
         next_plane_midpoint.z += (next_coord_box_points[2].z+next_coord_box_points[3].z);
         next_plane_midpoint.z /= (4.0);
         //
-        // Get the next plane's left dege mid point
+        // Get the next plane's left edge mid point
         next_plane_left_edge_midpoint.x += (next_coord_box_points[0].x+next_coord_box_points[3].x);
         next_plane_left_edge_midpoint.x /= (2.0);
         next_plane_left_edge_midpoint.y += (next_coord_box_points[0].y+next_coord_box_points[3].y);
@@ -1051,10 +1051,11 @@ ControlUINode::moveDroneBetweenPlanes(const vector<double> &previousPosition,
         mid_plane_normal.z = intersection_point.z - curr_plane_right_edge_midpoint.z;
         PRINT_DEBUG(1, "Intersection point: " << intersection_point << "\n");
         PRINT_DEBUG(1, "Mid plane normal: " << mid_plane_normal << "\n");
-        Point3f yAxis(0.0f, 1.0f, 0.0f);
-        float angleBetweenPlanes = findAngle(next_plane_normal, yAxis), angle = 0.0f;
+        // Point3f yAxis(0.0f, 1.0f, 0.0f);
+        float angleBetweenPlanes = findAngle(next_plane_normal, curr_plane_normal);
+        float angle = 0.0f;
         PRINT_DEBUG(1, "Projected Normal: " << next_plane_normal << "\n");
-        PRINT_DEBUG(1, "Y axis: " << yAxis << "\n");
+        PRINT_DEBUG(1, "Current plane normal: " << curr_plane_normal << "\n");
         angle = angleBetweenPlanes/2;
         PRINT_DEBUG(1, "Halfway angle in radians: " << angle << "\n");
         float new_distance = distance/cos(angle);
@@ -1067,10 +1068,10 @@ ControlUINode::moveDroneBetweenPlanes(const vector<double> &previousPosition,
         path_mid_point.x = curr_plane_right_edge_midpoint.x + new_distance*mid_plane_normal.x;
         path_mid_point.y = curr_plane_right_edge_midpoint.y + new_distance*mid_plane_normal.y;
         path_mid_point.z = curr_plane_right_edge_midpoint.z + new_distance*mid_plane_normal.z;
-        startPosition[0] = curr_plane_right_edge_midpoint_projection.x;
-        startPosition[1] = curr_plane_right_edge_midpoint_projection.y;
-        startPosition[2] = curr_plane_right_edge_midpoint_projection.z;
-        startPosition[3] = previousPosition[3];
+        startPosition[0] = endPosition[0];
+        startPosition[1] = endPosition[1];
+        startPosition[2] = endPosition[2];
+        startPosition[3] = endPosition[3];
         endPosition[0] = path_mid_point.x;
         endPosition[1] = path_mid_point.y;
         endPosition[2] = path_mid_point.z;
@@ -1085,26 +1086,31 @@ ControlUINode::moveDroneBetweenPlanes(const vector<double> &previousPosition,
         next_plane_midpoint_projection.x = next_plane_midpoint.x + distance*next_plane_normal.x;
         next_plane_midpoint_projection.y = next_plane_midpoint.y + distance*next_plane_normal.y;
         next_plane_midpoint_projection.z = next_plane_midpoint.z + distance*next_plane_normal.z;
-        startPosition[0] = path_mid_point.x;
-        startPosition[1] = path_mid_point.y;
-        startPosition[2] = path_mid_point.z;
-        startPosition[3] = previousPosition[3];
+        Point3f yAxis(0.0f, 1.0f, 0.0f);
+        float finalAngle = findAngle(next_plane_normal, yAxis);
+        PRINT_DEBUG(1, "Angle to turn in radians: " << finalAngle << "\n");
+        finalAngle = finalAngle*180.0/M_PI;
+        PRINT_DEBUG(1, "Angle to turn in degrees: " << finalAngle << "\n");
+        startPosition[0] = endPosition[0];
+        startPosition[1] = endPosition[1];
+        startPosition[2] = endPosition[2];
+        startPosition[3] = endPosition[3];
         endPosition[0] = next_plane_left_edge_midpoint_projection.x;
         endPosition[1] = next_plane_left_edge_midpoint_projection.y;
         endPosition[2] = next_plane_left_edge_midpoint_projection.z;
-        endPosition[3] = angleBetweenPlanes;
+        endPosition[3] = finalAngle;
         PRINT_DEBUG(1, print1dVector(startPosition, "2.5 -> Starting position", ""));
         PRINT_DEBUG(1, print1dVector(endPosition, "2.5 -> Ending position", ""));
         generatePathPoints(startPosition, endPosition, pathPoints, true);
         PRINT_DEBUG(1, "2.5 -> pathPoints size: " << pathPoints.size() << "\n");
-        startPosition[0] = next_plane_left_edge_midpoint_projection.x;
-        startPosition[1] = next_plane_left_edge_midpoint_projection.y;
-        startPosition[2] = next_plane_left_edge_midpoint_projection.z;
-        startPosition[3] = angleBetweenPlanes;
+        startPosition[0] = endPosition[0];
+        startPosition[1] = endPosition[1];
+        startPosition[2] = endPosition[2];
+        startPosition[3] = endPosition[3];
         endPosition[0] = next_plane_midpoint_projection.x;
         endPosition[1] = next_plane_midpoint_projection.y;
         endPosition[2] = next_plane_midpoint_projection.z;
-        endPosition[3] = angleBetweenPlanes;
+        endPosition[3] = finalAngle;
         PRINT_DEBUG(1, print1dVector(startPosition, "2.6 -> Starting position", ""));
         PRINT_DEBUG(1, print1dVector(endPosition, "2.6 -> Ending position", ""));
         generatePathPoints(startPosition, endPosition, pathPoints, false);
