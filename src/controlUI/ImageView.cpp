@@ -356,7 +356,7 @@ ImageView::renderFrame()
 		{
 			vector<Point3f> planeBoundingBoxPoints = visitedBoundingBoxPoints[planeIndex];
 			vector< vector<int> > planePts2D;
-			glColor3f(0.0, 0.0, 0.0);
+			glColor3f(0.0, 1.0, 0.0);
 			glBegin(GL_LINE_STRIP);
 			vector<Point2f> imagePts;
 			node->project3DPointsOnImage(planeBoundingBoxPoints, imagePts);
@@ -702,11 +702,6 @@ ImageView::on_key_down(int key)
 		readPlaneInfo(filename, sortedPlaneParameters, boundingBoxPoints);
 		PRINT_LOG(1, print2dVector(sortedPlaneParameters, "Plane Parameters:\n", ""));
 		PRINT_LOG(1, print2dVector(boundingBoxPoints, "Bounding Box points:\n", ""));
-		// Get the continuoous bounding box points
-		clear2dVector(continuousBoundingBoxPoints);
-		// getContinuousBoundingBox (boundingBoxPoints, sortedPlaneParameters, continuousBoundingBoxPoints);
-		// PRINT_LOG(1, print2dVector(continuousBoundingBoxPoints, "Continuous Bounding Box points:\n", ""));
-		// Path planning: Cover multiple planes
 		if(renderRect)
 		{
 			renderRect = false;  // While moving the quadcopter we don't want bounding box to appear
@@ -715,9 +710,18 @@ ImageView::on_key_down(int key)
 		}
 		PRINT_LOG(1, "Rendering Visited Planes\n");
 		setRender(false, false, false, true);
+		// Get the continuoous bounding box points
+		clear2dVector(continuousBoundingBoxPoints);
+		// getContinuousBoundingBox (boundingBoxPoints, sortedPlaneParameters, continuousBoundingBoxPoints);
+		// PRINT_LOG(1, print2dVector(continuousBoundingBoxPoints, "Continuous Bounding Box points:\n", ""));
+		// Path planning: Cover multiple planes
 		// setVisitedBoundingBoxPoints(continuousBoundingBoxPoints);
 		setVisitedBoundingBoxPoints(boundingBoxPoints);
 		renderFrame();
+		for (unsigned int i = 0; i < boundingBoxPoints.size(); ++i)
+		{
+			boundingBoxPoints[i].pop_back();
+		}
 		PRINT_LOG(1, "Calling moveQuadcopter()\n");
 		node->moveQuadcopter(sortedPlaneParameters, boundingBoxPoints);
 	}
@@ -1076,7 +1080,7 @@ ImageView::readPlaneInfo(string filename,
 			}
 			if(!line.empty() && line.compare(box_string)==0)
 			{
-				for (int i = 1; i <= 4; ++i)
+				for (int i = 1; i <= 5; ++i)
 				{
 					getline(plane_info, line);
 					split(line, copyVector);
