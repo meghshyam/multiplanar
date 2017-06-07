@@ -771,6 +771,9 @@ class ControlUINode
                                const vector<float> &next_plane_parameters, int plane_index);
 
         void
+        getBackTheDrone(vector< vector<double> > &path_points);
+
+        void
         generatePathPoints(const vector<double> &startPosition, 
                            const vector<double> &endPosition,
                            vector< vector<double> > &pathPoints,

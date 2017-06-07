@@ -817,6 +817,189 @@ ControlUINode::moveQuadcopter(const vector< vector<float> > &planeParameters,
 }
 
 void
+ControlUINode::getBackTheDrone(vector< vector<double> > &pathPoints)
+{
+    PRINT_LOG(1, "Started\n");
+    string filename = "Plane_Info.txt";
+    vector< vector<float> > sortedPlaneParameters;
+    vector< vector<Point3f> > boundingBoxPoints;
+    image_gui->readPlaneInfo(filename, sortedPlaneParameters, boundingBoxPoints);
+    PRINT_LOG(1, print2dVector(sortedPlaneParameters, "Plane Parameters:\n", ""));
+    PRINT_LOG(1, print2dVector(boundingBoxPoints, "Bounding Box points:\n", ""));
+    
+    clear2dVector(pathPoints);
+    vector<double> startPosition(4), endPosition(4);
+    float distance = -1.5;
+    for(unsigned int plane_no = sortedPlaneParameters.size()-1; plane_no > 0; plane_no--)
+    {
+        Point3f curr_plane_normal, next_plane_normal;
+        curr_plane_normal.x = sortedPlaneParameters[plane_no][0];
+        curr_plane_normal.y = sortedPlaneParameters[plane_no][1];
+        curr_plane_normal.z = sortedPlaneParameters[plane_no][2];
+        next_plane_normal.x = sortedPlaneParameters[plane_no-1][0];
+        next_plane_normal.y = sortedPlaneParameters[plane_no-1][1];
+        next_plane_normal.z = sortedPlaneParameters[plane_no-1][2];
+        Point3f yAxis(0.0f, 1.0f, 0.0f);
+        Point3f currProjectedNormal(curr_plane_normal.x, curr_plane_normal.y, 0);
+        Point3f nextProjectedNormal(next_plane_normal.x, next_plane_normal.y, 0);
+        double currYaw = findAngle(currProjectedNormal, yAxis);
+        double nextYaw = findAngle(nextProjectedNormal, yAxis);
+        currYaw = currYaw*180/M_PI;
+        nextYaw = nextYaw*180/M_PI;
+        float angle_between_planes = findAngle(next_plane_normal, curr_plane_normal);
+        PRINT_DEBUG(1, "Angle to turn in radians: " << angle_between_planes << "\n");
+        angle_between_planes = angle_between_planes*180.0/M_PI;
+        PRINT_DEBUG(1, "Angle to turn in degrees: " << angle_between_planes << "\n");
+        PRINT_DEBUG(1, "Angle to turn in degrees for current plane: " << currYaw << "\n");
+        PRINT_DEBUG(1, "Angle to turn in degrees for next plane: " << nextYaw << "\n");
+        Point3f next_plane_midpoint(0.0f, 0.0f, 0.0f), next_plane_right_edge_midpoint(0.0f, 0.0f, 0.0f);
+        Point3f curr_plane_midpoint(0.0f, 0.0f, 0.0f), curr_plane_left_edge_midpoint(0.0f, 0.0f, 0.0f);
+        // Get the current plane's mid point
+        curr_plane_midpoint.x += (boundingBoxPoints[plane_no][0].x+boundingBoxPoints[plane_no][1].x);
+        curr_plane_midpoint.x += (boundingBoxPoints[plane_no][2].x+boundingBoxPoints[plane_no][3].x);
+        curr_plane_midpoint.x /= (4.0);
+        curr_plane_midpoint.y += (boundingBoxPoints[plane_no][0].y+boundingBoxPoints[plane_no][1].y);
+        curr_plane_midpoint.y += (boundingBoxPoints[plane_no][2].y+boundingBoxPoints[plane_no][3].y);
+        curr_plane_midpoint.y /= (4.0);
+        curr_plane_midpoint.z += (boundingBoxPoints[plane_no][0].z+boundingBoxPoints[plane_no-1][1].z);
+        curr_plane_midpoint.z += (boundingBoxPoints[plane_no][2].z+boundingBoxPoints[plane_no-1][3].z);
+        curr_plane_midpoint.z /= (4.0);
+        //
+        next_plane_midpoint.x += (boundingBoxPoints[plane_no-1][0].x+boundingBoxPoints[plane_no-1][1].x);
+        next_plane_midpoint.x += (boundingBoxPoints[plane_no-1][2].x+boundingBoxPoints[plane_no-1][3].x);
+        next_plane_midpoint.x /= (4.0);
+        next_plane_midpoint.y += (boundingBoxPoints[plane_no-1][0].y+boundingBoxPoints[plane_no-1][1].y);
+        next_plane_midpoint.y += (boundingBoxPoints[plane_no-1][2].y+boundingBoxPoints[plane_no-1][3].y);
+        next_plane_midpoint.y /= (4.0);
+        next_plane_midpoint.z += (boundingBoxPoints[plane_no-1][0].z+boundingBoxPoints[plane_no-1][1].z);
+        next_plane_midpoint.z += (boundingBoxPoints[plane_no-1][2].z+boundingBoxPoints[plane_no-1][3].z);
+        next_plane_midpoint.z /= (4.0);
+        PRINT_DEBUG(1, "Current plane midpoint: " << curr_plane_midpoint << "\n");
+        PRINT_DEBUG(1, "Next plane midpoint: " << next_plane_midpoint << "\n");
+        next_plane_right_edge_midpoint.x += (boundingBoxPoints[plane_no-1][1].x+boundingBoxPoints[plane_no-1][2].x);
+        next_plane_right_edge_midpoint.x /= (2.0);
+        next_plane_right_edge_midpoint.y += (boundingBoxPoints[plane_no-1][1].y+boundingBoxPoints[plane_no-1][2].y);
+        next_plane_right_edge_midpoint.y /= (2.0);
+        next_plane_right_edge_midpoint.z += (boundingBoxPoints[plane_no-1][1].z+boundingBoxPoints[plane_no-1][2].z);
+        next_plane_right_edge_midpoint.z /= (2.0);
+        //
+        curr_plane_left_edge_midpoint.x += (boundingBoxPoints[plane_no][0].x+boundingBoxPoints[plane_no][3].x);
+        curr_plane_left_edge_midpoint.x /= (2.0);
+        curr_plane_left_edge_midpoint.y += (boundingBoxPoints[plane_no][0].y+boundingBoxPoints[plane_no][3].y);
+        curr_plane_left_edge_midpoint.y /= (2.0);
+        curr_plane_left_edge_midpoint.z += (boundingBoxPoints[plane_no][0].z+boundingBoxPoints[plane_no][3].z);
+        curr_plane_left_edge_midpoint.z /= (2.0);
+        Point3f next_plane_right_edge_midpoint_projection(0.0f, 0.0f, 0.0f);
+        Point3f next_plane_midpoint_projection(0.0f, 0.0f, 0.0f);
+        Point3f curr_plane_left_edge_midpoint_projection(0.0f, 0.0f, 0.0f);
+        Point3f curr_plane_midpoint_projection(0.0f, 0.0f, 0.0f);
+        Point3f midway_projection(0.0f, 0.0f, 0.0f);
+        next_plane_right_edge_midpoint_projection.x = next_plane_right_edge_midpoint.x + distance*next_plane_normal.x;
+        next_plane_right_edge_midpoint_projection.y = next_plane_right_edge_midpoint.y + distance*next_plane_normal.y;
+        next_plane_right_edge_midpoint_projection.z = next_plane_right_edge_midpoint.z + distance*next_plane_normal.z;
+        next_plane_midpoint_projection.x = next_plane_midpoint.x + distance*next_plane_normal.x;
+        next_plane_midpoint_projection.y = next_plane_midpoint.y + distance*next_plane_normal.y;
+        next_plane_midpoint_projection.z = next_plane_midpoint.z + distance*next_plane_normal.z;
+        curr_plane_left_edge_midpoint_projection.x = curr_plane_left_edge_midpoint.x + distance*curr_plane_normal.x;
+        curr_plane_left_edge_midpoint_projection.y = curr_plane_left_edge_midpoint.y + distance*curr_plane_normal.y;
+        curr_plane_left_edge_midpoint_projection.z = curr_plane_left_edge_midpoint.z + distance*curr_plane_normal.z;
+        curr_plane_midpoint_projection.x = curr_plane_midpoint.x + distance*curr_plane_normal.x;
+        curr_plane_midpoint_projection.y = curr_plane_midpoint.y + distance*curr_plane_normal.y;
+        curr_plane_midpoint_projection.z = curr_plane_midpoint.z + distance*curr_plane_normal.z;
+        float lambda = (next_plane_midpoint.x - curr_plane_midpoint.x)*curr_plane_normal.y - 
+                            (next_plane_midpoint.y - curr_plane_midpoint.y)*curr_plane_normal.x;
+        float denominator = (curr_plane_normal.x * next_plane_normal.y) - 
+                            (curr_plane_normal.y * next_plane_normal.x);
+        lambda = lambda / denominator;
+        float t = ((next_plane_normal.x * lambda) + next_plane_midpoint.x - curr_plane_midpoint.x) / curr_plane_normal.x;
+        Point3f intersection_point(0.0f, 0.0f, 0.0f), mid_plane_normal(0.0f, 0.0f, 0.0f);
+        intersection_point.x = (curr_plane_normal.x * t) + curr_plane_midpoint.x;
+        intersection_point.y = (curr_plane_normal.y * t) + curr_plane_midpoint.y;
+        intersection_point.z = (curr_plane_normal.z * t) + curr_plane_midpoint.z;
+        mid_plane_normal.x = intersection_point.x - curr_plane_left_edge_midpoint.x;
+        mid_plane_normal.y = intersection_point.y - curr_plane_left_edge_midpoint.y;
+        mid_plane_normal.z = intersection_point.z - curr_plane_left_edge_midpoint.z;
+        PRINT_DEBUG(1, "Intersection point: " << intersection_point << "\n");
+        PRINT_DEBUG(1, "Current plane normal: " << curr_plane_normal << "\n");
+        PRINT_DEBUG(1, "Mid plane normal: " << mid_plane_normal << "\n");
+        PRINT_DEBUG(1, "Next plane Normal: " << next_plane_normal << "\n");
+        midway_projection.x = curr_plane_left_edge_midpoint.x + distance*mid_plane_normal.x;
+        midway_projection.y = curr_plane_left_edge_midpoint.y + distance*mid_plane_normal.y;
+        midway_projection.z = curr_plane_left_edge_midpoint.z + distance*mid_plane_normal.z;
+        if (plane_no == sortedPlaneParameters.size()-1)
+        {
+            if(testing_code)
+            {
+                getCurrentPositionOfDrone();
+                startPosition[0] = _node_current_pos_of_drone[0];
+                startPosition[1] = _node_current_pos_of_drone[1];
+                startPosition[2] = _node_current_pos_of_drone[2];
+                startPosition[3] = _node_current_pos_of_drone[3];
+                endPosition[0] = curr_plane_midpoint_projection.x;
+                endPosition[1] = curr_plane_midpoint_projection.y;
+                endPosition[2] = curr_plane_midpoint_projection.z;
+                endPosition[3] = currYaw;
+                PRINT_DEBUG(1, print1dVector(startPosition, "0.1 -> Starting position", ""));
+                PRINT_DEBUG(1, print1dVector(endPosition, "0.1 -> Ending position", ""));
+                generatePathPoints(startPosition, endPosition, pathPoints, false);
+                PRINT_DEBUG(1, "0.1 -> pathPoints size: " << pathPoints.size() << "\n");
+            }
+        }
+        startPosition[0] = curr_plane_midpoint_projection.x;
+        startPosition[1] = curr_plane_midpoint_projection.y;
+        startPosition[2] = curr_plane_midpoint_projection.z;
+        startPosition[3] = currYaw;
+        endPosition[0] = curr_plane_left_edge_midpoint_projection.x;
+        endPosition[1] = curr_plane_left_edge_midpoint_projection.y;
+        endPosition[2] = curr_plane_left_edge_midpoint_projection.z;
+        endPosition[3] = currYaw;
+        PRINT_DEBUG(1, print1dVector(startPosition, "0.2 -> Starting position", ""));
+        PRINT_DEBUG(1, print1dVector(endPosition, "0.2 -> Ending position", ""));
+        generatePathPoints(startPosition, endPosition, pathPoints, false);
+        PRINT_DEBUG(1, "0.2 -> pathPoints size: " << pathPoints.size() << "\n");
+        startPosition[0] = endPosition[0];
+        startPosition[1] = endPosition[1];
+        startPosition[2] = endPosition[2];
+        startPosition[3] = endPosition[3];
+        endPosition[0] = midway_projection.x;
+        endPosition[1] = midway_projection.y;
+        endPosition[2] = midway_projection.z;
+        endPosition[3] = currYaw;
+        PRINT_DEBUG(1, print1dVector(startPosition, "0.3 -> Starting position", ""));
+        PRINT_DEBUG(1, print1dVector(endPosition, "0.3 -> Ending position", ""));
+        generatePathPoints(startPosition, endPosition, pathPoints, false);
+        PRINT_DEBUG(1, "0.3 -> pathPoints size: " << pathPoints.size() << "\n");
+        startPosition[0] = endPosition[0];
+        startPosition[1] = endPosition[1];
+        startPosition[2] = endPosition[2];
+        startPosition[3] = endPosition[3];
+        endPosition[0] = next_plane_right_edge_midpoint_projection.x;
+        endPosition[1] = next_plane_right_edge_midpoint_projection.y;
+        endPosition[2] = next_plane_right_edge_midpoint_projection.z;
+        endPosition[3] = nextYaw;
+        PRINT_DEBUG(1, print1dVector(startPosition, "0.4 -> Starting position", ""));
+        PRINT_DEBUG(1, print1dVector(endPosition, "0.4 -> Ending position", ""));
+        generatePathPoints(startPosition, endPosition, pathPoints, false);
+        PRINT_DEBUG(1, "0.4 -> pathPoints size: " << pathPoints.size() << "\n");
+        startPosition[0] = endPosition[0];
+        startPosition[1] = endPosition[1];
+        startPosition[2] = endPosition[2];
+        startPosition[3] = endPosition[3];
+        endPosition[0] = next_plane_midpoint_projection.x;
+        endPosition[1] = next_plane_midpoint_projection.y;
+        endPosition[2] = next_plane_midpoint_projection.z;
+        endPosition[3] = nextYaw;
+        PRINT_DEBUG(1, print1dVector(startPosition, "0.5 -> Starting position", ""));
+        PRINT_DEBUG(1, print1dVector(endPosition, "0.5 -> Ending position", ""));
+        generatePathPoints(startPosition, endPosition, pathPoints, false);
+        PRINT_DEBUG(1, "0.5 -> pathPoints size: " << pathPoints.size() << "\n");
+    }
+    /*pushCommands(pathPoints);
+    clear2dVector(pathPoints);*/
+    PRINT_LOG(1, "Completed\n");
+}
+
+void
 ControlUINode::moveDroneBetweenPlanes(const vector<double> &previousPosition,
                                       const vector<Point3f> &curr_coord_box_points,
                                       const vector<Point3f> &next_coord_box_points,
@@ -1219,6 +1402,7 @@ void
 ControlUINode::pushCommands(const vector< vector<double > > &pathPoints)
 {
     PRINT_LOG(1, "Started\n");
+    PRINT_LOG(1, "Pushing " << pathPoints.size() << " commands\n");
     char buf[100];
     for(unsigned int step = 0; step < pathPoints.size(); step++)
     {
@@ -4105,13 +4289,23 @@ ControlUINode::testUtility(int test_no)
     }
     else if(test_no == 2)
     {
-        reverse(visited_motion_points.begin(), visited_motion_points.end());
-        moveDroneViaSetOfPoints(visited_motion_points);
+        vector< vector<double> > path_points;
+        copyDoubleVector(visited_motion_points, path_points);
+        reverse(path_points.begin(), path_points.end());
+        PRINT_LOG(1, "Size of points: " << path_points.size() << "\n");
+        moveDroneViaSetOfPoints(path_points);
     }
     else if(test_no == 3)
-    {}
+    {
+        _is_adjusted = false;
+        alignQuadcopterToNextPlane();
+    }
     else if(test_no == 4)
-    {}
+    {
+        vector< vector<double> > path_points;
+        getBackTheDrone(path_points);
+        moveDroneViaSetOfPoints(path_points);
+    }
     else if(test_no == 5)
     {}
     else if(test_no == 6)
