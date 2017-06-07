@@ -1458,12 +1458,30 @@ getHeightFromGround(const vector<float> &planeParameters,
 
 template<typename T>
 inline static void
-copyVector(const vector<T> vec1, vector<T> &vec2)
+copyVector(const vector<T> &vec1, vector<T> &vec2)
 {
 	vec2.clear();
 	for (unsigned int i = 0; i < vec1.size(); ++i)
 	{
 		vec2.push_back(vec1[i]);
+	}
+	return ;
+}
+
+template<typename T>
+inline static void
+copyDoubleVector(const vector< vector<T> > &vec1, vector< vector<T> > &vec2)
+{
+	clear2dVector(vec2);
+	vector<T> dummy;
+	for (unsigned int i = 0; i < vec1.size(); ++i)
+	{
+		for (unsigned int j = 0; j < vec1[i].size(); ++j)
+		{
+			dummy.push_back(vec1[i][j]);
+		}
+		vec2.push_back(dummy);
+		dummy.clear();
 	}
 	return ;
 }
