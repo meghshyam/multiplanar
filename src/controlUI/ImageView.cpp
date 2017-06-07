@@ -696,12 +696,28 @@ ImageView::on_key_down(int key)
 		string str_home_dir(homedir); 
 		string inputDirectory = str_home_dir + "/";
 		string filename = inputDirectory + "Plane_Info.txt";*/
-		string filename = "Plane_Info.txt";
+		string plane_filename = "Plane_Info.txt";
+		string topview_filename = "TopViewInfo.txt";
 		vector< vector<float> > sortedPlaneParameters;
 		vector< vector<Point3f> > boundingBoxPoints;
-		readPlaneInfo(filename, sortedPlaneParameters, boundingBoxPoints);
+		readPlaneInfo(plane_filename, sortedPlaneParameters, boundingBoxPoints);
 		PRINT_LOG(1, print2dVector(sortedPlaneParameters, "Plane Parameters:\n", ""));
 		PRINT_LOG(1, print2dVector(boundingBoxPoints, "Bounding Box points:\n", ""));
+		/* Launches GUI: Return approx. angles and orientations */
+		/* Angle with which	quadcopter has to rotate to orient itself to the new plane */
+		std::vector< double > main_angles;
+		/* Direction in which quadcopter should rotate to orient its yaw with normal of new plane */
+		std::vector< int > directions;
+		std::vector< RotateDirection > main_directions;
+		/* Printing the information to the terminal */
+		int number_of_planes = 0;
+		int type_of_surface = 0;
+		int max_height_of_plane = 0;
+		int view_dir = 0;
+		readTopViewInfo(topview_filename, number_of_planes, type_of_surface,
+						max_height_of_plane, main_angles,
+						directions);
+		PRINT_LOG(1, print1dVector(directions, "Directions of rotation:\n", ""));
 		if(renderRect)
 		{
 			renderRect = false;  // While moving the quadcopter we don't want bounding box to appear
