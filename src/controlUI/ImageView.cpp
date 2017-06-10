@@ -858,7 +858,39 @@ ImageView::on_key_down(int key)
 	// E
 	else if(key == 'E')
 	{
-		
+		string plane_filename = "Plane_Info.txt";
+		string topview_filename = "TopViewInfo.txt";
+		vector< vector<float> > sortedPlaneParameters;
+		vector< vector<Point3f> > boundingBoxPoints;
+		vector< vector<float> > send_pp;
+		vector< vector<Point3f> > send_bb;
+		readPlaneInfo(plane_filename, sortedPlaneParameters, boundingBoxPoints);
+		PRINT_LOG(1, print2dVector(sortedPlaneParameters, "Plane Parameters:\n", ""));
+		PRINT_LOG(1, print2dVector(boundingBoxPoints, "Bounding Box points:\n", ""));
+		if(renderRect)
+		{
+			renderRect = false;  // While moving the quadcopter we don't want bounding box to appear
+			renderSignificantPlane = false;
+			renderVisitedPlanes = false;
+		}
+		PRINT_LOG(1, "Rendering Visited Planes\n");
+		setRender(false, false, false, true);
+		// Get the continuoous bounding box points
+		clear2dVector(continuousBoundingBoxPoints);
+		// getContinuousBoundingBox (boundingBoxPoints, sortedPlaneParameters, continuousBoundingBoxPoints);
+		// PRINT_LOG(1, print2dVector(continuousBoundingBoxPoints, "Continuous Bounding Box points:\n", ""));
+		// Path planning: Cover multiple planes
+		// setVisitedBoundingBoxPoints(continuousBoundingBoxPoints);
+		renderFrame();
+		send_bb.push_back(boundingBoxPoints.back());
+		send_pp.push_back(sortedPlaneParameters.back());
+		for (unsigned int i = 0; i < send_bb.size(); ++i)
+		{
+			send_bb[i].pop_back();
+		}
+		setVisitedBoundingBoxPoints(send_bb);
+		PRINT_LOG(1, "Calling moveQuadcopter()\n");
+		node->moveQuadcopter(send_pp, send_bb);
 	}
 	else if(key == 'Z')
 	{
