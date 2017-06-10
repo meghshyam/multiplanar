@@ -1006,7 +1006,7 @@ fixPlaneOrientation(const vector<double> &position,
 		plane_parameters[1] = -plane_parameters[1];
 		plane_parameters[2] = -plane_parameters[2];
 		plane_parameters[3] = -plane_parameters[3];
-		Point3f top_left = continuous_bounding_box_points[1];
+		/*Point3f top_left = continuous_bounding_box_points[1];
 		Point3f top_right = continuous_bounding_box_points[0];
 		Point3f bottom_right = continuous_bounding_box_points[3];
 		Point3f bottom_left = continuous_bounding_box_points[2];
@@ -1015,7 +1015,7 @@ fixPlaneOrientation(const vector<double> &position,
 		continuous_bounding_box_points.push_back(top_right);
 		continuous_bounding_box_points.push_back(bottom_right);
 		continuous_bounding_box_points.push_back(bottom_left);
-		continuous_bounding_box_points.push_back(top_left);
+		continuous_bounding_box_points.push_back(top_left);*/
 	}
 	/*print1dVector(plane_parameters, "[ DEBUG] [fixPlaneOrientation] New Plane Parameters");
 	print1dVector(continuous_bounding_box_points, "[ DEBUG] [fixPlaneOrientation] New CBB");*/
