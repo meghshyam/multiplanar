@@ -1551,6 +1551,79 @@ rotate3dPoints(const vector<Point3d> &_3d_points, const Mat &rotation,
 }
 
 /**
+ * @brief Write 3D points obtained to a CSV file
+ * @details
+ * @param
+ * @return
+ */
+template<typename T>
+inline static void
+write3DPointsToCSV(vector< vector<T> > &_3d_points, string filename="points.txt", 
+                    string separator=", ", string prefix="", int precision=6)
+{
+    int numberOfPoints = _3d_points.size();
+    const char* outFilename = filename.c_str();
+    ofstream outFile;
+    // Open the object in writing mode
+    outFile.open(outFilename, ios::out);
+    // Check if the file is open
+    if (!outFile.is_open())
+    {
+        cerr << "\nFile " << filename << " cannot be opened for writing.\n";
+        cerr << "Please check if the file is existing and has required permissions ";
+        cerr << " for writing.\n";
+    }
+    for (int i = 0; i < numberOfPoints; ++i)
+    {
+        int dimensions = _3d_points[i].size();
+        for (int j = 0; j < dimensions; ++j)
+        {
+            if(j == 0)
+            {
+                outFile << prefix;
+            }
+            if(j != dimensions-1)
+            {
+                outFile << std::setprecision(precision) << _3d_points[i][j] << separator;
+            }
+            else
+            {
+                outFile << std::setprecision(precision) << _3d_points[i][j] << "\n";
+            }
+        }
+    }
+    // Close the file
+    outFile.close();
+    return ;
+}
+
+inline static void
+write3DPointsToCSV(vector< Point3f > &_3d_points, string filename="points.txt", 
+                    string separator=", ", string prefix="", int precision=6)
+{
+    int numberOfPoints = _3d_points.size();
+    const char* outFilename = filename.c_str();
+    ofstream outFile;
+    // Open the object in writing mode
+    outFile.open(outFilename, ios::out);
+    // Check if the file is open
+    if (!outFile.is_open())
+    {
+        cerr << "\nFile " << filename << " cannot be opened for writing.\n";
+        cerr << "Please check if the file is existing and has required permissions ";
+        cerr << " for writing.\n";
+    }
+    for (int i = 0; i < numberOfPoints; ++i)
+    {
+        outFile << prefix << std::setprecision(precision) << _3d_points[i].x \
+                << separator << _3d_points[i].y << separator << _3d_points[i].z << "\n";
+    }
+    // Close the file
+    outFile.close();
+    return ;
+}
+
+/**
  * @brief Translates the fitted plane by the given distance along its normal toward origin
  * @details Currently not using
  * @param
