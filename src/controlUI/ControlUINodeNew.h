@@ -877,16 +877,6 @@ class ControlUINode
         equal(std::vector<float> p1, std::vector<float> p2);
 
         /**
-         * @brief Write 3D points obtained to a CSV file
-         * @details
-         * @param
-         * @return
-         */
-        void
-        write3DPointsToCSV(std::vector<std::vector<double> > &_3d_points, string filename="points.txt",
-                            string separator=" ", string prefix="", int precision=3);
-
-        /**
          * @brief A helper function to get the number of key points in the current frame
          * @details
          * @param
@@ -1150,6 +1140,9 @@ class ControlUINode
         moveInDirection(const vector<float> &dir, 
                         const vector<double> &position,
                         const vector<Point3f> &points);
+
+        int
+        getOrientation(float currentYaw, float destYaw);
 
 };
 
