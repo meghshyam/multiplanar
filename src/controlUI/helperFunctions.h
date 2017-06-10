@@ -1599,7 +1599,7 @@ write3DPointsToCSV(vector< vector<T> > &_3d_points, string filename="points.txt"
 
 inline static void
 write3DPointsToCSV(vector< Point3f > &_3d_points, string filename="points.txt", 
-                    string separator=", ", string prefix="", int precision=6)
+                    string separator=" ", string prefix="", int precision=6)
 {
     int numberOfPoints = _3d_points.size();
     const char* outFilename = filename.c_str();
