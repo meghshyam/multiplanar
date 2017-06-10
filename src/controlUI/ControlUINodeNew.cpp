@@ -328,46 +328,6 @@ ControlUINode::load2dPoints (vector<float> x_img, vector<float> y_img)
 }
 
 void
-ControlUINode::write3DPointsToCSV(vector< vector<double> > &_3d_points, string filename, 
-                                    string separator, string prefix, int precision)
-{
-    int numberOfPoints = _3d_points.size();
-    const char* outFilename = filename.c_str();
-    ofstream outFile;
-    // Open the object in writing mode
-    outFile.open(outFilename, ios::out);
-    // Check if the file is open
-    if (!outFile.is_open())
-    {
-        cerr << "\nFile " << filename << " cannot be opened for writint.\n";
-        cerr << "Please check if the file is existing and has required permissions ";
-        cerr << " for writing.\n";
-    }
-    for (int i = 0; i < numberOfPoints; ++i)
-    {
-        int dimensions = _3d_points[i].size();
-        for (int j = 0; j < dimensions; ++j)
-        {
-            if(j == 0)
-            {
-                outFile << prefix;
-            }
-            if(j != dimensions-1)
-            {
-                outFile << std::setprecision(precision) << _3d_points[i][j] << separator;
-            }
-            else
-            {
-                outFile << std::setprecision(precision) << _3d_points[i][j] << "\n";
-            }
-        }
-    }
-    // Close the file
-    outFile.close();
-    return ;
-}
-
-void
 ControlUINode::load3dPoints (vector<float> x_w, vector<float> y_w, vector<float> z_w)
 {
     pthread_mutex_lock(&pose_CS);
@@ -816,6 +776,37 @@ ControlUINode::moveQuadcopter(const vector< vector<float> > &planeParameters,
     return ;
 }
 
+int
+ControlUINode::getOrientation(float currentYaw, float destYaw)
+{
+    PRINT_LOG(1, "Started\n");
+    int answer = 0;
+    if (destYaw > 0 && currentYaw < 0 && fabs(180.0-destYaw) < 30.0)
+    {
+        destYaw = -179.0 - (180.0 - destYaw);
+    }
+    if (destYaw < 0 && currentYaw > 0 && fabs(-180.0-destYaw) < 30.0)
+    {
+        destYaw = 179.0 + (180.0 + destYaw);
+    }
+    if(destYaw < 0 && currentYaw < 0)
+    {
+        if(currentYaw > destYaw)
+            answer = 1;
+        else
+            answer = -1;
+    }
+    if(destYaw > 0 && currentYaw > 0)
+    {
+        if(currentYaw > destYaw)
+            answer = -1;
+        else
+            answer = 1;
+    }
+    PRINT_LOG(1, "Completed\n");
+    return answer;
+}
+
 void
 ControlUINode::getBackTheDrone(vector< vector<double> > &pathPoints)
 {
@@ -1229,12 +1220,6 @@ ControlUINode::moveDroneBetweenPlanes(const vector<double> &previousPosition,
         intersection_point.x = (curr_plane_normal.x * t) + curr_plane_midpoint.x;
         intersection_point.y = (curr_plane_normal.y * t) + curr_plane_midpoint.y;
         intersection_point.z = (curr_plane_normal.z * t) + curr_plane_midpoint.z;
-        mid_plane_normal.x = intersection_point.x - curr_plane_right_edge_midpoint.x;
-        mid_plane_normal.y = intersection_point.y - curr_plane_right_edge_midpoint.y;
-        mid_plane_normal.z = intersection_point.z - curr_plane_right_edge_midpoint.z;
-        PRINT_DEBUG(1, "Intersection point: " << intersection_point << "\n");
-        PRINT_DEBUG(1, "Mid plane normal: " << mid_plane_normal << "\n");
-        // Point3f yAxis(0.0f, 1.0f, 0.0f);
         float angleBetweenPlanes = findAngle(next_plane_normal, curr_plane_normal);
         float angle = 0.0f;
         PRINT_DEBUG(1, "Projected Normal: " << next_plane_normal << "\n");
@@ -1248,6 +1233,22 @@ ControlUINode::moveDroneBetweenPlanes(const vector<double> &previousPosition,
         PRINT_DEBUG(1, "Angle between planes in radians: " << angleBetweenPlanes << "\n");
         angleBetweenPlanes = angleBetweenPlanes*180.0/M_PI;
         PRINT_DEBUG(1, "Angle between planes in degrees: " << angleBetweenPlanes << "\n");
+        Point3f yAxis(0.0f, 1.0f, 0.0f);
+        float finalAngle = findAngle(next_plane_normal, yAxis);
+        PRINT_DEBUG(1, "Angle to turn in radians: " << finalAngle << "\n");
+        finalAngle = finalAngle*180.0/M_PI;
+        PRINT_DEBUG(1, "Angle to turn in degrees: " << finalAngle << "\n");
+        float currAngle = findAngle(curr_plane_normal, yAxis);
+        PRINT_DEBUG(1, "Angle with current plane in radians: " << currAngle << "\n");
+        currAngle = currAngle*180.0/M_PI;
+        PRINT_DEBUG(1, "Angle with current plane in degrees: " << currAngle << "\n");
+        int rotation_dir = getOrientation(currAngle, finalAngle);
+        mid_plane_normal.x = rotation_dir*(intersection_point.x - curr_plane_right_edge_midpoint.x);
+        mid_plane_normal.y = rotation_dir*(intersection_point.y - curr_plane_right_edge_midpoint.y);
+        mid_plane_normal.z = rotation_dir*(intersection_point.z - curr_plane_right_edge_midpoint.z);
+        PRINT_DEBUG(1, "Intersection point: " << intersection_point << "\n");
+        PRINT_DEBUG(1, "Mid plane normal: " << mid_plane_normal << "\n");
+        // Point3f yAxis(0.0f, 1.0f, 0.0f);
         path_mid_point.x = curr_plane_right_edge_midpoint.x + new_distance*mid_plane_normal.x;
         path_mid_point.y = curr_plane_right_edge_midpoint.y + new_distance*mid_plane_normal.y;
         path_mid_point.z = curr_plane_right_edge_midpoint.z + new_distance*mid_plane_normal.z;
@@ -1269,11 +1270,6 @@ ControlUINode::moveDroneBetweenPlanes(const vector<double> &previousPosition,
         next_plane_midpoint_projection.x = next_plane_midpoint.x + distance*next_plane_normal.x;
         next_plane_midpoint_projection.y = next_plane_midpoint.y + distance*next_plane_normal.y;
         next_plane_midpoint_projection.z = next_plane_midpoint.z + distance*next_plane_normal.z;
-        Point3f yAxis(0.0f, 1.0f, 0.0f);
-        float finalAngle = findAngle(next_plane_normal, yAxis);
-        PRINT_DEBUG(1, "Angle to turn in radians: " << finalAngle << "\n");
-        finalAngle = finalAngle*180.0/M_PI;
-        PRINT_DEBUG(1, "Angle to turn in degrees: " << finalAngle << "\n");
         startPosition[0] = endPosition[0];
         startPosition[1] = endPosition[1];
         startPosition[2] = endPosition[2];
@@ -1900,6 +1896,7 @@ ControlUINode::moveDrone (const vector<double> &prevPosition,
                 // ROS_INFO(buf);
                 commands.push_back(s);
                 targetPoints.push_back(interm_point);
+                PRINT_DEBUG(3, print1dVector(interm_point, "", ""));
             }
         }
         else
@@ -1911,6 +1908,8 @@ ControlUINode::moveDrone (const vector<double> &prevPosition,
             // ROS_INFO(buf);
             commands.push_back(s);
             targetPoints.push_back(p);
+            PRINT_DEBUG(3, print1dVector(p, "p: ", ""));
+            PRINT_DEBUG(3, "Desired yaw: " << desiredYaw << "\n");
         }
     }
     if(planeIndex < (numberOfPlanes-1))
@@ -2861,6 +2860,7 @@ ControlUINode::getMultiplePlanes3d (const vector<int> &ccPoints, const vector< v
             _in_points.push_back(featurePt);
         }
     }
+    // write3DPointsToCSV();
     pthread_mutex_unlock(&keyPoint_CS);
     PRINT_DEBUG(1, "Captured the 3d points within the clicked points\n");
     // See multiplePlanes.cpp
