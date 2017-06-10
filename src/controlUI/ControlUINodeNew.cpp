@@ -3588,8 +3588,8 @@ ControlUINode::captureTheCurrentPlane()
     // Calls JLinkage and finds all planes within the clicked region
     vector< vector<float> > test_plane_parameters;
     // @todo Can it be changed to RANSAC assuming we're clicking on single plane???
-    // doJLinkage(cc_points, points_clicked);
-    doJLinkage();
+    doJLinkage(cc_points, points_clicked);
+    // doJLinkage();
     // Render significant plane
     image_gui->setContinuousBoundingBoxPoints(jlink_all_continuous_bounding_box_points);
     image_gui->setSigPlaneBoundingBoxPoints(this_continuous_bounding_box_points);
