@@ -580,6 +580,8 @@ class ControlUINode
         int debug_level = 3;
         int log_level = 3;
 
+        bool _capture_mode = false;
+
 
         // distance between two 2d points
         /**

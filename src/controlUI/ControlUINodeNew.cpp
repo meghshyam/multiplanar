@@ -2806,6 +2806,9 @@ ControlUINode::augmentInfo()
         {
             aug_three_d_points.push_back(jlink_three_d_points[index][i]);
         }
+        string filename = "plane_points_" + to_string(_node_completed_number_of_planes+1);
+        write3DPointsToCSV(aug_three_d_points, filename, " ", "", 6);
+        _capture_mode = false;
         Point3f a0, a1, a2, a3;
         a0 = aug_plane_bounding_box_points[0];
         a1 = this_continuous_bounding_box_points[1];
@@ -2860,7 +2863,9 @@ ControlUINode::getMultiplePlanes3d (const vector<int> &ccPoints, const vector< v
             _in_points.push_back(featurePt);
         }
     }
-    // write3DPointsToCSV();
+    string filename = "plane_points_" + to_string(_node_completed_number_of_planes+1);
+    write3DPointsToCSV(_in_points, filename, " ", "", 6);
+    _capture_mode = false;
     pthread_mutex_unlock(&keyPoint_CS);
     PRINT_DEBUG(1, "Captured the 3d points within the clicked points\n");
     // See multiplePlanes.cpp
@@ -3588,6 +3593,7 @@ ControlUINode::captureTheCurrentPlane()
     // Calls JLinkage and finds all planes within the clicked region
     vector< vector<float> > test_plane_parameters;
     // @todo Can it be changed to RANSAC assuming we're clicking on single plane???
+    _capture_mode = true;
     doJLinkage(cc_points, points_clicked);
     // doJLinkage();
     // Render significant plane
