@@ -2761,11 +2761,14 @@ ControlUINode::copyNecessaryInfo()
     this_continuous_bounding_box_points.clear();*/
     PRINT_LOG(3, print2dVector(visited_plane_parameters, "Visited Plane Parameters:\n", ""));
     PRINT_LOG(3, print2dVector(visited_continuous_bounding_box_points, "Visited Continuous Bounding Box Points:\n", ""));
+    string filename = "Plane_Info.txt";
     _is_big_plane = false;
     _stage_of_plane_observation = true;
     _node_completed_number_of_planes++;
     _plane_d = 0.0;
     _plane_d_num = 0;
+    image_gui->WriteInfoToFile(visited_continuous_bounding_box_points.back(), 
+                                visited_plane_parameters.back(), _node_completed_number_of_planes, filename);
     PRINT_LOG(1, "Completed\n");
     endTime = clock();
     elapsedTime = double(endTime - beginTime) / (CLOCKS_PER_SEC/1000);
@@ -3704,7 +3707,7 @@ ControlUINode::captureTheCurrentPlane()
     {
         assert(visited_plane_parameters.size() == visited_continuous_bounding_box_points.size());
         PRINT_LOG(3, "All planes are completed\n");
-        string filename = "Plane_Info.txt";
+        string filename = "Complete_Plane_Info.txt";
         PRINT_LOG(3, "Writing info gathered to " << filename << "\n");
         for (unsigned int i = 0; i < visited_plane_parameters.size(); ++i)
         {
