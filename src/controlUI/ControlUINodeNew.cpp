@@ -1298,6 +1298,8 @@ ControlUINode::moveDroneBetweenPlanes(const vector<double> &previousPosition,
     moveDronePathPoints[plane_index] = (int)pathPoints.size() + 8;
     PRINT_LOG(1, print2dVector(pathPoints, "Points needed by drone to move from one plane to another:\n", "matlab"));
     pushCommands(pathPoints);
+    string filename = "path_points_" + to_string(plane_index);
+    write3DPointsToCSV(pathPoints, filename, " ");
     clear2dVector(pathPoints);
     PRINT_LOG(1, "Completed.\n");
     return ;
