@@ -1866,7 +1866,7 @@ ControlUINode::getPTargetPoints(const pGrid &g, const vector<float> & plane,
     finalSortTPoint.clear();
     string filename = "/home/sonapraneeth/plane"+to_string(plane_no+1)+"_map";
     PRINT_LOG(1, "Writing " << finalSortTPoints.size() << " points to file: " << filename << "\n");
-    write3DPointsToCSV(finalSortTPoints, filename);
+    write3DPointsToCSV(finalSortTPoints, filename, " ");
     PRINT_LOG(1, "Completed.\n");
 }
 
