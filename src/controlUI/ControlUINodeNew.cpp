@@ -158,6 +158,8 @@ ControlUINode::ControlUINode()
     _jlinkage_calls = 0;
     _sig_plane_index = 0;
     _actual_plane_index = 0;
+    _capture_mode_time = 0.0;
+    _traversal_mode_time = 0.0;
 
     PRINT_LOG(1, "Initiated ControlUINode.\n");
 }
@@ -3721,6 +3723,10 @@ ControlUINode::captureTheCurrentPlane()
         PRINT_LOG(3, "Writing visited motion points to file: motion_points.txt\n");
         reverse(visited_motion_points.begin(), visited_motion_points.end());
         write3DPointsToCSV(visited_motion_points, "motion_points.txt", " ", "goto ", 4);
+        PRINT_LOG(1, "Time spent in total in capture mode is: " << _capture_mode_time << " seconds.\n");
+        PRINT_LOG(1, "Time spent in total in traversal mode is: " << _traversal_mode_time << " seconds.\n");
+        _capture_mode_time = 0.0;
+        _traversal_mode_time = 0.0;
     }
     else
     {
@@ -3729,6 +3735,7 @@ ControlUINode::captureTheCurrentPlane()
     PRINT_LOG(1, "Completed\n");
     endTime = clock();
     elapsedTime = double(endTime - beginTime) / (CLOCKS_PER_SEC/1000);
+    _capture_mode_time += (elapsedTime/1000.0);
     PRINT_DEBUG(1, "Time taken for function is " << elapsedTime << " ms.\n");
 
 }
@@ -3953,6 +3960,7 @@ ControlUINode::adjustForNextCapture()
     PRINT_LOG(1, "Completed\n");
     endTime = clock();
     elapsedTime = double(endTime - beginTime) / (CLOCKS_PER_SEC/1000);
+    _traversal_mode_time += (elapsedTime/1000.0);
     PRINT_DEBUG(1, "Time taken for function is " << elapsedTime << " ms.\n");
 }
 
@@ -4274,6 +4282,7 @@ ControlUINode::alignQuadcopterToNextPlane()
     PRINT_DEBUG(1, "Completed\n");
     endTime = clock();
     elapsedTime = double(endTime - beginTime) / (CLOCKS_PER_SEC/1000);
+    _traversal_mode_time += (elapsedTime/1000.0);
     PRINT_DEBUG(1, "Time taken for function is " << elapsedTime << " ms.\n");
     return ;
 }

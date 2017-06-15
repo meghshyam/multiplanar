@@ -557,6 +557,8 @@ class ControlUINode
         float _fixed_height;
         double _move_heuristic;
         double _angle_heuristic;
+        double _capture_mode_time;
+        double _traversal_mode_time;
 
         RotateDirection _next_plane_dir;
         double _next_plane_angle;
