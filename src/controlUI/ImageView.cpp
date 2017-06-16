@@ -728,11 +728,11 @@ ImageView::on_key_down(int key)
 		setRender(false, false, false, true);
 		// Get the continuoous bounding box points
 		clear2dVector(continuousBoundingBoxPoints);
-		// getContinuousBoundingBox (boundingBoxPoints, sortedPlaneParameters, continuousBoundingBoxPoints);
+		getContinuousBoundingBox (boundingBoxPoints, sortedPlaneParameters, continuousBoundingBoxPoints);
 		// PRINT_LOG(1, print2dVector(continuousBoundingBoxPoints, "Continuous Bounding Box points:\n", ""));
 		// Path planning: Cover multiple planes
 		// setVisitedBoundingBoxPoints(continuousBoundingBoxPoints);
-		setVisitedBoundingBoxPoints(boundingBoxPoints);
+		setVisitedBoundingBoxPoints(continuousBoundingBoxPoints);
 		renderFrame();
 		for (unsigned int i = 0; i < boundingBoxPoints.size(); ++i)
 		{
