@@ -3683,6 +3683,10 @@ ControlUINode::captureTheCurrentPlane()
         }
         PRINT_DEBUG(3, "Is plane covered: " << _is_plane_covered << ", Move: " << move << "\n");
     }
+    endTime = clock();
+    elapsedTime = double(endTime - beginTime) / (CLOCKS_PER_SEC/1000);
+    _capture_mode_time += (elapsedTime/1000.0);
+    PRINT_DEBUG(1, "Time taken for function is " << elapsedTime << " ms.\n");
     if(_is_plane_covered)
     {
         copyNecessaryInfo();
@@ -3733,10 +3737,6 @@ ControlUINode::captureTheCurrentPlane()
         PRINT_LOG(3, "All planes are not completed\n");
     }
     PRINT_LOG(1, "Completed\n");
-    endTime = clock();
-    elapsedTime = double(endTime - beginTime) / (CLOCKS_PER_SEC/1000);
-    _capture_mode_time += (elapsedTime/1000.0);
-    PRINT_DEBUG(1, "Time taken for function is " << elapsedTime << " ms.\n");
 
 }
 
@@ -3923,6 +3923,10 @@ ControlUINode::adjustForNextCapture()
             moveDroneViaSetOfPoints(_interm_path);
         }
     }
+    endTime = clock();
+    elapsedTime = double(endTime - beginTime) / (CLOCKS_PER_SEC/1000);
+    _traversal_mode_time += (elapsedTime/1000.0);
+    PRINT_DEBUG(1, "Time taken for function is " << elapsedTime << " ms.\n");
     if(_node_completed_number_of_planes == _node_number_of_planes)
     {
         PRINT_DEBUG(3, "VPP size: " << visited_plane_parameters.size() << "\n");
@@ -3958,10 +3962,6 @@ ControlUINode::adjustForNextCapture()
         PRINT_LOG(3, "Please click 4 points on the DRONE CAMERA FEED window\n");
     }
     PRINT_LOG(1, "Completed\n");
-    endTime = clock();
-    elapsedTime = double(endTime - beginTime) / (CLOCKS_PER_SEC/1000);
-    _traversal_mode_time += (elapsedTime/1000.0);
-    PRINT_DEBUG(1, "Time taken for function is " << elapsedTime << " ms.\n");
 }
 
 /**
