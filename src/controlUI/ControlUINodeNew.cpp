@@ -2721,10 +2721,6 @@ ControlUINode::copyNecessaryInfo()
         visited_plane_parameters.push_back(this_plane_parameters);
         // Currently captured bounding box points of the plane
         visited_continuous_bounding_box_points.push_back(this_continuous_bounding_box_points);
-        PRINT_LOG(2, "Rendering visited plane\n");
-        image_gui->setRender(false, false, true, true);
-        image_gui->renderFrame();
-        image_gui->setVisitedBoundingBoxPoints(visited_continuous_bounding_box_points);
     }
     // If the plane was big enough to fit in the drone's view in onwe shot
     else if((!_is_big_plane && aug_three_d_points.size() > 0) || _is_big_plane)
@@ -2753,14 +2749,21 @@ ControlUINode::copyNecessaryInfo()
         PRINT_LOG(3, "Copying the necessary information\n");
         visited_plane_parameters.push_back(new_plane_params);
         visited_continuous_bounding_box_points.push_back(new_bounding_box_points);
-        PRINT_LOG(2, "Rendering visited plane\n");
-        image_gui->setRender(false, false, true, true);
-        image_gui->renderFrame();
-        image_gui->setVisitedBoundingBoxPoints(visited_continuous_bounding_box_points);
         aug_three_d_points.clear();
         aug_plane_bounding_box_points.clear();
         new_bounding_box_points.clear();
     }
+    vector< vector<Point3f> > cbb;
+    vector< vector<Point3f> > last_visited_plane;
+    PRINT_LOG(2, "Rendering last visited plane\n");
+    image_gui->setRender(false, false, false, true);
+    image_gui->renderFrame();
+    getContinuousBoundingBox (visited_continuous_bounding_box_points, 
+                                visited_plane_parameters, cbb);
+    last_visited_plane.push_back(cbb.back());
+    image_gui->setVisitedBoundingBoxPoints(last_visited_plane);
+    clear2dVector(cbb);
+    clear2dVector(last_visited_plane);
     /*this_plane_parameters.clear();
     this_continuous_bounding_box_points.clear();*/
     PRINT_LOG(3, print2dVector(visited_plane_parameters, "Visited Plane Parameters:\n", ""));
