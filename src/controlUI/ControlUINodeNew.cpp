@@ -794,16 +794,16 @@ ControlUINode::getOrientation(float currentYaw, float destYaw)
     if(destYaw < 0 && currentYaw < 0)
     {
         if(currentYaw > destYaw)
-            answer = 1;
+            answer = 1; // anti-clockwise
         else
-            answer = -1;
+            answer = -1; // clockwise
     }
     if(destYaw > 0 && currentYaw > 0)
     {
         if(currentYaw > destYaw)
-            answer = -1;
-        else
             answer = 1;
+        else
+            answer = -1;
     }
     PRINT_LOG(1, "Completed\n");
     return answer;
@@ -1000,7 +1000,7 @@ ControlUINode::moveDroneBetweenPlanes(const vector<double> &previousPosition,
                                       const vector<float> &next_plane_parameters, int plane_index)
 {
     PRINT_LOG(1, "Started.\n");
-    PRINT_LOG(1, "Designing path for plane " << plane_index << "\n");
+    PRINT_LOG(1, "Designing path for plane " << plane_index+1 << "\n");
     vector< vector<double> > pathPoints;
     clear2dVector(pathPoints);
     vector<double> startPosition(4), endPosition(4);
@@ -1245,6 +1245,7 @@ ControlUINode::moveDroneBetweenPlanes(const vector<double> &previousPosition,
         currAngle = currAngle*180.0/M_PI;
         PRINT_DEBUG(1, "Angle with current plane in degrees: " << currAngle << "\n");
         int rotation_dir = getOrientation(currAngle, finalAngle);
+        PRINT_DEBUG(1, "Rotation Direction: " << rotation_dir << "\n");
         mid_plane_normal.x = rotation_dir*(intersection_point.x - curr_plane_right_edge_midpoint.x);
         mid_plane_normal.y = rotation_dir*(intersection_point.y - curr_plane_right_edge_midpoint.y);
         mid_plane_normal.z = rotation_dir*(intersection_point.z - curr_plane_right_edge_midpoint.z);
@@ -1300,7 +1301,7 @@ ControlUINode::moveDroneBetweenPlanes(const vector<double> &previousPosition,
     moveDronePathPoints[plane_index] = (int)pathPoints.size() + 8;
     PRINT_LOG(1, print2dVector(pathPoints, "Points needed by drone to move from one plane to another:\n", "matlab"));
     pushCommands(pathPoints);
-    string filename = "path_points_" + to_string(plane_index);
+    string filename = "path_points_" + to_string(plane_index+1);
     write3DPointsToCSV(pathPoints, filename, " ");
     clear2dVector(pathPoints);
     PRINT_LOG(1, "Completed.\n");
