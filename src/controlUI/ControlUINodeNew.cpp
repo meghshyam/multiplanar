@@ -3410,6 +3410,7 @@ ControlUINode::alignQuadcopterToCurrentPlane()
         adjustYawToCurrentPlane();
     }
     PRINT_LOG(1, "Completed\n");
+    PRINT_LOG(3, "Completed plane no.: " << _node_completed_number_of_planes << "\n");
     PRINT_LOG(1, "Please click 4 points on the DRONE CAMERA FEED Screen\n");
     endTime = clock();
     elapsedTime = double(endTime - beginTime) / (CLOCKS_PER_SEC/1000);
@@ -3721,6 +3722,7 @@ ControlUINode::captureTheCurrentPlane()
         augmentInfo();
         PRINT_LOG(3, "Adjusting quadcopter for next capture of the same plane\n");
         adjustForNextCapture();
+        PRINT_LOG(3, "Completed plane no.: " << _node_completed_number_of_planes << "\n");
         PRINT_LOG(3, "Adjusted for next capture. Please click the 4 points on the DRONE CAMERA FEED\n");
     }
     if(_node_completed_number_of_planes == _node_number_of_planes)
@@ -3971,6 +3973,7 @@ ControlUINode::adjustForNextCapture()
     }
     else
     {
+        PRINT_LOG(3, "Completed plane no.: " << _node_completed_number_of_planes << "\n");
         PRINT_LOG(3, "Please click 4 points on the DRONE CAMERA FEED window\n");
     }
     PRINT_LOG(1, "Completed\n");
