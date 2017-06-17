@@ -782,6 +782,7 @@ int
 ControlUINode::getOrientation(float currentYaw, float destYaw)
 {
     PRINT_LOG(1, "Started\n");
+    PRINT_DEBUG(3, "Before: currentYaw: " << currentYaw << ", destYaw: " << destYaw << "\n");
     int answer = 0;
     if (destYaw > 0 && currentYaw < 0 && fabs(180.0-destYaw) < 30.0)
     {
@@ -791,6 +792,7 @@ ControlUINode::getOrientation(float currentYaw, float destYaw)
     {
         destYaw = 179.0 + (180.0 + destYaw);
     }
+    PRINT_DEBUG(3, "After: currentYaw: " << currentYaw << ", destYaw: " << destYaw << "\n");
     if(destYaw < 0 && currentYaw < 0)
     {
         if(currentYaw > destYaw)
@@ -798,13 +800,19 @@ ControlUINode::getOrientation(float currentYaw, float destYaw)
         else
             answer = -1; // clockwise
     }
-    if(destYaw > 0 && currentYaw > 0)
+    else if(destYaw > 0 && currentYaw > 0)
     {
         if(currentYaw > destYaw)
             answer = 1;
         else
             answer = -1;
     }
+    // assuming the case for -1 curryaw and 34 destyaw
+    else if(currentYaw < 0 && destYaw > 0)
+    {
+        answer = -1;
+    }
+    PRINT_DEBUG(3, "Orientation: " << answer << "\n");
     PRINT_LOG(1, "Completed\n");
     return answer;
 }
