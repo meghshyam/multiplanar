@@ -680,7 +680,7 @@ ControlUINode::moveQuadcopter(const vector< vector<float> > &planeParameters,
         // shift cbb to origin by subtracting centroid
         vector<Point3f> shifted_cbb;
         shifted_cbb = continuousBoundingBoxPoints[plane_index];
-        PRINT_DEBUG(3, print1dVector(shifted_cbb), "Initial shifted_cbb:\n", "");
+        PRINT_DEBUG(3, print1dVector(shifted_cbb, "Initial shifted_cbb:\n", ""));
         float x_centroid = 0.0;
         float y_centroid = 0.0;
         float z_centroid = 0.0;
@@ -699,7 +699,7 @@ ControlUINode::moveQuadcopter(const vector< vector<float> > &planeParameters,
             shifted_cbb[i].y -= y_centroid;
             shifted_cbb[i].z -= z_centroid;
         }
-        PRINT_DEBUG(3, print1dVector(shifted_cbb), "After shifted_cbb:\n", "");
+        PRINT_DEBUG(3, print1dVector(shifted_cbb, "After shifted_cbb:\n", ""));
         AllXYZToUVCoordinates(shifted_cbb, planeParameters[plane_index],
                               uvCoordinates, uvAxes);
         // Push the generated UV axis to the required vectors
@@ -1671,7 +1671,7 @@ ControlUINode::getPTargetPoints(const pGrid &g, const vector<float> & plane,
                 uvCorners.clear(); xyzCorners.clear();
                 rotatedXYZCorners.clear(); sortedXYZCorners.clear();
                 getGridSquareUVCorners(gs, uvCorners);
-                AllUVToXYZCoordinates(uvCorners, uvAxes, plane[3], xyzCorners);
+                AllUVToXYZCoordinates(uvCorners, uvAxes, 0.0, xyzCorners);
                 PRINT_DEBUG(3, print1dVector(xyzCorners, "XYZ Corners:\n", ""));
                 rotate3fPoints(xyzCorners, rotation, rotatedXYZCorners);
                 PRINT_DEBUG(3, print1dVector(rotatedXYZCorners, "Rotated XYZ Corners:\n", ""));
@@ -1777,7 +1777,7 @@ ControlUINode::getPTargetPoints(const pGrid &g, const vector<float> & plane,
                 uvCorners.clear(); xyzCorners.clear();
                 rotatedXYZCorners.clear(); sortedXYZCorners.clear();
                 getGridSquareUVCorners(gs, uvCorners);
-                AllUVToXYZCoordinates(uvCorners, uvAxes, plane[3], xyzCorners);
+                AllUVToXYZCoordinates(uvCorners, uvAxes, 0.0, xyzCorners);
                 PRINT_DEBUG(3, print1dVector(xyzCorners, "XYZ Corners:\n", ""));
                 rotate3fPoints(xyzCorners, rotation, rotatedXYZCorners);
                 PRINT_DEBUG(3, print1dVector(rotatedXYZCorners, "Rotated XYZ Corners:\n", ""));
