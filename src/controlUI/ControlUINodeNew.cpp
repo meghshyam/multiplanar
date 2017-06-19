@@ -745,7 +745,7 @@ ControlUINode::moveQuadcopter(const vector< vector<float> > &planeParameters,
             pTargetPoints[i][2] += (double)z_centroid;
         }
         PRINT_DEBUG(3, print2dVector(pTargetPoints, "After shifting pTargetPoints:\n", "matlab"));
-        string filename = "/home/sonapraneeth/plane"+to_string(plane_no+1)+"_map";
+        string filename = "/home/sonapraneeth/plane"+to_string(plane_index+1)+"_map";
         PRINT_LOG(1, "Writing " << pTargetPoints.size() << " points to file: " << filename << "\n");
         write3DPointsToCSV(pTargetPoints, filename, " ");
         // Having known the prevPosition and pTargetPoints
