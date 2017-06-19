@@ -676,8 +676,6 @@ ControlUINode::moveQuadcopter(const vector< vector<float> > &planeParameters,
         PRINT_LOG(1, "Generating the UV axes for the plane: " << plane_index+1 << ".\n");
         PRINT_DEBUG(3, print1dVector(continuousBoundingBoxPoints[plane_index], "Bounding Box points for plane:\n", ""));
         PRINT_DEBUG(3, print1dVector(planeParameters[plane_index], "Plane Parameters for plane:\n", ""));
-        // @todo
-        // shift cbb to origin by subtracting centroid
         vector<Point3f> shifted_cbb;
         shifted_cbb = continuousBoundingBoxPoints[plane_index];
         PRINT_DEBUG(3, print1dVector(shifted_cbb, "Initial shifted_cbb:\n", ""));
@@ -740,8 +738,6 @@ ControlUINode::moveQuadcopter(const vector< vector<float> > &planeParameters,
         PRINT_LOG(1, "Generating target points for capturing videos of the plane: " << plane_index+1 << ".\n");
         getPTargetPoints(grid, planeParameters[plane_index], plane_index, uvAxes, pTargetPoints);
         PRINT_DEBUG(3, print2dVector(pTargetPoints, "Before shifting pTargetPoints:\n", "matlab"));
-        // @todo
-        // pTargetPoints add centroid
         for (unsigned int i = 0; i < pTargetPoints.size(); ++i)
         {
             pTargetPoints[i][0] += (double)x_centroid;
@@ -749,6 +745,9 @@ ControlUINode::moveQuadcopter(const vector< vector<float> > &planeParameters,
             pTargetPoints[i][2] += (double)z_centroid;
         }
         PRINT_DEBUG(3, print2dVector(pTargetPoints, "After shifting pTargetPoints:\n", "matlab"));
+        string filename = "/home/sonapraneeth/plane"+to_string(plane_no+1)+"_map";
+        PRINT_LOG(1, "Writing " << pTargetPoints.size() << " points to file: " << filename << "\n");
+        write3DPointsToCSV(pTargetPoints, filename, " ");
         // Having known the prevPosition and pTargetPoints
         // move the drone from prevPosition to pTargetPoints[0]
         // and completely navigate around the plane as specified by the pTargetPoints
@@ -1908,9 +1907,6 @@ ControlUINode::getPTargetPoints(const pGrid &g, const vector<float> & plane,
         finalSortTPoints.push_back(finalSortTPoint);
     }
     finalSortTPoint.clear();
-    string filename = "/home/sonapraneeth/plane"+to_string(plane_no+1)+"_map";
-    PRINT_LOG(1, "Writing " << finalSortTPoints.size() << " points to file: " << filename << "\n");
-    write3DPointsToCSV(finalSortTPoints, filename, " ");
     PRINT_LOG(1, "Completed.\n");
 }
 
