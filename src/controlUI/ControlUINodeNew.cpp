@@ -676,7 +676,31 @@ ControlUINode::moveQuadcopter(const vector< vector<float> > &planeParameters,
         PRINT_LOG(1, "Generating the UV axes for the plane: " << plane_index+1 << ".\n");
         PRINT_DEBUG(3, print1dVector(continuousBoundingBoxPoints[plane_index], "Bounding Box points for plane:\n", ""));
         PRINT_DEBUG(3, print1dVector(planeParameters[plane_index], "Plane Parameters for plane:\n", ""));
-        AllXYZToUVCoordinates(continuousBoundingBoxPoints[plane_index], planeParameters[plane_index],
+        // @todo
+        // shift cbb to origin by subtracting centroid
+        vector<Point3f> shifted_cbb;
+        shifted_cbb = continuousBoundingBoxPoints[plane_index];
+        PRINT_DEBUG(3, print1dVector(shifted_cbb), "Initial shifted_cbb:\n", "");
+        float x_centroid = 0.0;
+        float y_centroid = 0.0;
+        float z_centroid = 0.0;
+        for (unsigned int i = 0; i < shifted_cbb.size(); ++i)
+        {
+            x_centroid += shifted_cbb[i].x;
+            y_centroid += shifted_cbb[i].y;
+            z_centroid += shifted_cbb[i].z;
+        }
+        x_centroid /= shifted_cbb.size();
+        y_centroid /= shifted_cbb.size();
+        z_centroid /= shifted_cbb.size();
+        for (unsigned int i = 0; i < shifted_cbb.size(); ++i)
+        {
+            shifted_cbb[i].x -= x_centroid;
+            shifted_cbb[i].y -= y_centroid;
+            shifted_cbb[i].z -= z_centroid;
+        }
+        PRINT_DEBUG(3, print1dVector(shifted_cbb), "After shifted_cbb:\n", "");
+        AllXYZToUVCoordinates(shifted_cbb, planeParameters[plane_index],
                               uvCoordinates, uvAxes);
         // Push the generated UV axis to the required vectors
         uVector.clear();
@@ -715,7 +739,16 @@ ControlUINode::moveQuadcopter(const vector< vector<float> > &planeParameters,
         // Call to function for generating the pTargetPoints
         PRINT_LOG(1, "Generating target points for capturing videos of the plane: " << plane_index+1 << ".\n");
         getPTargetPoints(grid, planeParameters[plane_index], plane_index, uvAxes, pTargetPoints);
-        PRINT_DEBUG(3, print2dVector(pTargetPoints, "pTargetPoints:\n", "matlab"));
+        PRINT_DEBUG(3, print2dVector(pTargetPoints, "Before shifting pTargetPoints:\n", "matlab"));
+        // @todo
+        // pTargetPoints add centroid
+        for (unsigned int i = 0; i < pTargetPoints.size(); ++i)
+        {
+            pTargetPoints[i][0] += (double)x_centroid;
+            pTargetPoints[i][1] += (double)y_centroid;
+            pTargetPoints[i][2] += (double)z_centroid;
+        }
+        PRINT_DEBUG(3, print2dVector(pTargetPoints, "After shifting pTargetPoints:\n", "matlab"));
         // Having known the prevPosition and pTargetPoints
         // move the drone from prevPosition to pTargetPoints[0]
         // and completely navigate around the plane as specified by the pTargetPoints
