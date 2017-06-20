@@ -745,6 +745,13 @@ ControlUINode::moveQuadcopter(const vector< vector<float> > &planeParameters,
             pTargetPoints[i][2] += (double)z_centroid;
         }
         PRINT_DEBUG(3, print2dVector(pTargetPoints, "After shifting pTargetPoints:\n", "matlab"));
+        for (unsigned int i = 0; i < pTargetPoints.size(); ++i)
+        {
+            pTargetPoints[i][0] += (drone_length*(-1.0)*planeParameters[plane_index][0]);
+            pTargetPoints[i][1] += (drone_length*(-1.0)*planeParameters[plane_index][1]);
+            pTargetPoints[i][2] += (drone_length*(-1.0)*planeParameters[plane_index][2]);
+        }
+        PRINT_DEBUG(3, print2dVector(pTargetPoints, "After shifting pTargetPoints and projecting by 0.6:\n", "matlab"));
         string filename = "/home/sonapraneeth/plane"+to_string(plane_index+1)+"_map";
         PRINT_LOG(1, "Writing " << pTargetPoints.size() << " points to file: " << filename << "\n");
         write3DPointsToCSV(pTargetPoints, filename, " ");
@@ -1916,11 +1923,11 @@ ControlUINode::moveDrone (const vector<double> &prevPosition,
                           double prevYaw, double desiredYaw)
 {
     PRINT_LOG(1, "Started.\n");
-    double drone_length = 0.6;
+    // double drone_length = 0.6;
     for (unsigned int i = 0; i < tPoints.size(); ++i)
     {
         vector<double> p = tPoints[i];
-        p[1] = p[1] - drone_length;
+        // p[1] = p[1] - drone_length;
         char buf[100];
         if(i == 0)
         {
