@@ -847,7 +847,12 @@ ControlUINode::getOrientation(float currentYaw, float destYaw)
             answer = -1;
     }
     // assuming the case for -1 curryaw and 34 destyaw
-    else if(currentYaw < 0 && destYaw > 0)
+    else if(currentYaw <= 0 && destYaw > 0)
+    {
+        answer = -1;
+    }
+    // assuming the case for 1 curryaw and -34 destyaw
+    else if(currentYaw >= 0 && destYaw < 0)
     {
         answer = -1;
     }
