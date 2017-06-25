@@ -3754,7 +3754,7 @@ ControlUINode::captureTheCurrentPlane()
         {
             PRINT_LOG(3, "All planes covered\n");
             PRINT_LOG(3, "Landing the quadcopter\n");
-            sendLand();
+            // sendLand();
             PRINT_LOG(1, "Total number of jlinkage calls: " << _jlinkage_calls << "\n");
         }
     }
@@ -3999,7 +3999,7 @@ ControlUINode::adjustForNextCapture()
         PRINT_LOG(5, print2dVector(visited_motion_points, "All motion points"));
         PRINT_LOG(3, "All planes are covered!\n");
         PRINT_LOG(3, "Landing the quadcopter\n");
-        sendLand();
+        // sendLand();
     }
     if((_is_plane_covered) &&
             (_node_completed_number_of_planes != _node_number_of_planes))
