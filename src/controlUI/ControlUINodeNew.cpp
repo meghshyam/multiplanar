@@ -3472,6 +3472,7 @@ ControlUINode::adjustYawToCurrentPlane()
 {
     clock_t beginTime, endTime;
     double elapsedTime;
+    int func_jlink_calls = 0;
     beginTime = clock();
     PRINT_LOG(1, "Started\n");
     getCurrentPositionOfDrone();
@@ -3487,7 +3488,7 @@ ControlUINode::adjustYawToCurrentPlane()
     Point3f pOrigin(_node_current_pos_of_drone[0], _node_current_pos_of_drone[1], _node_current_pos_of_drone[2]);
     Point3f projectedNormal(pYAxis-pOrigin);
     PRINT_LOG(4, "Estimating multiple planes -> call to JLinkage\n");
-    doJLinkage();
+    doJLinkage(); func_jlink_calls++;
     Point3f plane_params(this_plane_parameters[0], this_plane_parameters[1], 0.0);
     PRINT_DEBUG(4, "pYAxis: " << pYAxis << "\n");
     PRINT_DEBUG(4, "pOrigin: " << pOrigin << "\n");
@@ -3505,6 +3506,8 @@ ControlUINode::adjustYawToCurrentPlane()
     elapsedTime = double(endTime - beginTime) / (CLOCKS_PER_SEC/1000);
     _traversal_mode_time += (elapsedTime/1000.0);
     PRINT_DEBUG(1, "Time taken for function is " << elapsedTime << " ms.\n");
+    PRINT_DEBUG(1, "No. of j-linkage calls is " << func_jlink_calls << " ms.\n");
+    return ;
 }
 
 /**
@@ -3518,10 +3521,10 @@ ControlUINode::adjustTopBottomEdges()
     double elapsedTime;
     beginTime = clock();
     PRINT_LOG(1, "Started\n");
-    float step_distance;
-    float point_distance, height;
-    /*PRINT_LOG(4, "Estimating multiple planes -> call to JLinkage\n");
-    doJLinkage();*/
+    float step_distance, point_distance, height;
+    int func_jlink_calls = 0;
+    PRINT_LOG(4, "Estimating multiple planes -> call to JLinkage\n");
+    doJLinkage(); func_jlink_calls++;
     PRINT_DEBUG(5, print1dVector(this_plane_parameters, "Sig PP"));
     PRINT_DEBUG(5, print1dVector(this_continuous_bounding_box_points, "Sig CBB"));
     getCurrentPositionOfDrone();
@@ -3572,6 +3575,7 @@ ControlUINode::adjustTopBottomEdges()
     elapsedTime = double(endTime - beginTime) / (CLOCKS_PER_SEC/1000);
     _traversal_mode_time += (elapsedTime/1000.0);
     PRINT_DEBUG(1, "Time taken for function is " << elapsedTime << " ms.\n");
+    PRINT_DEBUG(1, "No. of j-linkage calls is " << func_jlink_calls << " ms.\n");
     return ;
 }
 
@@ -3585,9 +3589,10 @@ ControlUINode::adjustLeftEdge()
     clock_t beginTime, endTime;
     double elapsedTime;
     beginTime = clock();
+    int func_jlink_calls = 0;
     PRINT_DEBUG(1, "Started\n");
     PRINT_DEBUG(4, "Call Jlinkage\n");
-    doJLinkage();
+    doJLinkage(); func_jlink_calls++;
     bool planeLeftVisible;
     int move = checkVisibility(this_plane_parameters, this_continuous_bounding_box_points, 1);
     if(move==0)
@@ -3612,7 +3617,7 @@ ControlUINode::adjustLeftEdge()
             PRINT_DEBUG(4, "Moving right\n");
             moveDroneByMeasure(_move_heuristic, MOVE_DIRECTIONS::RIGHT);
         }
-        doJLinkage();
+        doJLinkage(); func_jlink_calls++;
         move = checkVisibility(this_plane_parameters, this_continuous_bounding_box_points, 1);
         PRINT_DEBUG(4, "Move: " << move << "\n");
         if(move==0) {planeLeftVisible = true;}
@@ -3623,6 +3628,8 @@ ControlUINode::adjustLeftEdge()
     elapsedTime = double(endTime - beginTime) / (CLOCKS_PER_SEC/1000);
     _traversal_mode_time += (elapsedTime/1000.0);
     PRINT_DEBUG(1, "Time taken for function is " << elapsedTime << " ms.\n");
+    PRINT_DEBUG(1, "No. of j-linkage calls is " << func_jlink_calls << " ms.\n");
+    return ;
 }
 
 /**
@@ -3634,6 +3641,7 @@ ControlUINode::captureTheCurrentPlane()
 {
     clock_t beginTime, endTime;
     double elapsedTime;
+    int func_jlink_calls = 0;
     beginTime = clock();
     PRINT_LOG(1, "Started\n");
     PRINT_LOG(1, "Total Number of planes: " << _node_number_of_planes 
@@ -3668,7 +3676,7 @@ ControlUINode::captureTheCurrentPlane()
     vector< vector<float> > test_plane_parameters;
     // @todo Can it be changed to RANSAC assuming we're clicking on single plane???
     _capture_mode = true;
-    doJLinkage(cc_points, points_clicked);
+    doJLinkage(cc_points, points_clicked); func_jlink_calls++;
     // doJLinkage();
     // Render significant plane
     image_gui->setContinuousBoundingBoxPoints(jlink_all_continuous_bounding_box_points);
@@ -3730,7 +3738,7 @@ ControlUINode::captureTheCurrentPlane()
             moveUp(step_distance);
         }
         // @todo check if this doJlinkage is necessary?
-        doJLinkage();
+        doJLinkage(); func_jlink_calls++;
     }
     PRINT_DEBUG(3, "Observe the plane without rotation\n");
     _is_plane_covered = isNewPlaneVisible(test_plane_parameters,
@@ -3754,6 +3762,7 @@ ControlUINode::captureTheCurrentPlane()
     elapsedTime = double(endTime - beginTime) / (CLOCKS_PER_SEC/1000);
     _capture_mode_time += (elapsedTime/1000.0);
     PRINT_DEBUG(1, "Time taken for function is " << elapsedTime << " ms.\n");
+    PRINT_DEBUG(1, "No. of j-linkage calls is " << func_jlink_calls << " ms.\n");
     if(_is_plane_covered)
     {
         copyNecessaryInfo();
@@ -3816,6 +3825,7 @@ ControlUINode::adjustForNextCapture()
     clock_t beginTime, endTime;
     double elapsedTime;
     beginTime = clock();
+    int func_jlink_calls = 0;
     PRINT_LOG(1, "Started\n");
     vector< vector<float> > test_plane_parameters;
     Point3f top_left = this_continuous_bounding_box_points[0];
@@ -3845,7 +3855,7 @@ ControlUINode::adjustForNextCapture()
             PRINT_DEBUG(3, "Last plane to cover\n");
         }
         PRINT_LOG(3, "Estimating multiple planes -> call to JLinkage\n");
-        doJLinkage();
+        doJLinkage(); func_jlink_calls++;
         // Adding the currently seeing plane to find out if a new plane another than the
         // current one is visible by rotating the drone
         clear2dVector(test_plane_parameters);
@@ -3938,7 +3948,7 @@ ControlUINode::adjustForNextCapture()
         designPathToChangeYaw(_node_current_pos_of_drone, _node_current_pos_of_drone[3]-(_next_plane_angle/5.0));
         moveDroneViaSetOfPoints(_interm_path);
         PRINT_LOG(3, "Calling Jlinkage\n");
-        doJLinkage();
+        doJLinkage(); func_jlink_calls++;
         clear2dVector(test_plane_parameters);
         for (unsigned int i = 0; i < visited_plane_parameters.size(); ++i)
         {
@@ -3993,6 +4003,7 @@ ControlUINode::adjustForNextCapture()
     elapsedTime = double(endTime - beginTime) / (CLOCKS_PER_SEC/1000);
     _traversal_mode_time += (elapsedTime/1000.0);
     PRINT_DEBUG(1, "Time taken for function is " << elapsedTime << " ms.\n");
+    PRINT_DEBUG(1, "No. of j-linkage calls is " << func_jlink_calls << " ms.\n");
     if(_node_completed_number_of_planes == _node_number_of_planes)
     {
         PRINT_DEBUG(3, "VPP size: " << visited_plane_parameters.size() << "\n");
@@ -4039,6 +4050,7 @@ ControlUINode::alignQuadcopterToNextPlane()
     clock_t beginTime, endTime;
     double elapsedTime;
     beginTime = clock();
+    int func_jlink_calls = 0;
     PRINT_LOG(1, "Started\n");
     PRINT_LOG(1, "Completed no. of planes: " << _node_completed_number_of_planes
                     << ", Total number of planes: " << _node_number_of_planes << "\n");
@@ -4065,7 +4077,7 @@ ControlUINode::alignQuadcopterToNextPlane()
                 {
                     PRINT_DEBUG(1, "Not adjusted. Can't see a new plane\n");
                     moveRight(m);
-                    doJLinkage();
+                    doJLinkage(); func_jlink_calls++;
                     m = m-0.2;
                 }while(_sig_plane_index == -1);
             }
@@ -4079,13 +4091,13 @@ ControlUINode::alignQuadcopterToNextPlane()
                 {
                     PRINT_DEBUG(3, "Not adjusted. Can't see a new plane\n");
                     moveRight(m);
-                    doJLinkage();
+                    doJLinkage(); func_jlink_calls++;
                     m = m-0.2;
                 }while(_sig_plane_index == -1);
             }
         }
         _is_adjusted = false;
-        doJLinkage();
+        doJLinkage(); func_jlink_calls++;
         PRINT_LOG(3, "Next plane is counter clockwise to current plane\n");
         image_gui->setContinuousBoundingBoxPoints(jlink_all_continuous_bounding_box_points);
         image_gui->setSigPlaneBoundingBoxPoints(this_continuous_bounding_box_points);
@@ -4112,7 +4124,7 @@ ControlUINode::alignQuadcopterToNextPlane()
             {
                 PRINT_DEBUG(3, "Not adjusted. Can't see a new plane\n");
                 moveRight(m);
-                doJLinkage();
+                doJLinkage(); func_jlink_calls++;
                 m = m-0.2;
             }while(_sig_plane_index == -1);
         }
@@ -4168,7 +4180,7 @@ ControlUINode::alignQuadcopterToNextPlane()
                     rotateCounterClockwise(angle_to_rotate);
                 }
                 yaw_change = true;
-                doJLinkage();
+                doJLinkage(); func_jlink_calls++;
                 PRINT_DEBUG(3, "Linearly translating along X by " << initial_move << "\n");
                 getCurrentPositionOfDrone();
                 /*float point_distance = getPointToPlaneDistance(this_plane_parameters, _node_current_pos_of_drone);
@@ -4205,7 +4217,7 @@ ControlUINode::alignQuadcopterToNextPlane()
                     moveUp(step_distance);
                 }
                 moveRight(initial_move);
-                doJLinkage();
+                doJLinkage(); func_jlink_calls++;
                 Point3f normal_new_plane(this_plane_parameters[0],
                                             this_plane_parameters[1], this_plane_parameters[2]);
                 PRINT_DEBUG(3, "Normal new plane: " << normal_new_plane << "\n");
@@ -4291,7 +4303,7 @@ ControlUINode::alignQuadcopterToNextPlane()
             while(_sig_plane_index == -1)
             {
                 rotateClockwise(fabs(_next_plane_angle)/denom);
-                doJLinkage();
+                doJLinkage(); func_jlink_calls++;
                 denom = denom + 1.0;
             }
         }
@@ -4301,7 +4313,7 @@ ControlUINode::alignQuadcopterToNextPlane()
             {
                 PRINT_DEBUG(3, "Adjusted. Can't see a new plane\n");
                 rotateClockwise(fabs(_next_plane_angle)/denom);
-                doJLinkage();
+                doJLinkage(); func_jlink_calls++;
                 denom = denom + 1.0;
             }
         }
@@ -4309,7 +4321,7 @@ ControlUINode::alignQuadcopterToNextPlane()
         rotateClockwise(fabs(_next_plane_angle)/denom);
         denom = denom + 1.0;
         rotateClockwise(fabs(_next_plane_angle)/denom);
-        doJLinkage();
+        doJLinkage(); func_jlink_calls++;
         PRINT_LOG(3, "Next plane is clockwise to current plane\n");
         image_gui->setContinuousBoundingBoxPoints(jlink_all_continuous_bounding_box_points);
         image_gui->setSigPlaneBoundingBoxPoints(this_continuous_bounding_box_points);
@@ -4326,7 +4338,8 @@ ControlUINode::alignQuadcopterToNextPlane()
     endTime = clock();
     elapsedTime = double(endTime - beginTime) / (CLOCKS_PER_SEC/1000);
     _traversal_mode_time += (elapsedTime/1000.0);
-    PRINT_DEBUG(3, "Aligning quadcopter to the new plane\n");
+    PRINT_DEBUG(1, "Time taken for function is " << elapsedTime << " ms.\n");
+    PRINT_DEBUG(1, "No. of j-linkage calls is " << func_jlink_calls << " ms.\n");
     alignQuadcopterToCurrentPlane();
     adjustLeftEdge();
     _stage_of_plane_observation = true;
@@ -4343,7 +4356,6 @@ ControlUINode::alignQuadcopterToNextPlane()
         _next_plane_angle = _node_main_angles.front();
     }
     PRINT_DEBUG(1, "Completed\n");
-    PRINT_DEBUG(1, "Time taken for function is " << elapsedTime << " ms.\n");
     return ;
 }
 
