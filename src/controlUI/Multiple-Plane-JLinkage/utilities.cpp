@@ -286,7 +286,7 @@ int writePointsToCSV(
 	int dataSize = data.size();
 	int i;
 
-	cout << "[ DEBUG ] Writing the points to CSV Started\n";
+	// cout << "[ DEBUG ] Writing the points to CSV Started\n";
 	// Initiate a ofstream object
 	const char* outFilename = filename.c_str();
 	ofstream outFile;
@@ -307,7 +307,7 @@ int writePointsToCSV(
 	// Close the file
 	outFile.close();
 
-	cout << "[ DEBUG ] Writing the points to CSV Completed\n";
+	// cout << "[ DEBUG ] Writing the points to CSV Completed\n";
 	return 0;
 
 }
@@ -320,7 +320,7 @@ int writePointsToCSVForGPlot(
 	int dataSize = data.size();
 	int i;
 
-	cout << "[ DEBUG ] Writing the points to CSV for GNUPlot Started\n";
+	// cout << "[ DEBUG ] Writing the points to CSV for GNUPlot Started\n";
 	// Initiate a ofstream object
 	const char* outFilename = filename.c_str();
 	ofstream outFile;
@@ -334,8 +334,8 @@ int writePointsToCSVForGPlot(
 		return -1;
 	}
 	// Write the data to file
-	cout << "[ DEBUG ] There are " << planeIndices.size() << "(" << dataSize <<
-			") points in the plane.\n";
+	/*cout << "[ DEBUG ] There are " << planeIndices.size() << "(" << dataSize <<
+			") points in the plane.\n";*/
 	for( i = 0; i < dataSize; i++) {
 		outFile << data[i].x << " " << data[i].y << " " << data[i].z << " " << planeIndices[i] << "\n";
 	}
@@ -343,7 +343,7 @@ int writePointsToCSVForGPlot(
 	// Close the file
 	outFile.close();
 
-	cout << "[ DEBUG ] Writing the points to CSV for GNUPlot Completed\n";
+	// cout << "[ DEBUG ] Writing the points to CSV for GNUPlot Completed\n";
 	return 0;
 
 }
@@ -355,7 +355,7 @@ int writePointsToCSVForGPlot(
 	int numberOfPlanes = data.size();
 	int i, j;
 
-	cout << "[ DEBUG ] Writing the points(vector of vector) to CSV for GNUPlot Started\n";
+	// cout << "[ DEBUG ] Writing the points(vector of vector) to CSV for GNUPlot Started\n";
 	// Initiate a ofstream object
 	const char* outFilename = filename.c_str();
 	ofstream outFile;
@@ -380,7 +380,7 @@ int writePointsToCSVForGPlot(
 	// Close the file
 	outFile.close();
 
-	cout << "[ DEBUG ] Writing the points(vector of vector) to CSV for GNUPlot Completed\n";
+	// cout << "[ DEBUG ] Writing the points(vector of vector) to CSV for GNUPlot Completed\n";
 	return 0;
 
 }
@@ -393,7 +393,7 @@ int writePointsToCSVForGPlot(
 	int numberOfPlanes = planeIndexBounds.size();
 	int i, j;
 
-	cout << "[ DEBUG ] Writing the points(map) to CSV for GNUPlot Started\n";
+	// cout << "[ DEBUG ] Writing the points(map) to CSV for GNUPlot Started\n";
 	// Initiate a ofstream object
 	const char* outFilename = filename.c_str();
 	ofstream outFile;
@@ -408,7 +408,7 @@ int writePointsToCSVForGPlot(
 	}
 
 	// Write the data to file
-	cout << "[ DEBUG ] There are " << numberOfPlanes << " planes.\n";
+	// cout << "[ DEBUG ] There are " << numberOfPlanes << " planes.\n";
 	for( i = 0; i < numberOfPlanes; i++) {
 		int firstBound = planeIndexBounds.at(i).first;
 		int secondBound = planeIndexBounds.at(i).second;
@@ -420,25 +420,25 @@ int writePointsToCSVForGPlot(
 	// Close the file
 	outFile.close();
 
-	cout << "[ DEBUG ] Writing the points(map) to CSV for GNUPlot Completed\n";
+	// cout << "[ DEBUG ] Writing the points(map) to CSV for GNUPlot Completed\n";
 	return 0;
 
 }
 
 double findAngle(Point3f vec1, Point3f vec2)
 {
-	cout << "[ DEBUG] [findAngle] Started\n";
+	// cout << "[ DEBUG] [findAngle] Started\n";
 	double dotProduct = vec1.dot(vec2);
 	double mag1 =  sqrt( vec1.x*vec1.x + vec1.y*vec1.y + vec1.z*vec1.z );
 	double mag2 =  sqrt( vec2.x*vec2.x + vec2.y*vec2.y + vec2.z*vec2.z );
 	double angle = acos(dotProduct/(mag1*mag2));
-	cout << "[ DEBUG] [findAngle] Angle: " << angle << "\n";
+	// cout << "[ DEBUG] [findAngle] Angle: " << angle << "\n";
 	Point3f crossProduct = vec1.cross(vec2);
-	cout << "[ DEBUG] [findAngle] crossProduct: " << crossProduct << "\n";
+	// cout << "[ DEBUG] [findAngle] crossProduct: " << crossProduct << "\n";
 	Point3f ref(0,0,1);
 	double sign = ref.dot(crossProduct);
-	cout << "[ DEBUG] [findAngle] Sign: " << sign << "\n";
-	cout << "[ DEBUG] [findAngle] Completed\n";
+	// cout << "[ DEBUG] [findAngle] Sign: " << sign << "\n";
+	// cout << "[ DEBUG] [findAngle] Completed\n";
 	if(sign>0)
 		return angle;
 	else

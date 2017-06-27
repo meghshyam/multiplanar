@@ -1504,7 +1504,7 @@ rotate3fPoints(const vector<Point3f> &_3d_points, const Mat &rotation,
     PRINT_DEBUG(3, "Object Points:\n" << _3d_points_matrix << "\n");
     PRINT_DEBUG(3, "Rotation matrix dimension: (" << float_rotation.rows << ", " << float_rotation.cols << ")\n");
     PRINT_DEBUG(3, "Points matrix dimension: (" << _3d_points_matrix.rows << ", " << _3d_points_matrix.cols << ")\n");
-    PRINT_DEBUG(3, float_rotation.inv() << "\n"); cout << "\n";
+    PRINT_DEBUG(3, float_rotation.inv() << "\n");
     PRINT_DEBUG(3, _3d_points_matrix.t() << "\n");
     Mat rot_3d_points_matrix = float_rotation.inv()*_3d_points_matrix.t();
     _rotated_3d_points.clear();
