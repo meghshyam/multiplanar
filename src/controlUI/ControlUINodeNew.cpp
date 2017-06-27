@@ -835,26 +835,26 @@ ControlUINode::getOrientation(float currentYaw, float destYaw)
     if(destYaw < 0 && currentYaw < 0)
     {
         if(currentYaw > destYaw)
-            answer = 1; // anti-clockwise
+            answer = -1; // anti-clockwise
         else
-            answer = -1; // clockwise
+            answer = 1; // clockwise
     }
     else if(destYaw > 0 && currentYaw > 0)
     {
         if(currentYaw > destYaw)
-            answer = 1;
-        else
             answer = -1;
+        else
+            answer = 1;
     }
     // assuming the case for -1 curryaw and 34 destyaw
     else if(currentYaw <= 0 && destYaw > 0)
     {
-        answer = -1;
+        answer = 1;
     }
     // assuming the case for 1 curryaw and -34 destyaw
     else if(currentYaw >= 0 && destYaw < 0)
     {
-        answer = 1;
+        answer = -1;
     }
     PRINT_DEBUG(4, "Orientation: " << answer << "\n");
     PRINT_LOG(1, "Completed\n");
@@ -1056,7 +1056,8 @@ ControlUINode::moveDroneBetweenPlanes(const vector<double> &previousPosition,
     vector< vector<double> > pathPoints;
     clear2dVector(pathPoints);
     vector<double> startPosition(4), endPosition(4);
-    float distance = -1.75;
+    float front_distance = 1.75;
+    float back_distance = 4.0;
     if (curr_coord_box_points.size() == 0 && curr_plane_parameters.size() == 0 && plane_index == 0)
     {
         PRINT_LOG(2, "You are currently adjusting for plane " << plane_index+1 << "\n");
@@ -1098,20 +1099,20 @@ ControlUINode::moveDroneBetweenPlanes(const vector<double> &previousPosition,
         Point3f next_plane_midpoint_projection(0.0f, 0.0f, 0.0f);
         Point3f next_plane_right_edge_midpoint_projection(0.0f, 0.0f, 0.0f);
         // Position in front of plane i-1 where the drone might have to go
-        next_plane_midpoint_projection.x = next_plane_midpoint.x + distance*next_plane_normal.x;
-        next_plane_midpoint_projection.y = next_plane_midpoint.y + distance*next_plane_normal.y;
-        next_plane_midpoint_projection.z = next_plane_midpoint.z + distance*next_plane_normal.z;
+        next_plane_midpoint_projection.x = next_plane_midpoint.x + front_distance*next_plane_normal.x;
+        next_plane_midpoint_projection.y = next_plane_midpoint.y + front_distance*next_plane_normal.y;
+        next_plane_midpoint_projection.z = next_plane_midpoint.z + front_distance*next_plane_normal.z;
         PRINT_DEBUG(4, "Current plane midpoint projection: " << next_plane_midpoint_projection << "\n");
         // 
-        next_plane_right_edge_midpoint_projection.x = next_plane_right_edge_midpoint.x + distance*next_plane_normal.x;
-        next_plane_right_edge_midpoint_projection.y = next_plane_right_edge_midpoint.y + distance*next_plane_normal.y;
-        next_plane_right_edge_midpoint_projection.z = next_plane_right_edge_midpoint.z + distance*next_plane_normal.z;
+        next_plane_right_edge_midpoint_projection.x = next_plane_right_edge_midpoint.x + front_distance*next_plane_normal.x;
+        next_plane_right_edge_midpoint_projection.y = next_plane_right_edge_midpoint.y + front_distance*next_plane_normal.y;
+        next_plane_right_edge_midpoint_projection.z = next_plane_right_edge_midpoint.z + front_distance*next_plane_normal.z;
         PRINT_DEBUG(4, "Current plane right edge midpoint projection: " << next_plane_right_edge_midpoint_projection << "\n");
         PRINT_DEBUG(4, "Start position point: " << prevPositionPoint << "\n");
-        float distance13 = distanceBetweenPoints(prevPositionPoint, next_plane_midpoint_projection);
-        float distance14 = distanceBetweenPoints(prevPositionPoint, next_plane_right_edge_midpoint_projection);
-        PRINT_DEBUG(4, "Distance between last targetPoint and next plane midpoint projection: " << distance13 << "\n");
-        PRINT_DEBUG(4, "Distance between last targetPoint and next plane right edge midpoint projection: " << distance14 << "\n");
+        float front_distance13 = distanceBetweenPoints(prevPositionPoint, next_plane_midpoint_projection);
+        float front_distance14 = distanceBetweenPoints(prevPositionPoint, next_plane_right_edge_midpoint_projection);
+        PRINT_DEBUG(4, "Distance between last targetPoint and next plane midpoint projection: " << front_distance13 << "\n");
+        PRINT_DEBUG(4, "Distance between last targetPoint and next plane right edge midpoint projection: " << front_distance14 << "\n");
         Point3f projectedNormal(next_plane_parameters[0], next_plane_parameters[1], 0);
         Point3f yAxis(0, 1, 0);
         double desiredYaw = findAngle(projectedNormal, yAxis);
@@ -1122,7 +1123,7 @@ ControlUINode::moveDroneBetweenPlanes(const vector<double> &previousPosition,
         startPosition[1] = previousPosition[1];
         startPosition[2] = previousPosition[2];
         startPosition[3] = previousPosition[3];
-        if(distance13 < distance14)
+        if(front_distance13 < front_distance14)
         {
             endPosition[0] = next_plane_midpoint_projection.x;
             endPosition[1] = next_plane_midpoint_projection.y;
@@ -1189,25 +1190,25 @@ ControlUINode::moveDroneBetweenPlanes(const vector<double> &previousPosition,
         Point3f curr_plane_midpoint_projection(0.0f, 0.0f, 0.0f);
         Point3f curr_plane_right_edge_midpoint_projection(0.0f, 0.0f, 0.0f);
         // Position in front of plane i-1 where the drone might have to go
-        curr_plane_midpoint_projection.x = curr_plane_midpoint.x + distance*curr_plane_normal.x;
-        curr_plane_midpoint_projection.y = curr_plane_midpoint.y + distance*curr_plane_normal.y;
-        curr_plane_midpoint_projection.z = curr_plane_midpoint.z + distance*curr_plane_normal.z;
+        curr_plane_midpoint_projection.x = curr_plane_midpoint.x + front_distance*curr_plane_normal.x;
+        curr_plane_midpoint_projection.y = curr_plane_midpoint.y + front_distance*curr_plane_normal.y;
+        curr_plane_midpoint_projection.z = curr_plane_midpoint.z + front_distance*curr_plane_normal.z;
         PRINT_DEBUG(4, "Current plane midpoint projection: " << curr_plane_midpoint_projection << "\n");
         // 
-        curr_plane_right_edge_midpoint_projection.x = curr_plane_right_edge_midpoint.x + distance*curr_plane_normal.x;
-        curr_plane_right_edge_midpoint_projection.y = curr_plane_right_edge_midpoint.y + distance*curr_plane_normal.y;
-        curr_plane_right_edge_midpoint_projection.z = curr_plane_right_edge_midpoint.z + distance*curr_plane_normal.z;
+        curr_plane_right_edge_midpoint_projection.x = curr_plane_right_edge_midpoint.x + front_distance*curr_plane_normal.x;
+        curr_plane_right_edge_midpoint_projection.y = curr_plane_right_edge_midpoint.y + front_distance*curr_plane_normal.y;
+        curr_plane_right_edge_midpoint_projection.z = curr_plane_right_edge_midpoint.z + front_distance*curr_plane_normal.z;
         PRINT_DEBUG(4, "Current plane right edge midpoint projection: " << curr_plane_right_edge_midpoint_projection << "\n");
         PRINT_DEBUG(4, "Start position point: " << prevPositionPoint << "\n");
-        float distance13 = distanceBetweenPoints(prevPositionPoint, curr_plane_midpoint_projection);
-        float distance14 = distanceBetweenPoints(prevPositionPoint, curr_plane_right_edge_midpoint_projection);
-        PRINT_DEBUG(4, "Distance between last targetPoint and current plane midpoint projection: " << distance13 << "\n");
-        PRINT_DEBUG(4, "Distance between last targetPoint and current plane right edge midpoint projection: " << distance14 << "\n");
+        float front_distance13 = distanceBetweenPoints(prevPositionPoint, curr_plane_midpoint_projection);
+        float front_distance14 = distanceBetweenPoints(prevPositionPoint, curr_plane_right_edge_midpoint_projection);
+        PRINT_DEBUG(4, "Distance between last targetPoint and current plane midpoint projection: " << front_distance13 << "\n");
+        PRINT_DEBUG(4, "Distance between last targetPoint and current plane right edge midpoint projection: " << front_distance14 << "\n");
         startPosition[0] = previousPosition[0];
         startPosition[1] = previousPosition[1];
         startPosition[2] = previousPosition[2];
         startPosition[3] = previousPosition[3];
-        if(distance13 < distance14)
+        if(front_distance13 < front_distance14)
         {
             endPosition[0] = curr_plane_midpoint_projection.x;
             endPosition[1] = curr_plane_midpoint_projection.y;
@@ -1280,7 +1281,7 @@ ControlUINode::moveDroneBetweenPlanes(const vector<double> &previousPosition,
         PRINT_DEBUG(4, "Current plane normal: " << curr_plane_normal << "\n");
         angle = angleBetweenPlanes/2;
         PRINT_DEBUG(4, "Halfway angle in radians: " << angle << "\n");
-        float new_distance = distance/cos(angle);
+        float new_distance = back_distance/cos(angle);
         PRINT_DEBUG(4, "New distance diagonally: " << new_distance << "\n");
         angle = angle*180.0/M_PI;
         PRINT_DEBUG(4, "Halfway angle in degrees: " << angle << "\n");
@@ -1326,12 +1327,12 @@ ControlUINode::moveDroneBetweenPlanes(const vector<double> &previousPosition,
         PRINT_DEBUG(4, print1dVector(endPosition, "2.4 -> Ending position", ""));
         generatePathPoints(startPosition, endPosition, pathPoints, false);
         PRINT_DEBUG(4, "2.4 -> pathPoints size: " << pathPoints.size() << "\n");
-        next_plane_left_edge_midpoint_projection.x = next_plane_left_edge_midpoint.x + distance*next_plane_normal.x;
-        next_plane_left_edge_midpoint_projection.y = next_plane_left_edge_midpoint.y + distance*next_plane_normal.y;
-        next_plane_left_edge_midpoint_projection.z = next_plane_left_edge_midpoint.z + distance*next_plane_normal.z;
-        next_plane_midpoint_projection.x = next_plane_midpoint.x + distance*next_plane_normal.x;
-        next_plane_midpoint_projection.y = next_plane_midpoint.y + distance*next_plane_normal.y;
-        next_plane_midpoint_projection.z = next_plane_midpoint.z + distance*next_plane_normal.z;
+        next_plane_left_edge_midpoint_projection.x = next_plane_left_edge_midpoint.x + front_distance*next_plane_normal.x;
+        next_plane_left_edge_midpoint_projection.y = next_plane_left_edge_midpoint.y + front_distance*next_plane_normal.y;
+        next_plane_left_edge_midpoint_projection.z = next_plane_left_edge_midpoint.z + front_distance*next_plane_normal.z;
+        next_plane_midpoint_projection.x = next_plane_midpoint.x + front_distance*next_plane_normal.x;
+        next_plane_midpoint_projection.y = next_plane_midpoint.y + front_distance*next_plane_normal.y;
+        next_plane_midpoint_projection.z = next_plane_midpoint.z + front_distance*next_plane_normal.z;
         startPosition[0] = endPosition[0];
         startPosition[1] = endPosition[1];
         startPosition[2] = endPosition[2];
@@ -3506,7 +3507,7 @@ ControlUINode::adjustYawToCurrentPlane()
     elapsedTime = double(endTime - beginTime) / (CLOCKS_PER_SEC/1000);
     _traversal_mode_time += (elapsedTime/1000.0);
     PRINT_DEBUG(1, "Time taken for function is " << elapsedTime << " ms.\n");
-    PRINT_DEBUG(1, "No. of j-linkage calls is " << func_jlink_calls << " ms.\n");
+    PRINT_DEBUG(1, "No. of j-linkage calls is " << func_jlink_calls << "\n");
     return ;
 }
 
@@ -3575,7 +3576,7 @@ ControlUINode::adjustTopBottomEdges()
     elapsedTime = double(endTime - beginTime) / (CLOCKS_PER_SEC/1000);
     _traversal_mode_time += (elapsedTime/1000.0);
     PRINT_DEBUG(1, "Time taken for function is " << elapsedTime << " ms.\n");
-    PRINT_DEBUG(1, "No. of j-linkage calls is " << func_jlink_calls << " ms.\n");
+    PRINT_DEBUG(1, "No. of j-linkage calls is " << func_jlink_calls << "\n");
     return ;
 }
 
@@ -3628,7 +3629,7 @@ ControlUINode::adjustLeftEdge()
     elapsedTime = double(endTime - beginTime) / (CLOCKS_PER_SEC/1000);
     _traversal_mode_time += (elapsedTime/1000.0);
     PRINT_DEBUG(1, "Time taken for function is " << elapsedTime << " ms.\n");
-    PRINT_DEBUG(1, "No. of j-linkage calls is " << func_jlink_calls << " ms.\n");
+    PRINT_DEBUG(1, "No. of j-linkage calls is " << func_jlink_calls << "\n");
     return ;
 }
 
@@ -3762,7 +3763,7 @@ ControlUINode::captureTheCurrentPlane()
     elapsedTime = double(endTime - beginTime) / (CLOCKS_PER_SEC/1000);
     _capture_mode_time += (elapsedTime/1000.0);
     PRINT_DEBUG(1, "Time taken for function is " << elapsedTime << " ms.\n");
-    PRINT_DEBUG(1, "No. of j-linkage calls is " << func_jlink_calls << " ms.\n");
+    PRINT_DEBUG(1, "No. of j-linkage calls is " << func_jlink_calls << "\n");
     if(_is_plane_covered)
     {
         copyNecessaryInfo();
@@ -4003,7 +4004,7 @@ ControlUINode::adjustForNextCapture()
     elapsedTime = double(endTime - beginTime) / (CLOCKS_PER_SEC/1000);
     _traversal_mode_time += (elapsedTime/1000.0);
     PRINT_DEBUG(1, "Time taken for function is " << elapsedTime << " ms.\n");
-    PRINT_DEBUG(1, "No. of j-linkage calls is " << func_jlink_calls << " ms.\n");
+    PRINT_DEBUG(1, "No. of j-linkage calls is " << func_jlink_calls << "\n");
     if(_node_completed_number_of_planes == _node_number_of_planes)
     {
         PRINT_DEBUG(3, "VPP size: " << visited_plane_parameters.size() << "\n");
@@ -4339,7 +4340,7 @@ ControlUINode::alignQuadcopterToNextPlane()
     elapsedTime = double(endTime - beginTime) / (CLOCKS_PER_SEC/1000);
     _traversal_mode_time += (elapsedTime/1000.0);
     PRINT_DEBUG(1, "Time taken for function is " << elapsedTime << " ms.\n");
-    PRINT_DEBUG(1, "No. of j-linkage calls is " << func_jlink_calls << " ms.\n");
+    PRINT_DEBUG(1, "No. of j-linkage calls is " << func_jlink_calls << "\n");
     alignQuadcopterToCurrentPlane();
     adjustLeftEdge();
     _stage_of_plane_observation = true;
