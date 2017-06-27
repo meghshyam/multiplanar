@@ -827,7 +827,7 @@ ControlUINode::getOrientation(float currentYaw, float destYaw)
     {
         destYaw = -179.0 - (180.0 - destYaw);
     }
-    if (destYaw < 0 && currentYaw > 0 && fabs(-180.0-destYaw) < 30.0)
+    else if (destYaw < 0 && currentYaw > 0 && fabs(-180.0-destYaw) < 30.0)
     {
         destYaw = 179.0 + (180.0 + destYaw);
     }
@@ -1056,7 +1056,7 @@ ControlUINode::moveDroneBetweenPlanes(const vector<double> &previousPosition,
     vector< vector<double> > pathPoints;
     clear2dVector(pathPoints);
     vector<double> startPosition(4), endPosition(4);
-    float distance = -1.5;
+    float distance = -1.75;
     if (curr_coord_box_points.size() == 0 && curr_plane_parameters.size() == 0 && plane_index == 0)
     {
         PRINT_LOG(2, "You are currently adjusting for plane " << plane_index+1 << "\n");
@@ -1301,6 +1301,13 @@ ControlUINode::moveDroneBetweenPlanes(const vector<double> &previousPosition,
         mid_plane_normal.x = rotation_dir*(intersection_point.x - curr_plane_right_edge_midpoint.x);
         mid_plane_normal.y = rotation_dir*(intersection_point.y - curr_plane_right_edge_midpoint.y);
         mid_plane_normal.z = rotation_dir*(intersection_point.z - curr_plane_right_edge_midpoint.z);
+        float mid_plane_normal_mag = \
+                        sqrt((mid_plane_normal.x * mid_plane_normal.x)+ \
+                        (mid_plane_normal.y * mid_plane_normal.y)+ \
+                        (mid_plane_normal.z * mid_plane_normal.z));
+        mid_plane_normal.x /= mid_plane_normal_mag;
+        mid_plane_normal.y /= mid_plane_normal_mag;
+        mid_plane_normal.z /= mid_plane_normal_mag;
         PRINT_DEBUG(4, "Intersection point: " << intersection_point << "\n");
         PRINT_DEBUG(4, "Mid plane normal: " << mid_plane_normal << "\n");
         // Point3f yAxis(0.0f, 1.0f, 0.0f);
@@ -3429,7 +3436,7 @@ ControlUINode::alignQuadcopterToCurrentPlane()
     clock_t beginTime, endTime;
     double elapsedTime;
     beginTime = clock();
-    PRINT_LOG(5, "Started\n");
+    PRINT_LOG(1, "Started\n");
     if(_node_number_of_planes == 1)
     {
         _next_plane_dir = CLOCKWISE;
@@ -3456,7 +3463,7 @@ ControlUINode::alignQuadcopterToCurrentPlane()
     endTime = clock();
     elapsedTime = double(endTime - beginTime) / (CLOCKS_PER_SEC/1000);
     PRINT_DEBUG(1, "Time taken for function is " << elapsedTime << " ms.\n");
-    PRINT_LOG(5, "Completed\n");
+    PRINT_LOG(1, "Completed\n");
     return ;
 }
 
@@ -3496,6 +3503,7 @@ ControlUINode::adjustYawToCurrentPlane()
     PRINT_LOG(1, "Completed\n");
     endTime = clock();
     elapsedTime = double(endTime - beginTime) / (CLOCKS_PER_SEC/1000);
+    _traversal_mode_time += (elapsedTime/1000.0);
     PRINT_DEBUG(1, "Time taken for function is " << elapsedTime << " ms.\n");
 }
 
@@ -3512,6 +3520,8 @@ ControlUINode::adjustTopBottomEdges()
     PRINT_LOG(1, "Started\n");
     float step_distance;
     float point_distance, height;
+    /*PRINT_LOG(4, "Estimating multiple planes -> call to JLinkage\n");
+    doJLinkage();*/
     PRINT_DEBUG(5, print1dVector(this_plane_parameters, "Sig PP"));
     PRINT_DEBUG(5, print1dVector(this_continuous_bounding_box_points, "Sig CBB"));
     getCurrentPositionOfDrone();
@@ -3560,6 +3570,7 @@ ControlUINode::adjustTopBottomEdges()
     PRINT_DEBUG(3, "Adjusting top and bottom done.\n");
     endTime = clock();
     elapsedTime = double(endTime - beginTime) / (CLOCKS_PER_SEC/1000);
+    _traversal_mode_time += (elapsedTime/1000.0);
     PRINT_DEBUG(1, "Time taken for function is " << elapsedTime << " ms.\n");
     return ;
 }
@@ -3610,6 +3621,7 @@ ControlUINode::adjustLeftEdge()
     PRINT_LOG(1, "Completed\n");
     endTime = clock();
     elapsedTime = double(endTime - beginTime) / (CLOCKS_PER_SEC/1000);
+    _traversal_mode_time += (elapsedTime/1000.0);
     PRINT_DEBUG(1, "Time taken for function is " << elapsedTime << " ms.\n");
 }
 
@@ -4253,11 +4265,6 @@ ControlUINode::alignQuadcopterToNextPlane()
                 denom += 1.0;
             } while(!aligned);
         }
-        PRINT_DEBUG(3, "Aligning quadcopter to the new plane\n");
-        alignQuadcopterToCurrentPlane();
-        doJLinkage();
-        adjustLeftEdge();
-        PRINT_DEBUG(3, "Aligning quadcopter to the new plane\n");
     }
     else if(_next_plane_dir == CLOCKWISE)
     {
@@ -4315,10 +4322,13 @@ ControlUINode::alignQuadcopterToNextPlane()
         moveBackward(0.4);
         PRINT_DEBUG(3, "Moving forwards by 0.4\n");
         moveForward(0.4);
-        PRINT_DEBUG(3, "Aligning the quadcoper to the new plane\n");
-        alignQuadcopterToCurrentPlane();
-        adjustLeftEdge();
     }
+    endTime = clock();
+    elapsedTime = double(endTime - beginTime) / (CLOCKS_PER_SEC/1000);
+    _traversal_mode_time += (elapsedTime/1000.0);
+    PRINT_DEBUG(3, "Aligning quadcopter to the new plane\n");
+    alignQuadcopterToCurrentPlane();
+    adjustLeftEdge();
     _stage_of_plane_observation = true;
     _node_main_directions.pop_front();
     _node_main_angles.pop_front();
@@ -4333,9 +4343,6 @@ ControlUINode::alignQuadcopterToNextPlane()
         _next_plane_angle = _node_main_angles.front();
     }
     PRINT_DEBUG(1, "Completed\n");
-    endTime = clock();
-    elapsedTime = double(endTime - beginTime) / (CLOCKS_PER_SEC/1000);
-    _traversal_mode_time += (elapsedTime/1000.0);
     PRINT_DEBUG(1, "Time taken for function is " << elapsedTime << " ms.\n");
     return ;
 }
