@@ -3714,7 +3714,7 @@ ControlUINode::captureTheCurrentPlane()
         bottom_mid.x = bottom_mid.x/(float)2.0;
         bottom_mid.y = bottom_mid.y/(float)2.0;
         bottom_mid.z = bottom_mid.z/(float)2.0;
-        float height_required = ((1.0f * top_mid.z) + (3.0f * bottom_mid.z))/4.0f;
+        float height_required = ((3.0f * top_mid.z) + (1.0f * bottom_mid.z))/4.0f;
         // float distance = getDistanceToSeePlane((int)ceil(top_mid.z));
         float distance = getDistanceToSeePlane((int)ceil(height_required));
         _fixed_distance = distance;
@@ -4194,7 +4194,7 @@ ControlUINode::alignQuadcopterToNextPlane()
                     rotateCounterClockwise(angle_to_rotate);
                 }
                 yaw_change = true;
-                doJLinkage(); func_jlink_calls++;
+                // doJLinkage(); func_jlink_calls++;
                 PRINT_DEBUG(3, "Linearly translating along X by " << initial_move << "\n");
                 getCurrentPositionOfDrone();
                 /*float point_distance = getPointToPlaneDistance(this_plane_parameters, _node_current_pos_of_drone);
