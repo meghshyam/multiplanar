@@ -712,7 +712,7 @@ ImageView::on_key_down(int key)
 		/* Printing the information to the terminal */
 		int number_of_planes = 0;
 		int type_of_surface = 0;
-		int max_height_of_plane = 0;
+		float max_height_of_plane = 0.0f;
 		int view_dir = 0;
 		readTopViewInfo(topview_filename, number_of_planes, type_of_surface,
 						max_height_of_plane, main_angles,
@@ -787,7 +787,7 @@ ImageView::on_key_down(int key)
 		/* Printing the information to the terminal */
 		int number_of_planes = 0;
 		int type_of_surface = 0;
-		int max_height_of_plane = 0;
+		float max_height_of_plane = 0.0f;
 		int view_dir = 0;
 		string filename = "TopViewInfo.txt";
 		readTopViewInfo(filename, number_of_planes, type_of_surface,
@@ -845,7 +845,7 @@ ImageView::on_key_down(int key)
 					cout << "ANTI-CLOCKWISE" << " ";
 			}
 			PRINT_LOG(1, "\n");
-			int min_height_of_plane = 2.0;
+			float min_height_of_plane = 2.0f;
 			float min_distance = getDistanceToSeePlane(min_height_of_plane);
 			float max_distance = getDistanceToSeePlane(max_height_of_plane);
 			PRINT_LOG(1, "[Key 'W'] Min. Distance: " << min_distance << ", Max. Distance: " << max_distance << "\n");
@@ -1157,7 +1157,7 @@ void
 ImageView::readTopViewInfo(string filename,
 							int &number_of_planes,
 							int &type_of_surface,
-							int &max_height_of_plane,
+							float &max_height_of_plane,
 							vector<double> &main_angles,
 							vector<int> &main_directions)
 {
@@ -1192,7 +1192,7 @@ ImageView::readTopViewInfo(string filename,
 			{
 				getline(topview_info, line);
 				// cout << "Max-Height-of-the-Plane: " << line << "\n";
-				max_height_of_plane = stoi(line);
+				max_height_of_plane = stof(line);
 			}
 			if(!line.empty() && line.compare(main_angles_string)==0)
 			{

@@ -52,9 +52,9 @@ class TopView: private CVD::Thread
 		int _window_width = 800; //< Width of the GUI
 		int _draw_screen_height = 360; //< Height of the drawing area
 		int _draw_screen_width = 640; // Width of the drawing area
-		int _max_plane_height = 2; // Max allowed default plane height. Can go upto 15
-		int _max_allowed_plane_height = 5;
-		int _min_allowed_plane_height = 1;
+		float _max_plane_height = 2.0f; // Max allowed default plane height. Can go upto 15
+		float _max_allowed_plane_height = 5.0f;
+		float _min_allowed_plane_height = 1.0f;
 		int _window; //< Indicator for the GUI window
 		int _number_of_planes; //< Number of planes drawn on the screen
 		int _type_of_surface = SURFACES::OPEN;
@@ -178,7 +178,7 @@ class TopView: private CVD::Thread
 		void getAngles(vector<double> &angle);
 		int getNumberOfPlanes();
 		int getTypeOfSurface();
-		int getMaxHeightOfPlane();
+		float getMaxHeightOfPlane();
 		int getViewingDirection();
 		bool getExitStatus();
 

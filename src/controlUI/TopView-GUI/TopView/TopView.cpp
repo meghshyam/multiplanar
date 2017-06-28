@@ -334,7 +334,7 @@ TopView::checkMenu(float x, float y)
 	}
 	else if( (x >= 660.0) && (x <= 680.0) && (y >= 520.0) && (y <= 530.0) )
 	{
-		_max_plane_height++;
+		_max_plane_height += 0.25f;
 		if(_max_plane_height >= _max_allowed_plane_height)
 		{
 			_max_plane_height = _max_allowed_plane_height;
@@ -346,7 +346,7 @@ TopView::checkMenu(float x, float y)
 	}
 	else if( (x >= 685.0) && (x <= 705.0) && (y >= 520.0) && (y <= 530.0) )
 	{
-		_max_plane_height--;
+		_max_plane_height -= 0.25f;
 		if(_max_plane_height <= _min_allowed_plane_height)
 		{
 			_max_plane_height = _min_allowed_plane_height;
@@ -687,7 +687,7 @@ TopView::getTypeOfSurface()
 	return _type_of_surface;
 }
 
-int
+float
 TopView::getMaxHeightOfPlane()
 {
 	return _max_plane_height;

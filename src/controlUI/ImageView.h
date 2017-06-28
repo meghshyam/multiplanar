@@ -319,7 +319,7 @@ class ImageView : private CVD::Thread, private MouseKeyHandler
 		readTopViewInfo(string filename,
 						int &number_of_planes,
 						int &type_of_surface,
-						int &max_height_of_plane,
+						float &max_height_of_plane,
 						vector<double> &main_angles,
 						vector<int> &main_directions);
 

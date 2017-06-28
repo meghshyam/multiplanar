@@ -1298,7 +1298,7 @@ GenerateMy3DPoints(float width, float height)
  * @details From tyhis position the leftmost and rightmost edges of the plane may not be visible
  */
 inline static float
-getDistanceToSeePlane(int height)
+getDistanceToSeePlane(float height)
 {
 	// Read points
 	vector<Point2f> imagePoints = GenerateMy2DPoints();
