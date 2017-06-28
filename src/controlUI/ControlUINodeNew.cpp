@@ -1057,7 +1057,7 @@ ControlUINode::moveDroneBetweenPlanes(const vector<double> &previousPosition,
     clear2dVector(pathPoints);
     vector<double> startPosition(4), endPosition(4);
     float front_distance = 1.75;
-    float back_distance = 4.0;
+    float back_distance = 2.5;
     if (curr_coord_box_points.size() == 0 && curr_plane_parameters.size() == 0 && plane_index == 0)
     {
         PRINT_LOG(2, "You are currently adjusting for plane " << plane_index+1 << "\n");
@@ -3707,12 +3707,22 @@ ControlUINode::captureTheCurrentPlane()
         getCurrentPositionOfDrone();
         PRINT_DEBUG(5, print1dVector(_node_current_pos_of_drone, "Current position of drone"));
         Point3f top_mid = (this_continuous_bounding_box_points[0]+this_continuous_bounding_box_points[1]);
+        Point3f bottom_mid = (this_continuous_bounding_box_points[2]+this_continuous_bounding_box_points[3]);
         top_mid.x = top_mid.x/(float)2.0;
         top_mid.y = top_mid.y/(float)2.0;
         top_mid.z = top_mid.z/(float)2.0;
-        float distance = getDistanceToSeePlane((int)ceil(top_mid.z));
+        bottom_mid.x = bottom_mid.x/(float)2.0;
+        bottom_mid.y = bottom_mid.y/(float)2.0;
+        bottom_mid.z = bottom_mid.z/(float)2.0;
+        float height_required = ((1.0f * top_mid.z) + (3.0f * bottom_mid.z))/4.0f;
+        // float distance = getDistanceToSeePlane((int)ceil(top_mid.z));
+        float distance = getDistanceToSeePlane((int)ceil(height_required));
         _fixed_distance = distance;
         float point_distance = getPointToPlaneDistance(this_plane_parameters, _node_current_pos_of_drone);
+        PRINT_LOG(1, "Top mid z: " << (int)ceil(top_mid.z) << ".\n");
+        PRINT_LOG(1, "Height required: " << height_required << ".\n");
+        PRINT_LOG(1, "Distance to see plane: " << distance << ".\n");
+        PRINT_LOG(1, "Current Distance from plane: " << point_distance << ".\n");
         int move = (distance >= point_distance) ? -1: 1;
         float step_distance = fabs(distance - point_distance);
         if(move == -1)
@@ -4403,9 +4413,62 @@ ControlUINode::testUtility(int test_no)
         moveDroneViaSetOfPoints(path_points);
     }
     else if(test_no == 5)
-    {}
+    {
+        int func_jlink_calls = 0;
+        // 2d image points clicked on the DRONE CAMERA FEED Screen
+        vector< vector<int> > points_clicked;
+        // the 3d keypoints of control node for nearest keypoints
+        vector< vector<float> > key_points_nearest;
+        // corners of the convex hull
+        vector<int> cc_points;
+        // First param: Number of points clicked on the screen
+        // Second param: Number of Key points detected
+        image_gui->setNumberOfPoints(0, 0);
+        // RenderRect: false, RenderPoly: false, RenderSignificantPlane: false
+        PRINT_DEBUG(3, "Stopped rendering of frame\n");
+        image_gui->setRender(false, false, true, true);
+        image_gui->getPointsClicked(points_clicked);
+        PRINT_LOG(3, "Extracting Bounding Poly\n");
+        image_gui->extractBoundingPoly();
+        _sig_plane_index = 0;
+        image_gui->getCCPoints(cc_points);
+        PRINT_DEBUG(3, print2dVector(points_clicked, "Points Clicked by the user in 2D:\n", ""));
+        PRINT_DEBUG(3, print1dVector(cc_points, "CCPoints:\n", ""));
+        clear2dVector(key_points_nearest);
+        for(unsigned int  i = 0; i < points_clicked.size(); i++)
+        {
+            key_points_nearest.push_back(searchNearest(points_clicked[i], true));
+        }
+        PRINT_DEBUG(3, print2dVector(key_points_nearest, "Points Clicked by the user in 3D:\n", ""));
+        PRINT_LOG(3, "Get multiple planes from the clicked points using JLinkage\n");
+        // Calls JLinkage and finds all planes within the clicked region
+        vector< vector<float> > test_plane_parameters;
+        doJLinkage(cc_points, points_clicked); func_jlink_calls++;
+        // Render significant plane
+        image_gui->setContinuousBoundingBoxPoints(jlink_all_continuous_bounding_box_points);
+        image_gui->setSigPlaneBoundingBoxPoints(this_continuous_bounding_box_points);
+        image_gui->setVisitedBoundingBoxPoints(visited_continuous_bounding_box_points);
+        PRINT_LOG(3, "Rendering the frames in the DRONE CAMERA FEED GUI\n");
+        image_gui->setRender(false, false, true, true);
+        PRINT_DEBUG(4, "SigPlaneIndex: " << _sig_plane_index << "\n");
+        PRINT_DEBUG(4, "ActualPlaneIndex: " << _actual_plane_index << "\n");
+        PRINT_DEBUG(4, "Rendering significant plane in white and visited planes in black\n");
+        image_gui->renderFrame();
+        PRINT_DEBUG(5, print2dVector(visited_plane_parameters, "All planes visited completely"));
+        PRINT_LOG(2, print1dVector(this_plane_parameters, "Final Plane parameters:\n", ""));
+        PRINT_LOG(2, print1dVector(this_continuous_bounding_box_points, "Final Continuous Bounding Box points:\n", ""));
+        visited_plane_parameters.push_back(this_plane_parameters);
+        visited_continuous_bounding_box_points.push_back(this_continuous_bounding_box_points);
+    }
     else if(test_no == 6)
-    {}
+    {
+        string filename = "Plane_Info.txt";
+        PRINT_LOG(1, "Writing info gathered to " << filename << "\n");
+        for (unsigned int i = 0; i < visited_plane_parameters.size(); ++i)
+        {
+            image_gui->WriteInfoToFile(visited_continuous_bounding_box_points[i], visited_plane_parameters[i], i+1, filename);
+        }
+    }
     else if(test_no == 7)
     {}
     else if(test_no == 8)
