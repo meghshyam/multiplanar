@@ -741,6 +741,71 @@ ImageView::on_key_down(int key)
 		PRINT_LOG(1, "Calling moveQuadcopter()\n");
 		node->moveQuadcopter(sortedPlaneParameters, boundingBoxPoints);
 	}
+	// Key N - Uses the points written from a file (obtained from key c)
+	else if(key == 'N')
+	{
+		string plane_filename = "Plane_Info.txt";
+		string topview_filename = "TopViewInfo.txt";
+		vector< vector<float> > sortedPlaneParameters;
+		vector< vector<Point3f> > boundingBoxPoints;
+		readPlaneInfo(plane_filename, sortedPlaneParameters, boundingBoxPoints);
+		PRINT_LOG(1, print2dVector(sortedPlaneParameters, "Plane Parameters:\n", ""));
+		PRINT_LOG(1, print2dVector(boundingBoxPoints, "Bounding Box points:\n", ""));
+		/* Launches GUI: Return approx. angles and orientations */
+		/* Angle with which	quadcopter has to rotate to orient itself to the new plane */
+		std::vector< double > main_angles;
+		/* Direction in which quadcopter should rotate to orient its yaw with normal of new plane */
+		std::vector< int > directions;
+		std::vector< RotateDirection > main_directions;
+		/* Printing the information to the terminal */
+		int number_of_planes = 0;
+		int type_of_surface = 0;
+		float max_height_of_plane = 0.0f;
+		int view_dir = 0;
+		readTopViewInfo(topview_filename, number_of_planes, type_of_surface,
+						max_height_of_plane, main_angles,
+						directions);
+		PRINT_LOG(1, print1dVector(directions, "Directions of rotation:\n", ""));
+		if(renderRect)
+		{
+			renderRect = false;  // While moving the quadcopter we don't want bounding box to appear
+			renderSignificantPlane = false;
+			renderVisitedPlanes = false;
+		}
+		PRINT_LOG(1, "Rendering Visited Planes\n");
+		setRender(false, false, false, true);
+		// Get the continuoous bounding box points
+		clear2dVector(continuousBoundingBoxPoints);
+		getContinuousBoundingBox (boundingBoxPoints, sortedPlaneParameters, continuousBoundingBoxPoints);
+		setVisitedBoundingBoxPoints(continuousBoundingBoxPoints);
+		renderFrame();
+		reverse(sortedPlaneParameters.begin(), sortedPlaneParameters.end());
+		reverse(boundingBoxPoints.begin(), boundingBoxPoints.end());
+		for (unsigned int i = 0; i < boundingBoxPoints.size(); ++i)
+		{
+			Point3f zero = boundingBoxPoints[i][0];
+			Point3f one = boundingBoxPoints[i][1];
+			Point3f two = boundingBoxPoints[i][2];
+			Point3f three = boundingBoxPoints[i][3];
+			boundingBoxPoints[i][0] = one;
+			boundingBoxPoints[i][1] = zero;
+			boundingBoxPoints[i][2] = three;
+			boundingBoxPoints[i][3] = two;
+			boundingBoxPoints[i][4] = one;
+		}
+		string filename = "Reversed_Plane_Info.txt";
+        PRINT_LOG(1, "Writing info gathered to " << filename << "\n");
+        for (unsigned int i = 0; i < sortedPlaneParameters.size(); ++i)
+        {
+            WriteInfoToFile(boundingBoxPoints[i], sortedPlaneParameters[i], i+1, filename);
+        }
+		for (unsigned int i = 0; i < boundingBoxPoints.size(); ++i)
+		{
+			boundingBoxPoints[i].pop_back();
+		}
+		PRINT_LOG(1, "Calling moveQuadcopter()\n");
+		node->moveQuadcopter(sortedPlaneParameters, boundingBoxPoints);
+	}
 	/* Movement letter keys */
 	else if(key == 'F')
 	{

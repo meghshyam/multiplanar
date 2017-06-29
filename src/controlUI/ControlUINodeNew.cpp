@@ -856,6 +856,7 @@ ControlUINode::getOrientation(float currentYaw, float destYaw)
     {
         answer = -1;
     }
+    answer = -1 * answer;
     PRINT_DEBUG(4, "Orientation: " << answer << "\n");
     PRINT_LOG(1, "Completed\n");
     return answer;
@@ -1348,7 +1349,7 @@ ControlUINode::moveDroneBetweenPlanes(const vector<double> &previousPosition,
         PRINT_DEBUG(4, print1dVector(endPosition, "2.5 -> Ending position", ""));
         generatePathPoints(startPosition, endPosition, pathPoints, true);
         PRINT_DEBUG(4, "2.5 -> pathPoints size: " << pathPoints.size() << "\n");
-        /*startPosition[0] = endPosition[0];
+        startPosition[0] = endPosition[0];
         startPosition[1] = endPosition[1];
         startPosition[2] = endPosition[2];
         startPosition[3] = endPosition[3];
@@ -1359,7 +1360,7 @@ ControlUINode::moveDroneBetweenPlanes(const vector<double> &previousPosition,
         PRINT_DEBUG(4, print1dVector(startPosition, "2.6 -> Starting position", ""));
         PRINT_DEBUG(4, print1dVector(endPosition, "2.6 -> Ending position", ""));
         generatePathPoints(startPosition, endPosition, pathPoints, false);
-        PRINT_DEBUG(4, "2.6 -> pathPoints size: " << pathPoints.size() << "\n");*/
+        PRINT_DEBUG(4, "2.6 -> pathPoints size: " << pathPoints.size() << "\n");
     }
     moveDronePathPoints[plane_index] = (int)pathPoints.size() + 8;
     PRINT_LOG(4, print2dVector(pathPoints, "Points needed by drone to move from one plane to another:\n", "matlab"));
