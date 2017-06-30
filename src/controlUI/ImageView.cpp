@@ -402,7 +402,7 @@ ImageView::renderFrame()
 void
 ImageView::on_key_down(int key)
 {
-	PRINT_LOG(1, "Key pressed: " << key << ", " << (char)key << "\n");
+	PRINT_LOG(0, "Key pressed: " << key << ", " << (char)key << "\n");
 	// Key b - Extracts bounding rect
 	if(key == 'b')
 	{
@@ -563,7 +563,7 @@ ImageView::on_key_down(int key)
 		TopView *top = new TopView();
 		top->startSystem();
 		/* GUI has been closed here */
-		PRINT_LOG(1, "[Key 'c'] Calling the GUI for drawing top view sketch of the surface\n");
+		PRINT_LOG(0, "[Key 'c'] Calling the GUI for drawing top view sketch of the surface\n");
 		while(!(top->getExitStatus()))
 		{}
 		/* Get the directions, angles and number of planes */
@@ -615,9 +615,13 @@ ImageView::on_key_down(int key)
 			for (unsigned int i = 0; i < main_directions.size(); ++i)
 			{
 				if(main_directions[i] == 0)
-					cout << "CLOCKWISE" << " ";
+				{
+					PRINT_LOG(1, "CLOCKWISE" << " ");
+				}
 				else if(main_directions[i] == 1)
-					cout << "ANTI-CLOCKWISE" << " ";
+				{
+					PRINT_LOG(1, "ANTI-CLOCKWISE" << " ");
+				}
 			}
 			cout << "\n";
 			int min_height_of_plane = 2.0;
@@ -803,7 +807,7 @@ ImageView::on_key_down(int key)
 		{
 			boundingBoxPoints[i].pop_back();
 		}
-		PRINT_LOG(1, "Calling moveQuadcopter()\n");
+		PRINT_LOG(0, "Calling moveQuadcopter()\n");
 		node->moveQuadcopter(sortedPlaneParameters, boundingBoxPoints);
 	}
 	/* Movement letter keys */
@@ -905,9 +909,13 @@ ImageView::on_key_down(int key)
 			for (unsigned int i = 0; i < main_directions.size(); ++i)
 			{
 				if(main_directions[i] == 0)
-					cout << "CLOCKWISE" << " ";
+				{
+					PRINT_LOG(1, "CLOCKWISE" << " ");
+				}
 				else if(main_directions[i] == 1)
-					cout << "ANTI-CLOCKWISE" << " ";
+				{
+					PRINT_LOG(1, "ANTI-CLOCKWISE" << " ");
+				}
 			}
 			PRINT_LOG(1, "\n");
 			float min_height_of_plane = 2.0f;
