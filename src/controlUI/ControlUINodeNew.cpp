@@ -67,7 +67,7 @@ ControlUINode::ControlUINode()
         SET_LOG_LEVEL(log_level);
     }
 
-    PRINT_LOG(1, "Initiating ControlUINode ...\n");
+    PRINT_LOG(0, "Initiating ControlUINode ...\n");
     PRINT_LOG(1, "Initiating various publishers and\n");
     PRINT_LOG(1, "subscribers for channels using tum_ardrone and ardrone.\n");
 
@@ -182,7 +182,7 @@ ControlUINode::navDataCb(const ardrone_autonomy::Navdata navPtr)
     {
         if (navPtr.batteryPercent < 15)
         {
-            PRINT_LOG(1, "Current battery percentage: " << navPtr.batteryPercent << "\n");
+            PRINT_LOG(0, "Current battery percentage: " << navPtr.batteryPercent << "\n");
             sendLand();
         }
     }
@@ -639,7 +639,7 @@ void
 ControlUINode::moveQuadcopter(const vector< vector<float> > &planeParameters,
                               const vector< vector<Point3f> > &continuousBoundingBoxPoints)
 {
-    PRINT_LOG(1, "Started.\n");
+    PRINT_LOG(0, "Started.\n");
     double drone_length = 0.6;
     // Get the number of planes
     numberOfPlanes = planeParameters.size();
@@ -662,7 +662,7 @@ ControlUINode::moveQuadcopter(const vector< vector<float> > &planeParameters,
     pthread_mutex_lock(&command_CS);
     for (int plane_index = 0; plane_index < numberOfPlanes; ++plane_index)
     {
-        PRINT_LOG(1, "Drone ready to capture for plane: " << plane_index+1 << ".\n");
+        PRINT_LOG(0, "Drone ready to capture for plane: " << plane_index+1 << ".\n");
         // Make parameters for making the grid
         // ax + by + cz + d = 0 Parameters for the plane numbered by plane_index
         // float a = planeParameters[plane_index][0];
@@ -718,8 +718,8 @@ ControlUINode::moveQuadcopter(const vector< vector<float> > &planeParameters,
         {
             num_cols = grid.rowSquares[0].size();
         }
-        PRINT_LOG(1, "Number of rows in the grid: " << num_rows << ".\n");
-        PRINT_LOG(1, "Number of cols in the grid: " << num_cols << ".\n");
+        PRINT_LOG(0, "Number of rows in the grid: " << num_rows << ".\n");
+        PRINT_LOG(0, "Number of cols in the grid: " << num_cols << ".\n");
         // Print the Grid co-ordinates
         // printGrid(grid, uvAxes, planeParameters[i]);
         // Vector containing target points from where the video recording is supposed to be done
@@ -1052,8 +1052,8 @@ ControlUINode::moveDroneBetweenPlanes(const vector<double> &previousPosition,
                                       const vector<float> &curr_plane_parameters,
                                       const vector<float> &next_plane_parameters, int plane_index)
 {
-    PRINT_LOG(1, "Started.\n");
-    PRINT_LOG(1, "Designing path for plane " << plane_index+1 << "\n");
+    PRINT_LOG(0, "Started.\n");
+    PRINT_LOG(0, "Designing path for plane " << plane_index+1 << "\n");
     vector< vector<double> > pathPoints;
     clear2dVector(pathPoints);
     vector<double> startPosition(4), endPosition(4);
@@ -1349,7 +1349,7 @@ ControlUINode::moveDroneBetweenPlanes(const vector<double> &previousPosition,
         PRINT_DEBUG(4, print1dVector(endPosition, "2.5 -> Ending position", ""));
         generatePathPoints(startPosition, endPosition, pathPoints, true);
         PRINT_DEBUG(4, "2.5 -> pathPoints size: " << pathPoints.size() << "\n");
-        startPosition[0] = endPosition[0];
+        /*startPosition[0] = endPosition[0];
         startPosition[1] = endPosition[1];
         startPosition[2] = endPosition[2];
         startPosition[3] = endPosition[3];
@@ -1360,7 +1360,7 @@ ControlUINode::moveDroneBetweenPlanes(const vector<double> &previousPosition,
         PRINT_DEBUG(4, print1dVector(startPosition, "2.6 -> Starting position", ""));
         PRINT_DEBUG(4, print1dVector(endPosition, "2.6 -> Ending position", ""));
         generatePathPoints(startPosition, endPosition, pathPoints, false);
-        PRINT_DEBUG(4, "2.6 -> pathPoints size: " << pathPoints.size() << "\n");
+        PRINT_DEBUG(4, "2.6 -> pathPoints size: " << pathPoints.size() << "\n");*/
     }
     moveDronePathPoints[plane_index] = (int)pathPoints.size() + 8;
     PRINT_LOG(4, print2dVector(pathPoints, "Points needed by drone to move from one plane to another:\n", "matlab"));
@@ -1368,7 +1368,7 @@ ControlUINode::moveDroneBetweenPlanes(const vector<double> &previousPosition,
     string filename = "path_points_" + to_string(plane_index+1);
     write3DPointsToCSV(pathPoints, filename, " ");
     clear2dVector(pathPoints);
-    PRINT_LOG(1, "Completed.\n");
+    PRINT_LOG(0, "Completed.\n");
     return ;
 }
 
@@ -1598,7 +1598,7 @@ ControlUINode::getPTargetPoints(const pGrid &g, const vector<float> & plane,
                                 int plane_no, const vector<Point3f> &uvAxes,
                                 vector< vector<double> > &finalSortTPoints)
 {
-    PRINT_LOG(1, "Started.\n");
+    PRINT_LOG(0, "Started.\n");
     PRINT_DEBUG(4, "Inputs\n");
     PRINT_DEBUG(4, print1dVector(plane, "Plane: ", ""));
     PRINT_DEBUG(4, print1dVector(uvAxes, "UV Axes:\n", ""));
@@ -1907,31 +1907,55 @@ ControlUINode::getPTargetPoints(const pGrid &g, const vector<float> & plane,
     PRINT_LOG(4, "Printing Object points for plane " << plane_no << "\n");
     PRINT_LOG(4, print2dVector(completeObjPoints, "Complete object points:\n", "matlab"));
     PRINT_LOG(4, print2dVector(tPoints, "LOG Target points:\n", "matlab"));
-    PRINT_DEBUG(4, "Numrows: " << numRows << "\n");
-    PRINT_DEBUG(4, print1dVector(numColsPerRow, "Number of cols per row:\n", ""));
+    PRINT_DEBUG(0, "Number of rows: " << numRows << "\n");
+    PRINT_DEBUG(0, print1dVector(numColsPerRow, "Number of cols per row:\n", ""));
     sortTargetPoints(numRows, numColsPerRow, tPoints, sortedTPoints);
     PRINT_LOG(4, print2dVector(sortedTPoints, "Sorted LOG Target points:\n", "matlab"));
     PRINT_DEBUG(4, "Number of SortedTPoints: " << sortedTPoints.size() << "\n");
     PRINT_DEBUG(4, "SortedTPoints size: " << sortedTPoints[0].size() << "\n");
     vector<Point3d> sortedTPointsVec, rotSortedTPointsVec;
+    vector<Point3d> reverseRotSortedTPointsVec;
     for(unsigned int i = 0; i < sortedTPoints.size(); i++)
     {
         sortedTPointsVec.push_back(Point3d(sortedTPoints[i][0], sortedTPoints[i][1], sortedTPoints[i][2]));
     }
     rotate3dPoints(sortedTPointsVec, rotation.inv(), rotSortedTPointsVec);
+    //
+    int start_index, end_index;
+    for (int row_index = 0; row_index < numRows; row_index++)
+    {
+        start_index = row_index * numColsPerRow[row_index];
+        end_index = start_index + numColsPerRow[row_index];
+        /*cout << "Row index: " << row_index << "\n";
+        cout << "Start index: " << start_index << ", End index: " << end_index << "\n";*/
+        for (int index = end_index-1; index >= start_index; index--)
+        {
+            /*cout << "Index: " << index << ", Start index: " << start_index << "\n";
+            cout << "index >= start_index: " << (index >= start_index) << "\n";*/
+            reverseRotSortedTPointsVec.push_back(rotSortedTPointsVec[index]);
+        }
+    }
     // vector< vector<double> > finalSortTPoints;
     clear2dVector(finalSortTPoints);
     vector<double> finalSortTPoint;
-    for(unsigned int i = 0; i < rotSortedTPointsVec.size(); i++)
+    /*for(unsigned int i = 0; i < rotSortedTPointsVec.size(); i++)
     {
         finalSortTPoint.clear();
         finalSortTPoint.push_back(rotSortedTPointsVec[i].x);
         finalSortTPoint.push_back(rotSortedTPointsVec[i].y);
         finalSortTPoint.push_back(rotSortedTPointsVec[i].z);
         finalSortTPoints.push_back(finalSortTPoint);
+    }*/
+    for(unsigned int i = 0; i < reverseRotSortedTPointsVec.size(); i++)
+    {
+        finalSortTPoint.clear();
+        finalSortTPoint.push_back(reverseRotSortedTPointsVec[i].x);
+        finalSortTPoint.push_back(reverseRotSortedTPointsVec[i].y);
+        finalSortTPoint.push_back(reverseRotSortedTPointsVec[i].z);
+        finalSortTPoints.push_back(finalSortTPoint);
     }
     finalSortTPoint.clear();
-    PRINT_LOG(1, "Completed.\n");
+    PRINT_LOG(0, "Completed.\n");
 }
 
 void
@@ -2324,7 +2348,7 @@ ControlUINode::newPoseCb (const tum_ardrone::filter_stateConstPtr statePtr)
             if(record && notRecording)
             {
                 getCurrentPositionOfDrone();
-                PRINT_LOG(1, "Recording Video at: (" << _node_current_pos_of_drone[0] << ", " 
+                PRINT_LOG(0, "Recording Video at: (" << _node_current_pos_of_drone[0] << ", " 
                             << _node_current_pos_of_drone[1] << ", " << _node_current_pos_of_drone[2]
                             << ", " << _node_current_pos_of_drone[3] << ")\n");
                 ardrone_autonomy::RecordEnable srv;
@@ -3441,7 +3465,7 @@ ControlUINode::alignQuadcopterToCurrentPlane()
     clock_t beginTime, endTime;
     double elapsedTime;
     beginTime = clock();
-    PRINT_LOG(1, "Started\n");
+    PRINT_LOG(0, "Started\n");
     if(_node_number_of_planes == 1)
     {
         _next_plane_dir = CLOCKWISE;
@@ -3467,8 +3491,9 @@ ControlUINode::alignQuadcopterToCurrentPlane()
     PRINT_LOG(3, "Completed plane no.: " << _node_completed_number_of_planes << "\n");
     endTime = clock();
     elapsedTime = double(endTime - beginTime) / (CLOCKS_PER_SEC/1000);
-    PRINT_DEBUG(1, "Time taken for function is " << elapsedTime << " ms.\n");
-    PRINT_LOG(1, "Completed\n");
+    PRINT_LOG(0, "Completed\n");
+    PRINT_DEBUG(0, "Time taken for function is " << elapsedTime << " ms.\n");
+    PRINT_LOG(0, "Please click 4 points on the DRONE CAMERA FEED window\n");
     return ;
 }
 
@@ -3479,7 +3504,7 @@ ControlUINode::adjustYawToCurrentPlane()
     double elapsedTime;
     int func_jlink_calls = 0;
     beginTime = clock();
-    PRINT_LOG(1, "Started\n");
+    PRINT_LOG(0, "Started\n");
     getCurrentPositionOfDrone();
     PRINT_LOG(5, print1dVector(_node_current_pos_of_drone, "Current position of drone: ", ""));
     _node_dest_pos_of_drone.clear();
@@ -3506,12 +3531,12 @@ ControlUINode::adjustYawToCurrentPlane()
     PRINT_LOG(4, "Angle to rotate: " << angle << "\n");
     designPathToChangeYaw(_node_current_pos_of_drone, _node_current_pos_of_drone[3]+angle);
     moveDroneViaSetOfPoints(_interm_path);
-    PRINT_LOG(1, "Completed\n");
+    PRINT_LOG(0, "Completed\n");
     endTime = clock();
     elapsedTime = double(endTime - beginTime) / (CLOCKS_PER_SEC/1000);
     _traversal_mode_time += (elapsedTime/1000.0);
-    PRINT_DEBUG(1, "Time taken for function is " << elapsedTime << " ms.\n");
-    PRINT_DEBUG(1, "No. of j-linkage calls is " << func_jlink_calls << "\n");
+    PRINT_DEBUG(0, "Time taken for function is " << elapsedTime << " ms.\n");
+    PRINT_DEBUG(0, "No. of j-linkage calls is " << func_jlink_calls << "\n");
     return ;
 }
 
@@ -3525,7 +3550,7 @@ ControlUINode::adjustTopBottomEdges()
     clock_t beginTime, endTime;
     double elapsedTime;
     beginTime = clock();
-    PRINT_LOG(1, "Started\n");
+    PRINT_LOG(0, "Started\n");
     float step_distance, point_distance, height;
     int func_jlink_calls = 0;
     PRINT_LOG(4, "Estimating multiple planes -> call to JLinkage\n");
@@ -3579,8 +3604,9 @@ ControlUINode::adjustTopBottomEdges()
     endTime = clock();
     elapsedTime = double(endTime - beginTime) / (CLOCKS_PER_SEC/1000);
     _traversal_mode_time += (elapsedTime/1000.0);
-    PRINT_DEBUG(1, "Time taken for function is " << elapsedTime << " ms.\n");
-    PRINT_DEBUG(1, "No. of j-linkage calls is " << func_jlink_calls << "\n");
+    PRINT_LOG(0, "Completed\n");
+    PRINT_DEBUG(0, "Time taken for function is " << elapsedTime << " ms.\n");
+    PRINT_DEBUG(0, "No. of j-linkage calls is " << func_jlink_calls << "\n");
     return ;
 }
 
@@ -3595,7 +3621,7 @@ ControlUINode::adjustLeftEdge()
     double elapsedTime;
     beginTime = clock();
     int func_jlink_calls = 0;
-    PRINT_DEBUG(1, "Started\n");
+    PRINT_DEBUG(0, "Started\n");
     PRINT_DEBUG(4, "Call Jlinkage\n");
     doJLinkage(); func_jlink_calls++;
     bool planeLeftVisible;
@@ -3628,12 +3654,12 @@ ControlUINode::adjustLeftEdge()
         if(move==0) {planeLeftVisible = true;}
         else {planeLeftVisible = false;}
     }
-    PRINT_LOG(1, "Completed\n");
+    PRINT_LOG(0, "Completed\n");
     endTime = clock();
     elapsedTime = double(endTime - beginTime) / (CLOCKS_PER_SEC/1000);
     _traversal_mode_time += (elapsedTime/1000.0);
-    PRINT_DEBUG(1, "Time taken for function is " << elapsedTime << " ms.\n");
-    PRINT_DEBUG(1, "No. of j-linkage calls is " << func_jlink_calls << "\n");
+    PRINT_DEBUG(0, "Time taken for function is " << elapsedTime << " ms.\n");
+    PRINT_DEBUG(0, "No. of j-linkage calls is " << func_jlink_calls << "\n");
     return ;
 }
 
@@ -3648,7 +3674,7 @@ ControlUINode::captureTheCurrentPlane()
     double elapsedTime;
     int func_jlink_calls = 0;
     beginTime = clock();
-    PRINT_LOG(1, "Started\n");
+    PRINT_LOG(0, "Started\n");
     PRINT_LOG(1, "Total Number of planes: " << _node_number_of_planes 
             << ", Number of planes covered: " << _node_completed_number_of_planes << "\n");
     // 2d image points clicked on the DRONE CAMERA FEED Screen
@@ -3776,8 +3802,9 @@ ControlUINode::captureTheCurrentPlane()
     endTime = clock();
     elapsedTime = double(endTime - beginTime) / (CLOCKS_PER_SEC/1000);
     _capture_mode_time += (elapsedTime/1000.0);
-    PRINT_DEBUG(1, "Time taken for function is " << elapsedTime << " ms.\n");
-    PRINT_DEBUG(1, "No. of j-linkage calls is " << func_jlink_calls << "\n");
+    PRINT_LOG(1, "Completed\n");
+    PRINT_DEBUG(0, "Time taken for function is " << elapsedTime << " ms.\n");
+    PRINT_DEBUG(0, "No. of j-linkage calls is " << func_jlink_calls << "\n");
     if(_is_plane_covered)
     {
         copyNecessaryInfo();
@@ -3789,8 +3816,7 @@ ControlUINode::captureTheCurrentPlane()
         }
         else
         {
-            PRINT_LOG(1, "All planes covered\n");
-            PRINT_LOG(1, "Total number of jlinkage calls: " << _jlinkage_calls << "\n");
+            PRINT_LOG(0, "Total number of jlinkage calls: " << _jlinkage_calls << "\n");
         }
     }
     else
@@ -3798,15 +3824,15 @@ ControlUINode::captureTheCurrentPlane()
         augmentInfo();
         PRINT_LOG(1, "Adjusting quadcopter for next capture of the same plane\n");
         adjustForNextCapture();
-        PRINT_LOG(1, "Completed plane no.: " << _node_completed_number_of_planes << "\n");
-        PRINT_LOG(1, "Adjusted for next capture. Please click the 4 points on the DRONE CAMERA FEED\n");
+        PRINT_LOG(0, "Completed plane no.: " << _node_completed_number_of_planes << "\n");
+        PRINT_LOG(0, "Adjusted for next capture. Please click the 4 points on the DRONE CAMERA FEED\n");
     }
     if(_node_completed_number_of_planes == _node_number_of_planes)
     {
         assert(visited_plane_parameters.size() == visited_continuous_bounding_box_points.size());
-        PRINT_LOG(1, "All planes are completed\n");
+        PRINT_LOG(0, "All planes are completed\n");
         string filename = "Complete_Plane_Info.txt";
-        PRINT_LOG(1, "Writing info gathered to " << filename << "\n");
+        PRINT_LOG(0, "Writing info gathered to " << filename << "\n");
         for (unsigned int i = 0; i < visited_plane_parameters.size(); ++i)
         {
             image_gui->WriteInfoToFile(visited_continuous_bounding_box_points[i], visited_plane_parameters[i], i+1, filename);
@@ -3814,11 +3840,11 @@ ControlUINode::captureTheCurrentPlane()
         PRINT_LOG(4, print2dVector(visited_plane_parameters, "All Plane Parameters:\n", "matlab"));
         PRINT_LOG(4, print2dVector(visited_continuous_bounding_box_points, "All Plane BBP:\n", "matlab"));
         PRINT_LOG(4, print2dVector(visited_motion_points, "All motion points:\n", "matlab"));
-        PRINT_LOG(1, "Writing visited motion points to file: motion_points.txt\n");
+        PRINT_LOG(0, "Writing visited motion points to file: motion_points.txt\n");
         reverse(visited_motion_points.begin(), visited_motion_points.end());
         write3DPointsToCSV(visited_motion_points, "motion_points.txt", " ", "goto ", 4);
-        PRINT_LOG(1, "Time spent in total in capture mode is: " << _capture_mode_time << " seconds.\n");
-        PRINT_LOG(1, "Time spent in total in traversal mode is: " << _traversal_mode_time << " seconds.\n");
+        PRINT_LOG(0, "Time spent in total in capture mode is: " << _capture_mode_time << " seconds.\n");
+        PRINT_LOG(0, "Time spent in total in traversal mode is: " << _traversal_mode_time << " seconds.\n");
         _capture_mode_time = 0.0;
         _traversal_mode_time = 0.0;
     }
@@ -3826,8 +3852,6 @@ ControlUINode::captureTheCurrentPlane()
     {
         PRINT_LOG(1, "All planes are not completed\n");
     }
-    PRINT_LOG(1, "Completed\n");
-
 }
 
 /**
@@ -3841,7 +3865,7 @@ ControlUINode::adjustForNextCapture()
     double elapsedTime;
     beginTime = clock();
     int func_jlink_calls = 0;
-    PRINT_LOG(1, "Started\n");
+    PRINT_LOG(0, "Started\n");
     vector< vector<float> > test_plane_parameters;
     Point3f top_left = this_continuous_bounding_box_points[0];
     Point3f top_right = this_continuous_bounding_box_points[1];
@@ -4017,8 +4041,8 @@ ControlUINode::adjustForNextCapture()
     endTime = clock();
     elapsedTime = double(endTime - beginTime) / (CLOCKS_PER_SEC/1000);
     _traversal_mode_time += (elapsedTime/1000.0);
-    PRINT_DEBUG(1, "Time taken for function is " << elapsedTime << " ms.\n");
-    PRINT_DEBUG(1, "No. of j-linkage calls is " << func_jlink_calls << "\n");
+    PRINT_DEBUG(0, "Time taken for function is " << elapsedTime << " ms.\n");
+    PRINT_DEBUG(0, "No. of j-linkage calls is " << func_jlink_calls << "\n");
     if(_node_completed_number_of_planes == _node_number_of_planes)
     {
         PRINT_DEBUG(3, "VPP size: " << visited_plane_parameters.size() << "\n");
@@ -4026,7 +4050,7 @@ ControlUINode::adjustForNextCapture()
         PRINT_DEBUG(5, print2dVector(visited_plane_parameters, "VPP"));
         PRINT_DEBUG(5, print2dVector(visited_continuous_bounding_box_points, "VCBB"));
         string filename = "Plane_Info.txt";
-        PRINT_DEBUG(3, "Writing info gathered to " << filename << "\n");
+        PRINT_DEBUG(0, "Writing info gathered to " << filename << "\n");
         for (unsigned int i = 0; i < visited_plane_parameters.size(); ++i)
         {
             image_gui->WriteInfoToFile(visited_continuous_bounding_box_points[i], visited_plane_parameters[i], i+1, filename);
@@ -4034,7 +4058,14 @@ ControlUINode::adjustForNextCapture()
         PRINT_LOG(5, print2dVector(visited_plane_parameters, "All Plane Parameters"));
         PRINT_LOG(5, print2dVector(visited_continuous_bounding_box_points, "All Plane BBP"));
         PRINT_LOG(5, print2dVector(visited_motion_points, "All motion points"));
-        PRINT_LOG(1, "All planes are covered!\n");
+        PRINT_LOG(0, "All planes are covered!\n");
+        PRINT_LOG(0, "Writing visited motion points to file: motion_points.txt\n");
+        reverse(visited_motion_points.begin(), visited_motion_points.end());
+        write3DPointsToCSV(visited_motion_points, "motion_points.txt", " ", "goto ", 4);
+        PRINT_LOG(0, "Time spent in total in capture mode is: " << _capture_mode_time << " seconds.\n");
+        PRINT_LOG(0, "Time spent in total in traversal mode is: " << _traversal_mode_time << " seconds.\n");
+        _capture_mode_time = 0.0;
+        _traversal_mode_time = 0.0;
     }
     if((_is_plane_covered) &&
             (_node_completed_number_of_planes != _node_number_of_planes))
@@ -4050,9 +4081,9 @@ ControlUINode::adjustForNextCapture()
     else
     {
         PRINT_LOG(1, "Completed plane no.: " << _node_completed_number_of_planes << "\n");
-        PRINT_LOG(1, "Please click 4 points on the DRONE CAMERA FEED window\n");
+        PRINT_LOG(0, "Please click 4 points on the DRONE CAMERA FEED window\n");
     }
-    PRINT_LOG(1, "Completed\n");
+    PRINT_LOG(0, "Completed\n");
 }
 
 /**
@@ -4066,8 +4097,8 @@ ControlUINode::alignQuadcopterToNextPlane()
     double elapsedTime;
     beginTime = clock();
     int func_jlink_calls = 0;
-    PRINT_LOG(1, "Started\n");
-    PRINT_LOG(1, "Completed no. of planes: " << _node_completed_number_of_planes
+    PRINT_LOG(0, "Started\n");
+    PRINT_LOG(0, "Completed no. of planes: " << _node_completed_number_of_planes
                     << ", Total number of planes: " << _node_number_of_planes << "\n");
     float angle;
     if(_next_plane_dir == COUNTERCLOCKWISE)
@@ -4353,8 +4384,8 @@ ControlUINode::alignQuadcopterToNextPlane()
     endTime = clock();
     elapsedTime = double(endTime - beginTime) / (CLOCKS_PER_SEC/1000);
     _traversal_mode_time += (elapsedTime/1000.0);
-    PRINT_DEBUG(1, "Time taken for function is " << elapsedTime << " ms.\n");
-    PRINT_DEBUG(1, "No. of j-linkage calls is " << func_jlink_calls << "\n");
+    PRINT_DEBUG(0, "Time taken for function is " << elapsedTime << " ms.\n");
+    PRINT_DEBUG(0, "No. of j-linkage calls is " << func_jlink_calls << "\n");
     alignQuadcopterToCurrentPlane();
     adjustLeftEdge();
     _stage_of_plane_observation = true;
@@ -4370,7 +4401,8 @@ ControlUINode::alignQuadcopterToNextPlane()
         _next_plane_dir = _node_main_directions.front();
         _next_plane_angle = _node_main_angles.front();
     }
-    PRINT_DEBUG(1, "Completed\n");
+    PRINT_DEBUG(0, "Completed\n");
+    PRINT_LOG(0, "Please click 4 points on the DRONE CAMERA FEED window\n");
     return ;
 }
 

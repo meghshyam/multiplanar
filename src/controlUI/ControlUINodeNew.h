@@ -579,8 +579,8 @@ class ControlUINode
         unsigned int just_navigation_total_commands;
         std::list<std_msgs::String> just_navigation_commands;
 
-        int debug_level = 3;
-        int log_level = 3;
+        int debug_level = 0;
+        int log_level = 0;
 
         bool _capture_mode = false;
 
