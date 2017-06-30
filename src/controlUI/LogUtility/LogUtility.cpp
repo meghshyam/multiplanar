@@ -28,7 +28,7 @@
 #include "LogUtility.hpp"
 
 bool LOG_ACTIVATE = false;          /*!< boolean variable to start logging. DEFAULT: "false" */
-int LOG_LEVEL = 1;          /*!< level of logging messages to be printed. DEFAULT: "1" */
+int LOG_LEVEL = 0;          /*!< level of logging messages to be printed. DEFAULT: "1" */
 string logFile = "log/myLog.txt"; /*!< If logging is set to file. DEFAULT: "log/myLog.txt" */
 bool logFileOpen = false;   /*!< boolean variable to check if log file is open. DEFAULT: "false" */
 ofstream logOutFile;            /*!< stream operator for writing to log file */
@@ -38,15 +38,15 @@ stringstream logExceptionMessage;       /*!< stream for storing exception messag
 void setLog()
 {
     LOG_ACTIVATE = true; logMessage.str(string());
-    printLogMessage(1, "LOG IS ACTIVATED.\n");
+    printLogMessage(0, "LOG IS ACTIVATED.\n");
 }
 
 void setLog(int level)
 {
     LOG_ACTIVATE = true; logMessage.str(string());
     LOG_LEVEL = level;
-    LOG_MSG(1) << "LOG IS ACTIVATED WITH LEVEL " << LOG_LEVEL << ".\n";
-    printLogMessage(1, logMessage);
+    LOG_MSG(0) << "LOG IS ACTIVATED WITH LEVEL " << LOG_LEVEL << ".\n";
+    printLogMessage(0, logMessage);
 }
 
 void setLog(string filename)
@@ -55,9 +55,9 @@ void setLog(string filename)
     logFileOpen = true;
     logMessage.str(string());
     logOutFile.open(logFile.c_str(), ofstream::out);
-    LOG_MSG(1) << "LOG TO FILE \"" << logFile << "\" ACTIVATED.\n";
+    LOG_MSG(0) << "LOG TO FILE \"" << logFile << "\" ACTIVATED.\n";
     cout << "LOG TO FILE \"" << logFile << "\" ACTIVATED.\n";
-    printLogMessage(1, logMessage);
+    printLogMessage(0, logMessage);
 }
 
 void printLogMessage(   int level,
@@ -85,7 +85,7 @@ void printLogMessage(   int level,
 void printLogMessage(   int level,
                         string logMessageToPrint)
 {
-    if( !(level>=1 && level<=10) )
+    if( !(level>=0 && level<=10) )
     {
         logExceptionMessage.str(string());
         logExceptionMessage << "\nEXCEPTION::Wrong Log level " << level << " used.\n";
@@ -119,7 +119,7 @@ void clearLog(stringstream &logMessageToPrint)
 void unsetLog()
 {
     LOG_ACTIVATE = false;
-    printLogMessage(1, "LOG DEACTIVATED.\n");
+    printLogMessage(0, "LOG DEACTIVATED.\n");
     if(logOutFile.is_open())
     {
         logOutFile.close();

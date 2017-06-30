@@ -29,15 +29,15 @@ stringstream debugExceptionMessage;         /*!< stream for storing exception me
 void setDebug()
 {
     DEBUG_ACTIVATE = true; debugMessage.str(string());
-    printDebugMessage(1, "DEBUG IS ACTIVATED.\n");
+    printDebugMessage(0, "DEBUG IS ACTIVATED.\n");
 }
 
 void setDebug(int level)
 {
     DEBUG_ACTIVATE = true; debugMessage.str(string());
     DEBUG_LEVEL = level;
-    DEBUG_MSG(1) << "DEBUG IS ACTIVATED WITH LEVEL " << DEBUG_LEVEL << ".\n";
-    printDebugMessage(1, debugMessage);
+    DEBUG_MSG(0) << "DEBUG IS ACTIVATED WITH LEVEL " << DEBUG_LEVEL << ".\n";
+    printDebugMessage(0, debugMessage);
 }
 
 void setDebug(string filename)
@@ -46,9 +46,9 @@ void setDebug(string filename)
     debugFileOpen = true;
     debugMessage.str(string());
     debugOutFile.open(debugFile.c_str(), ofstream::out);
-    DEBUG_MSG(1) << "DEBUG TO FILE \"" << debugFile << "\" ACTIVATED.\n";
+    DEBUG_MSG(0) << "DEBUG TO FILE \"" << debugFile << "\" ACTIVATED.\n";
     cout << "DEBUG TO FILE \"" << debugFile << "\" ACTIVATED.\n";
-    printDebugMessage(1, debugMessage);
+    printDebugMessage(0, debugMessage);
 }
 
 void printDebugMessage( int level,
@@ -76,7 +76,7 @@ void printDebugMessage( int level,
 void printDebugMessage( int level,
                         string debugMessageToPrint)
 {
-    if( !(level>=1 && level<=10) )
+    if( !(level>=0 && level<=10) )
     {
         debugExceptionMessage.str(string());
         debugExceptionMessage << "\nEXCEPTION::Wrong debug level " << level << " used.\n";
@@ -111,7 +111,7 @@ void clearDebug(stringstream &debugMessageToPrint)
 void unsetDebug()
 {
     DEBUG_ACTIVATE = false;
-    printDebugMessage(1, "DEBUG DEACTIVATED.\n");
+    printDebugMessage(0, "DEBUG DEACTIVATED.\n");
     if(debugOutFile.is_open())
     {
         debugOutFile.close();
