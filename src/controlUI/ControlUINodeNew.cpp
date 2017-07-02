@@ -160,6 +160,7 @@ ControlUINode::ControlUINode()
     _actual_plane_index = 0;
     _capture_mode_time = 0.0;
     _traversal_mode_time = 0.0;
+    numCommands = 0;
 
     PRINT_LOG(1, "Initiated ControlUINode.\n");
 }
@@ -2194,7 +2195,6 @@ ControlUINode::newPoseCb (const tum_ardrone::filter_stateConstPtr statePtr)
     // Goto commands left to be executed
     pthread_mutex_lock(&command_CS);
     PRINT_DEBUG(10, "Acquired command_CS Lock\n");
-    static int numCommands = 0;
     /*cout << "[ DEBUG] [poseCb] Checking for just navigation commands\n";
     cout << "[ DEBUG] [poseCb] Number of commands left: " << just_navigation_commands.size() << "\n";
     cout << "[ DEBUG] [poseCb] justNavigation: " << justNavigation << "\n";
@@ -2243,7 +2243,7 @@ ControlUINode::newPoseCb (const tum_ardrone::filter_stateConstPtr statePtr)
         bool var1 = (fabs(x-_node_current_pos_of_drone[0]) < 0.08);
         bool var2 = (fabs(y-_node_current_pos_of_drone[1]) < 0.08);
         bool var3 = (fabs(z-_node_current_pos_of_drone[2]) < 0.08);
-        bool var4 = (fabs(ya-_node_current_pos_of_drone[3]) < 0.3);
+        bool var4 = (fabs(ya-_node_current_pos_of_drone[3]) < 0.2);
         PRINT_DEBUG(10, "x: " << var1 << ", y: " << var2 << ", z: " << var3 << ", yaw: " << var4 << "\n");
         if( var1 & var2 & var3 & var4 )
         {
@@ -4590,6 +4590,7 @@ ControlUINode::testUtility(int test_no)
     {
         clear2dVector(visited_plane_parameters);
         clear2dVector(visited_continuous_bounding_box_points);
+        numCommands = 0;
     }
     else if(test_no == 8)
     {}
