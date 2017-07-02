@@ -2216,7 +2216,7 @@ ControlUINode::newPoseCb (const tum_ardrone::filter_stateConstPtr statePtr)
         pthread_mutex_unlock(&tum_ardrone_CS);
         targetPoint.clear();
         targetPoint = targetPoints.front();
-        PRINT_DEBUG(3, "Just navigation current target " << just_navigation_command_number
+        PRINT_DEBUG(0, "Just navigation current target " << just_navigation_command_number
                 <<" of " << just_navigation_total_commands << ": (" << targetPoint[0] << ", " 
                 << targetPoint[1] << ", " << targetPoint[2] << ", " << targetPoint[3] << ")\n");
     }
@@ -2233,20 +2233,22 @@ ControlUINode::newPoseCb (const tum_ardrone::filter_stateConstPtr statePtr)
                     << fabs(z-z_drone) << ", " << fabs(ya-yaw) << "\n";*/
         //printf("[ DEBUG] [poseCb] Error %lf\n", ea);
         getCurrentPositionOfDrone();
-        PRINT_DEBUG(10, "Current position of drone: (" << x_drone << ", " << y_drone << ", " << z_drone << ")\n");
+        PRINT_DEBUG(10, "Current position of drone: (" << _node_current_pos_of_drone[0] 
+                    << ", " << _node_current_pos_of_drone[1] << ", " 
+                    << _node_current_pos_of_drone[2] << _node_current_pos_of_drone[3] << ")\n");
         /*print1dVector(_node_current_pos_of_drone, "[ DEBUG] [newPoseCb] Current position of drone");
         cout << " [DEBUG] [newPoseCb] x: " << x << ", y: " << y << ", z: " << z << "\n";
         cout << "[ DEBUG] [newPoseCb] Error: " << fabs(x-x_drone) << ", " << fabs(y-y_drone) << ", "
                     << fabs(z-z_drone) << ", " << fabs(ya-yaw) << "\n";*/
-        bool var1 = (fabs(x-x_drone) < 0.08);
-        bool var2 = (fabs(y-y_drone) < 0.08);
-        bool var3 = (fabs(z-z_drone) < 0.08);
-        bool var4 = (fabs(ya-yaw) < 0.3);
+        bool var1 = (fabs(x-_node_current_pos_of_drone[0]) < 0.08);
+        bool var2 = (fabs(y-_node_current_pos_of_drone[1]) < 0.08);
+        bool var3 = (fabs(z-_node_current_pos_of_drone[2]) < 0.08);
+        bool var4 = (fabs(ya-_node_current_pos_of_drone[3]) < 0.3);
         PRINT_DEBUG(10, "x: " << var1 << ", y: " << var2 << ", z: " << var3 << ", yaw: " << var4 << "\n");
         if( var1 & var2 & var3 & var4 )
         {
             // cout << "[ DEBUG] [poseCb] Destination reached for command no. " << just_navigation_number << "\n";
-            PRINT_DEBUG(1, "Reached targetPoint: (" << x << ", " << y << ", " << z << ", " << ya << ")\n");
+            PRINT_DEBUG(0, "Reached targetPoint: (" << x << ", " << y << ", " << z << ", " << ya << ")\n");
             if(just_navigation_command_number <= just_navigation_total_commands)
             {
                 ros::Duration(1).sleep();
@@ -2283,7 +2285,7 @@ ControlUINode::newPoseCb (const tum_ardrone::filter_stateConstPtr statePtr)
         tum_ardrone_pub.publish(commands.front());
         pthread_mutex_unlock(&tum_ardrone_CS);
         targetPoint = targetPoints.front();
-        PRINT_DEBUG(3, "Current target: (" << targetPoint[0] << ", " << targetPoint[1] << ", "
+        PRINT_DEBUG(0, "Current target: (" << targetPoint[0] << ", " << targetPoint[1] << ", "
                         << targetPoint[2] << ", " << targetPoint[3] << ")\n");
     }
     else if(currentCommand && !recordNow)
@@ -2331,7 +2333,7 @@ ControlUINode::newPoseCb (const tum_ardrone::filter_stateConstPtr statePtr)
         pthread_mutex_unlock(&pose_CS);
         if(ea < error_threshold)
         {
-            PRINT_DEBUG(1, "Reached targetPoint: (" << x << ", " << y << ", " << z  << ", " << ya << ")\n");
+            PRINT_DEBUG(0, "Reached targetPoint: (" << x << ", " << y << ", " << z  << ", " << ya << ")\n");
             recordNow = true;
             ros::Duration(3).sleep();
             last= ros::Time::now();
