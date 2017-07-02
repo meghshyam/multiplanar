@@ -4493,6 +4493,7 @@ ControlUINode::alignQuadcopterToNextPlane()
 void
 ControlUINode::testUtility(int test_no)
 {
+    static int plane_no = 1;
     clock_t beginTime, endTime;
     double elapsedTime;
     if(test_no == 0)
@@ -4579,12 +4580,17 @@ ControlUINode::testUtility(int test_no)
     }
     else if(test_no == 6)
     {
-        string filename = "Plane_Info.txt";
-        PRINT_LOG(1, "Writing info gathered to " << filename << "\n");
+        string orig_filename = "Plane_Info.txt";
+        string filename = "Complete_Plane_Info.txt";
+        string plane_filename = "Plane_Info_" + to_string(plane_no) + ".txt";
+        PRINT_LOG(1, "Writing info gathered to " << orig_filename << "\n");
         for (unsigned int i = 0; i < visited_plane_parameters.size(); ++i)
         {
             image_gui->WriteInfoToFile(visited_continuous_bounding_box_points[i], visited_plane_parameters[i], i+1, filename);
         }
+        image_gui->WriteInfoToFile(this_continuous_bounding_box_points, this_plane_parameters, 1, orig_filename);
+        image_gui->WriteInfoToFile(this_continuous_bounding_box_points, this_plane_parameters, plane_no, plane_filename);
+        plane_no++;
     }
     else if(test_no == 7)
     {
@@ -4593,7 +4599,9 @@ ControlUINode::testUtility(int test_no)
         numCommands = 0;
     }
     else if(test_no == 8)
-    {}
+    {
+        numCommands = 0;
+    }
     else if(test_no == 9)
     {}
     else
