@@ -2248,7 +2248,10 @@ ControlUINode::newPoseCb (const tum_ardrone::filter_stateConstPtr statePtr)
         if( var1 & var2 & var3 & var4 )
         {
             // cout << "[ DEBUG] [poseCb] Destination reached for command no. " << just_navigation_number << "\n";
-            PRINT_DEBUG(0, "Reached targetPoint: (" << x << ", " << y << ", " << z << ", " << ya << ")\n");
+            PRINT_DEBUG(0, "Reached just navigation command point: (" << _node_current_pos_of_drone[0] 
+                        << ", " << _node_current_pos_of_drone[1] << ", " 
+                        << _node_current_pos_of_drone[2] << ", " 
+                        << _node_current_pos_of_drone[3] << ")\n");
             if(just_navigation_command_number <= just_navigation_total_commands)
             {
                 ros::Duration(1).sleep();
@@ -2456,7 +2459,7 @@ ControlUINode::move(double distance, int i)
     _node_dest_pos_of_drone.push_back(0.0);
     PRINT_DEBUG(3, print1dVector(_node_current_pos_of_drone, "Current position of drone: ", ""));
     PRINT_DEBUG(5, "Requested movement: " << distance << ", Direction: " << i << "\n");
-    double start = 0.0, move;
+    /*double start = 0.0, move;
     // Determine the direction of motion
     if(signbit(distance))
     {
@@ -2466,8 +2469,54 @@ ControlUINode::move(double distance, int i)
     {
         move = 1.0;
     }
-    PRINT_DEBUG(4, "Move sign: " << move << "\n");
-    bool to_move = false;
+    PRINT_DEBUG(4, "Move sign: " << move << "\n");*/
+    _node_dest_pos_of_drone[i] = distance;
+    // Convert the destination position of drone wrt to world origin
+    convertWRTQuadcopterOrigin(_node_current_pos_of_drone, _node_dest_pos_of_drone, _node_ac_dest_pos_of_drone);
+    double prevYaw = _node_current_pos_of_drone[3];
+    double desiredYaw = _node_ac_dest_pos_of_drone[3];
+    if (desiredYaw > 0 && prevYaw < 0 && fabs(180.0-desiredYaw) < 30.0)
+    {
+        desiredYaw = -179.0 - (180.0 - desiredYaw);
+    }
+    else if (desiredYaw < 0 && prevYaw > 0 && fabs(-180.0-desiredYaw) < 30.0)
+    {
+        desiredYaw = 179.0 + (180.0 + desiredYaw);
+    }
+    double x_diff = fabs(_node_ac_dest_pos_of_drone[0] - _node_current_pos_of_drone[0]);
+    double y_diff = fabs(_node_ac_dest_pos_of_drone[1] - _node_current_pos_of_drone[1]);
+    double z_diff = fabs(_node_ac_dest_pos_of_drone[2] - _node_current_pos_of_drone[2]);
+    int x_num_steps = ceil(x_diff/_move_heuristic);
+    int y_num_steps = ceil(y_diff/_move_heuristic);
+    int z_num_steps = ceil(z_diff/_move_heuristic);
+    double angle;
+    PRINT_DEBUG(4, "X difference: " << x_diff << ", Number of steps in X direction: " << x_num_steps << "\n");
+    PRINT_DEBUG(4, "Y difference: " << x_diff << ", Number of steps in Y direction: " << y_num_steps << "\n");
+    PRINT_DEBUG(4, "Z difference: " << x_diff << ", Number of steps in Z direction: " << z_num_steps << "\n");
+    int num_steps = max(x_num_steps, max(y_num_steps, z_num_steps));
+    PRINT_DEBUG(0, "Number of steps: " << num_steps << ".\n");
+    vector<double> interm_point(4);
+    for(int i = 0; i < num_steps; i++)
+    {
+        interm_point[0] = ((i+1)*_node_ac_dest_pos_of_drone[0] + (num_steps-i-1)*_node_current_pos_of_drone[0])/num_steps;
+        interm_point[1] = ((i+1)*_node_ac_dest_pos_of_drone[1] + (num_steps-i-1)*_node_current_pos_of_drone[1])/num_steps;
+        interm_point[2] = ((i+1)*_node_ac_dest_pos_of_drone[2] + (num_steps-i-1)*_node_current_pos_of_drone[2])/num_steps;
+        angle = ((i+1)*desiredYaw + (num_steps-i-1)*prevYaw)/num_steps;
+        if(angle < -180.0)
+        {
+            interm_point[3] = 360.0+angle;
+        }
+        else if(angle >= 180.0)
+        {
+            interm_point[3] = -360.0+angle;
+        }
+        else
+        {
+            interm_point[3] = angle;
+        }
+        _interm_path.push_back(interm_point);
+    }
+    /*bool to_move = false;
     // Use the destination point directly if it is at a very short distance from the current position
     // Else generate intermediate points
     if(fabs(start - distance) < _move_heuristic)
@@ -2510,7 +2559,7 @@ ControlUINode::move(double distance, int i)
         // Convert the generated position wrt world's origin
         convertWRTQuadcopterOrigin(_node_current_pos_of_drone, _node_dest_pos_of_drone, _node_ac_dest_pos_of_drone);
         _interm_path.push_back(_node_ac_dest_pos_of_drone);
-    }
+    }*/
     // Move the drone via the generated set of points
     moveDroneViaSetOfPoints(_interm_path);
     PRINT_DEBUG(5, "Completed\n");
@@ -2681,9 +2730,9 @@ ControlUINode::moveDroneViaSetOfPoints(const vector< vector<double> > &dest_poin
     PRINT_DEBUG(4, "Released second changeyaw_CS Lock\n");
     just_navigation_total_commands = -1;
     just_navigation_command_number = -1;
-    PRINT_LOG(1, "Completed.\n");
     endTime = clock();
     elapsedTime = double(endTime - beginTime) / (CLOCKS_PER_SEC/1000);
+    PRINT_LOG(1, "Completed.\n");
     PRINT_DEBUG(1, "Time taken for function is " << elapsedTime << " ms.\n");
 }
 
@@ -2720,10 +2769,43 @@ void
 ControlUINode::designPathToChangeYaw(const vector<double> &curr_point,
                                      double dest_yaw)
 {
-    PRINT_DEBUG(5, "Started\n");
+    PRINT_DEBUG(5, "Started\n"); 
     clear2dVector(_interm_path);
-    vector<double> interm_point;
-    double currentYaw = curr_point[3], desiredYaw = dest_yaw;
+    double prevYaw = curr_point[3];
+    double desiredYaw = dest_yaw;
+    if (desiredYaw > 0 && prevYaw < 0 && fabs(180.0-desiredYaw) < 30.0)
+    {
+        desiredYaw = -179.0 - (180.0 - desiredYaw);
+    }
+    else if (desiredYaw < 0 && prevYaw > 0 && fabs(-180.0-desiredYaw) < 30.0)
+    {
+        desiredYaw = 179.0 + (180.0 + desiredYaw);
+    }
+    double angle_diff = fabs(desiredYaw-prevYaw), angle;
+    int num_steps = ceil(angle_diff/_angle_heuristic);
+    PRINT_DEBUG(0, "Number of steps: " << num_steps << ".\n");
+    vector<double> interm_point(4);
+    interm_point[0] = curr_point[0];
+    interm_point[1] = curr_point[1];
+    interm_point[2] = curr_point[2];
+    for(int i = 0; i < num_steps; i++)
+    {
+        angle = ((i+1)*desiredYaw + (num_steps-i-1)*prevYaw)/num_steps;
+        if(angle < -180.0)
+        {
+            interm_point[3] = 360.0+angle;
+        }
+        else if(angle >= 180.0)
+        {
+            interm_point[3] = -360.0+angle;
+        }
+        else
+        {
+            interm_point[3] = angle;
+        }
+        _interm_path.push_back(interm_point);
+    }
+    /*double currentYaw = curr_point[3], desiredYaw = dest_yaw;
     PRINT_DEBUG(5, "Changing yaw by " << _angle_heuristic << " step\n");
     PRINT_DEBUG(5, "Current Yaw: " << currentYaw << "\n");
     PRINT_DEBUG(5, "Destination Yaw: " << desiredYaw << "\n");
@@ -2786,7 +2868,7 @@ ControlUINode::designPathToChangeYaw(const vector<double> &curr_point,
         interm_point.push_back(curr_point[0]); interm_point.push_back(curr_point[1]);
         interm_point.push_back(curr_point[2]); interm_point.push_back(prog_yaw);
         _interm_path.push_back(interm_point);
-    }
+    }*/
     PRINT_DEBUG(5,  print2dVector(_interm_path, "Final Path"));
     PRINT_DEBUG(5, "Completed\n");
 }
