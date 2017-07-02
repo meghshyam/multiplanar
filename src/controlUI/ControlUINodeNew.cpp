@@ -4587,7 +4587,10 @@ ControlUINode::testUtility(int test_no)
         }
     }
     else if(test_no == 7)
-    {}
+    {
+        clear2dVector(visited_plane_parameters);
+        clear2dVector(visited_continuous_bounding_box_points);
+    }
     else if(test_no == 8)
     {}
     else if(test_no == 9)
