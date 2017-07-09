@@ -634,6 +634,13 @@ class ControlUINode
         /* */
         vector<Point3f> this_sorted_3d_points;
 
+        /* Plane parameters for plane marked */
+        vector<float> current_marked_plane_parameters;
+        /* Continuous bounding box points for plane marked */
+        vector<Point3f> current_marked_continuous_bounding_box_points;
+        /* Continuous bounding box points for plane marked */
+        vector<Point3f> current_marked_3d_points;
+
         /* Plane parameters for all planes visited till now */
         vector< vector<float> > visited_plane_parameters;
         /* Continuous bounding box points for all planes visited till now */
