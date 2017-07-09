@@ -731,6 +731,8 @@ ImageView::on_key_down(int key)
 		vector< vector<float> > sortedPlaneParameters;
 		vector< vector<Point3f> > boundingBoxPoints;
 		readPlaneInfo(plane_filename, sortedPlaneParameters, boundingBoxPoints);
+		/*cout << print2dVector(sortedPlaneParameters, "SPP:\n");
+		cout << print2dVector(boundingBoxPoints, "SBB:\n");*/
 		if(renderRect)
 		{
 			renderRect = false;  // While moving the quadcopter we don't want bounding box to appear
@@ -1153,7 +1155,7 @@ ImageView::readPlaneInfo(string filename,
 	{
 		while ( getline (plane_info, line) )
 		{
-			/*cout << "Line: " << line << "\n";
+			/*cout << "Line: \'" << line << "\'\n";
 			cout << "1-Compare: " << line.compare(plane_string) << "\n";
 			cout << "2-Compare: " << line.compare(box_string) << "\n";*/
 			if(!line.empty() && line.compare(plane_string)==0)
@@ -1186,6 +1188,8 @@ ImageView::readPlaneInfo(string filename,
 		cerr << "[ DEBUG] File " << filename << " doesn't open\n";
 		return ;
 	}
+	/*cout << print2dVector(boundingBoxPoints, "BB:\n");
+	cout << print2dVector(planeParameters, "PP:\n");*/
 	plane_info.close();
 }
 

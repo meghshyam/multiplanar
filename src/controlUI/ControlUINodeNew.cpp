@@ -857,7 +857,7 @@ ControlUINode::getOrientation(float currentYaw, float destYaw)
     {
         answer = -1;
     }
-    answer = -1 * answer;
+    // answer = -1 * answer;
     PRINT_DEBUG(4, "Orientation: " << answer << "\n");
     PRINT_LOG(1, "Completed\n");
     return answer;
@@ -1178,8 +1178,8 @@ ControlUINode::moveDroneBetweenPlanes(const vector<double> &previousPosition,
         PRINT_DEBUG(4, "Angle with current plane in degrees: " << currAngle << "\n");
         int rotation_dir = getOrientation(currAngle, finalAngle);
         PRINT_DEBUG(4, "Rotation Direction: " << rotation_dir << "\n");
-        front_distance = (float)rotation_dir * front_distance;
-        back_distance = (float)rotation_dir * back_distance;
+        /*front_distance = (float)rotation_dir * front_distance;
+        back_distance = (float)rotation_dir * back_distance;*/
         PRINT_DEBUG(4, "Front distance: " << front_distance << "\n");
         PRINT_DEBUG(4, "Back distance: " << back_distance << "\n");
         float angleBetweenPlanes = findAngle(next_plane_normal, curr_plane_normal);
@@ -1219,14 +1219,14 @@ ControlUINode::moveDroneBetweenPlanes(const vector<double> &previousPosition,
         Point3f curr_plane_midpoint_projection(0.0f, 0.0f, 0.0f);
         Point3f curr_plane_right_edge_midpoint_projection(0.0f, 0.0f, 0.0f);
         // Position in front of plane i-1 where the drone might have to go
-        curr_plane_midpoint_projection.x = curr_plane_midpoint.x + front_distance*curr_plane_normal.x;
-        curr_plane_midpoint_projection.y = curr_plane_midpoint.y + front_distance*curr_plane_normal.y;
-        curr_plane_midpoint_projection.z = curr_plane_midpoint.z + front_distance*curr_plane_normal.z;
+        curr_plane_midpoint_projection.x = curr_plane_midpoint.x - front_distance*curr_plane_normal.x;
+        curr_plane_midpoint_projection.y = curr_plane_midpoint.y - front_distance*curr_plane_normal.y;
+        curr_plane_midpoint_projection.z = curr_plane_midpoint.z - front_distance*curr_plane_normal.z;
         PRINT_DEBUG(4, "Current plane midpoint projection: " << curr_plane_midpoint_projection << "\n");
         // 
-        curr_plane_right_edge_midpoint_projection.x = curr_plane_right_edge_midpoint.x + front_distance*curr_plane_normal.x;
-        curr_plane_right_edge_midpoint_projection.y = curr_plane_right_edge_midpoint.y + front_distance*curr_plane_normal.y;
-        curr_plane_right_edge_midpoint_projection.z = curr_plane_right_edge_midpoint.z + front_distance*curr_plane_normal.z;
+        curr_plane_right_edge_midpoint_projection.x = curr_plane_right_edge_midpoint.x - front_distance*curr_plane_normal.x;
+        curr_plane_right_edge_midpoint_projection.y = curr_plane_right_edge_midpoint.y - front_distance*curr_plane_normal.y;
+        curr_plane_right_edge_midpoint_projection.z = curr_plane_right_edge_midpoint.z - front_distance*curr_plane_normal.z;
         PRINT_DEBUG(4, "Current plane right edge midpoint projection: " << curr_plane_right_edge_midpoint_projection << "\n");
         PRINT_DEBUG(4, "Start position point: " << prevPositionPoint << "\n");
         float front_distance13 = distanceBetweenPoints(prevPositionPoint, curr_plane_midpoint_projection);
@@ -1305,9 +1305,9 @@ ControlUINode::moveDroneBetweenPlanes(const vector<double> &previousPosition,
         intersection_point.y = (curr_plane_normal.y * t) + curr_plane_midpoint.y;
         intersection_point.z = (curr_plane_normal.z * t) + curr_plane_midpoint.z;
         //
-        mid_plane_normal.x = intersection_point.x - curr_plane_right_edge_midpoint.x;
-        mid_plane_normal.y = intersection_point.y - curr_plane_right_edge_midpoint.y;
-        mid_plane_normal.z = intersection_point.z - curr_plane_right_edge_midpoint.z;
+        mid_plane_normal.x = rotation_dir * (intersection_point.x - curr_plane_right_edge_midpoint.x);
+        mid_plane_normal.y = rotation_dir * (intersection_point.y - curr_plane_right_edge_midpoint.y);
+        mid_plane_normal.z = rotation_dir * (intersection_point.z - curr_plane_right_edge_midpoint.z);
         float mid_plane_normal_mag = \
                         sqrt((mid_plane_normal.x * mid_plane_normal.x)+ \
                         (mid_plane_normal.y * mid_plane_normal.y)+ \
@@ -1317,9 +1317,9 @@ ControlUINode::moveDroneBetweenPlanes(const vector<double> &previousPosition,
         mid_plane_normal.z /= mid_plane_normal_mag;
         PRINT_DEBUG(4, "Intersection point: " << intersection_point << "\n");
         PRINT_DEBUG(4, "Mid plane normal: " << mid_plane_normal << "\n");
-        path_mid_point.x = curr_plane_right_edge_midpoint.x + new_distance*mid_plane_normal.x;
-        path_mid_point.y = curr_plane_right_edge_midpoint.y + new_distance*mid_plane_normal.y;
-        path_mid_point.z = curr_plane_right_edge_midpoint.z + new_distance*mid_plane_normal.z;
+        path_mid_point.x = curr_plane_right_edge_midpoint.x - new_distance*mid_plane_normal.x;
+        path_mid_point.y = curr_plane_right_edge_midpoint.y - new_distance*mid_plane_normal.y;
+        path_mid_point.z = curr_plane_right_edge_midpoint.z - new_distance*mid_plane_normal.z;
         startPosition[0] = endPosition[0];
         startPosition[1] = endPosition[1];
         startPosition[2] = endPosition[2];
@@ -1332,12 +1332,12 @@ ControlUINode::moveDroneBetweenPlanes(const vector<double> &previousPosition,
         PRINT_DEBUG(4, print1dVector(endPosition, "2.4 -> Ending position", ""));
         generatePathPoints(startPosition, endPosition, pathPoints, false);
         PRINT_DEBUG(4, "2.4 -> pathPoints size: " << pathPoints.size() << "\n");
-        next_plane_left_edge_midpoint_projection.x = next_plane_left_edge_midpoint.x + front_distance*next_plane_normal.x;
-        next_plane_left_edge_midpoint_projection.y = next_plane_left_edge_midpoint.y + front_distance*next_plane_normal.y;
-        next_plane_left_edge_midpoint_projection.z = next_plane_left_edge_midpoint.z + front_distance*next_plane_normal.z;
-        next_plane_midpoint_projection.x = next_plane_midpoint.x + front_distance*next_plane_normal.x;
-        next_plane_midpoint_projection.y = next_plane_midpoint.y + front_distance*next_plane_normal.y;
-        next_plane_midpoint_projection.z = next_plane_midpoint.z + front_distance*next_plane_normal.z;
+        next_plane_left_edge_midpoint_projection.x = next_plane_left_edge_midpoint.x - front_distance*next_plane_normal.x;
+        next_plane_left_edge_midpoint_projection.y = next_plane_left_edge_midpoint.y - front_distance*next_plane_normal.y;
+        next_plane_left_edge_midpoint_projection.z = next_plane_left_edge_midpoint.z - front_distance*next_plane_normal.z;
+        next_plane_midpoint_projection.x = next_plane_midpoint.x - front_distance*next_plane_normal.x;
+        next_plane_midpoint_projection.y = next_plane_midpoint.y - front_distance*next_plane_normal.y;
+        next_plane_midpoint_projection.z = next_plane_midpoint.z - front_distance*next_plane_normal.z;
         startPosition[0] = endPosition[0];
         startPosition[1] = endPosition[1];
         startPosition[2] = endPosition[2];
@@ -2885,14 +2885,16 @@ ControlUINode::copyNecessaryInfo()
     {
         PRINT_LOG(1, "Not a big plane. Covered in one go. Copying the necessary information\n");
         PRINT_LOG(1, "Plane no.: " << _node_completed_number_of_planes << "\n");
-        PRINT_LOG(2, print1dVector(this_plane_parameters, "Final Plane parameters:\n", ""));
-        PRINT_LOG(2, print1dVector(this_continuous_bounding_box_points, "Final Continuous Bounding Box points:\n", ""));
+        PRINT_LOG(2, print1dVector(current_marked_plane_parameters, "Final Plane parameters:\n", ""));
+        PRINT_LOG(2, print1dVector(current_marked_continuous_bounding_box_points, "Final Continuous Bounding Box points:\n", ""));
         // Currently captured plane parameters of the plane
-        visited_plane_parameters.push_back(this_plane_parameters);
+        visited_plane_parameters.push_back(current_marked_plane_parameters);
         // Currently captured bounding box points of the plane
-        visited_continuous_bounding_box_points.push_back(this_continuous_bounding_box_points);
+        visited_continuous_bounding_box_points.push_back(current_marked_continuous_bounding_box_points);
+        string filename = "plane_points_" + to_string(_node_completed_number_of_planes+1);
+        write3DPointsToCSV(current_marked_3d_points, filename, " ", "", 6);
     }
-    // If the plane was big enough to fit in the drone's view in onwe shot
+    // If the plane was big enough to fit in the drone's view in one shot
     else if((!_is_big_plane && aug_three_d_points.size() > 0) || _is_big_plane)
     {
         PRINT_LOG(1, "A big plane. Could not cover in one go. Estimating the best plane\n");
@@ -2919,6 +2921,8 @@ ControlUINode::copyNecessaryInfo()
         PRINT_LOG(3, "Copying the necessary information\n");
         visited_plane_parameters.push_back(new_plane_params);
         visited_continuous_bounding_box_points.push_back(new_bounding_box_points);
+        string filename = "plane_points_" + to_string(_node_completed_number_of_planes+1);
+        write3DPointsToCSV(aug_three_d_points, filename, " ", "", 6);
         aug_three_d_points.clear();
         aug_plane_bounding_box_points.clear();
         new_bounding_box_points.clear();
@@ -2969,30 +2973,38 @@ ControlUINode::augmentInfo()
     if(_stage_of_plane_observation)
     {
         aug_plane_bounding_box_points.clear();
-        for (unsigned int i = 0; i < this_continuous_bounding_box_points.size(); ++i)
+        for (unsigned int i = 0; i < current_marked_continuous_bounding_box_points.size(); ++i)
         {
-            aug_plane_bounding_box_points.push_back(this_continuous_bounding_box_points[i]);
+            aug_plane_bounding_box_points.push_back(current_marked_continuous_bounding_box_points[i]);
         }
         aug_three_d_points.clear();
-        for (unsigned int i = 0; i < jlink_three_d_points[index].size(); ++i)
+        /*for (unsigned int i = 0; i < jlink_three_d_points[index].size(); ++i)
         {
             aug_three_d_points.push_back(jlink_three_d_points[index][i]);
+        }*/
+        for (unsigned int i = 0; i < current_marked_3d_points.size(); ++i)
+        {
+            aug_three_d_points.push_back(current_marked_3d_points[i]);
         }
         _stage_of_plane_observation = false;
     }
     else
     {
-        for (unsigned int i = 0; i < jlink_three_d_points[index].size(); ++i)
+        /*for (unsigned int i = 0; i < jlink_three_d_points[index].size(); ++i)
         {
             aug_three_d_points.push_back(jlink_three_d_points[index][i]);
+        }*/
+        for (unsigned int i = 0; i < current_marked_3d_points.size(); ++i)
+        {
+            aug_three_d_points.push_back(current_marked_3d_points[i]);
         }
-        string filename = "plane_points_" + to_string(_node_completed_number_of_planes+1);
-        write3DPointsToCSV(aug_three_d_points, filename, " ", "", 6);
+        /*string filename = "plane_points_" + to_string(_node_completed_number_of_planes+1);
+        write3DPointsToCSV(aug_three_d_points, filename, " ", "", 6);*/
         _capture_mode = false;
         Point3f a0, a1, a2, a3;
         a0 = aug_plane_bounding_box_points[0];
-        a1 = this_continuous_bounding_box_points[1];
-        a2 = this_continuous_bounding_box_points[2];
+        a1 = current_marked_continuous_bounding_box_points[1];
+        a2 = current_marked_continuous_bounding_box_points[2];
         a3 = aug_plane_bounding_box_points[3];
         aug_plane_bounding_box_points.clear();
         aug_plane_bounding_box_points.push_back(a0);
@@ -3043,8 +3055,8 @@ ControlUINode::getMultiplePlanes3d (const vector<int> &ccPoints, const vector< v
             _in_points.push_back(featurePt);
         }
     }
-    string filename = "plane_points_" + to_string(_node_completed_number_of_planes+1);
-    write3DPointsToCSV(_in_points, filename, " ", "", 6);
+    /*string filename = "plane_points_" + to_string(_node_completed_number_of_planes+1);
+    write3DPointsToCSV(_in_points, filename, " ", "", 6);*/
     _capture_mode = false;
     pthread_mutex_unlock(&keyPoint_CS);
     PRINT_DEBUG(2, "Captured the 3d points within the clicked points\n");
@@ -3345,6 +3357,21 @@ ControlUINode::doJLinkage(const vector<int> &ccPoints, const vector< vector<int>
                                 this_sorted_3d_points);
     PRINT_DEBUG(5, print1dVector(this_plane_parameters, "Sig PP: ", ""));
     PRINT_DEBUG(5, print1dVector(this_continuous_bounding_box_points, "Sig CBB:\n", ""));
+    current_marked_plane_parameters.clear();
+    current_marked_continuous_bounding_box_points.clear();
+    current_marked_3d_points.clear();
+    for(unsigned int i = 0; i < this_plane_parameters.size(); i++)
+    {
+        current_marked_plane_parameters.push_back(this_plane_parameters[i]);
+    }
+    for(unsigned int i = 0; i < this_continuous_bounding_box_points.size(); i++)
+    {
+        current_marked_continuous_bounding_box_points.push_back(this_continuous_bounding_box_points[i]);
+    }
+    for(unsigned int i = 0; i < this_sorted_3d_points.size(); i++)
+    {
+        current_marked_3d_points.push_back(this_sorted_3d_points[i]);
+    }
     PRINT_DEBUG(5, "Completed\n");
     endTime = clock();
     elapsedTime = double(endTime - beginTime) / (CLOCKS_PER_SEC/1000);
@@ -3831,9 +3858,9 @@ ControlUINode::captureTheCurrentPlane()
         _fixed_distance = distance;
         float point_distance = getPointToPlaneDistance(this_plane_parameters, _node_current_pos_of_drone);
         PRINT_LOG(1, "Top mid z: " << (int)ceil(top_mid.z) << ".\n");
-        PRINT_LOG(1, "Height required: " << height_required << ".\n");
-        PRINT_LOG(1, "Distance to see plane: " << distance << ".\n");
-        PRINT_LOG(1, "Current Distance from plane: " << point_distance << ".\n");
+        PRINT_LOG(0, "Height required: " << height_required << ".\n");
+        PRINT_LOG(0, "Distance to see plane: " << distance << ".\n");
+        PRINT_LOG(0, "Current Distance from plane: " << point_distance << ".\n");
         int move = (distance >= point_distance) ? -1: 1;
         float step_distance = fabs(distance - point_distance);
         if(move == -1)
