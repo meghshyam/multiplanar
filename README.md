@@ -6,11 +6,7 @@ This package contains the implementation corresponding to the following publicat
 
 This Package builds on the well known paper Camera-Based Navigation of a Low-Cost Quadrocopter by Engel et al. presented in International Conference on Intelligent Robots and Systems, 2012. Please study the http://wiki.ros.org/tum_ardrone and the corresponding paper for more information on this part of the software. Also, be aware of the license that comes with it. 
 
-## Supplementary file
-
-### Abstract
-
-In this supplementary material, we present additional results which cannot be accommodated due to page restrictions in the main paper.
+## Results
 
 !["Aircrafts"](http://meghshyam.github.io/multiplanar/figures/aircrafts2.png)
 **Fig 1:** *(a) Large illustrations of military aircrafts were exhibited on a wall. (b) Images captured by our autonomous navigation algorithm are mosaiced in a single panorama as shown in (c).*
